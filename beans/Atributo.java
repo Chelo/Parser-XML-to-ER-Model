@@ -1,5 +1,4 @@
 package beans;
-//prueba daniel
 
 import java.util.Vector;
 
