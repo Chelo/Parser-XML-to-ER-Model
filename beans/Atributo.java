@@ -1,5 +1,5 @@
 package beans;
-//se lo voli a colocar
+//y ahora estoy jugando
 import java.util.Vector;
 
 public class Atributo {
