@@ -176,7 +176,7 @@ public class Parser {
 	public static void main(final String[] args) throws SAXException, IOException
 	{
 		MostrarEntidades m = new MostrarEntidades();
-		File file = new File("///home/liliana/taller/ejemplo.xml");
+		File file = new File("ejemplo.xml");
 		try {
 		
 			XSSchemaSet result = CrearParser(file);
