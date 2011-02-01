@@ -1,15 +1,35 @@
 package beans;
-//prueba daniel
 
+import java.util.ArrayList;
 import java.util.Vector;
 
+
+/**
+ * Clase Atributo
+ * --------------
+ * 
+ * Clase que contiene las características básicas de los atributos de una entidad en 
+ * el modelo ER.
+ *
+ * 
+ * @version 1.0  30/01/11
+ * @author:
+ *  - Karina Aguiar
+ *  - Liliana Barrios
+ *  - Consuelo Gómez
+ *  - Daniel Pedroza
+ * 
+ */
+
 public class Atributo {
-	public String nombre = null;
+	public String nombre = null; 
 	public String tipo = null;
-	public String valor = null;
+	public String valorPorDefecto = null;
 	public int longitud = 0;
 	public boolean nulo =  true;
+	public ArrayList<Integer> rango; 
 	public Vector<String> dominio;
+	
 	
 	public String getNombre() {
 		return nombre;
@@ -24,10 +44,10 @@ public class Atributo {
 		this.tipo = tipo;
 	}
 	public String getValor() {
-		return valor;
+		return valorPorDefecto;
 	}
 	public void setValor(String valor) {
-		this.valor = valor;
+		this.valorPorDefecto = valor;
 	}
 	public int getLongitud() {
 		return longitud;
@@ -41,6 +61,12 @@ public class Atributo {
 	public void setNulo(boolean nulo) {
 		this.nulo = nulo;
 	}
+	public void setRango(ArrayList<Integer> rango) {
+		this.rango = rango;
+	}
+	public ArrayList<Integer> getRango() {
+		return rango;
+	}
 	public Vector<String> getDominio() {
 		return dominio;
 	}
@@ -48,4 +74,3 @@ public class Atributo {
 		this.dominio = dominio;
 	}
 }
-
