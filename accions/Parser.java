@@ -2,6 +2,7 @@ package accions;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
@@ -128,8 +129,8 @@ public class Parser {
 		 	return entidad;
 	}
 	
-	public static Vector leerEntidades(Iterator<String> claves, Iterator<XSComplexType> valores ){
-		 String nombre;
+	public static HashMap<String, Entidad> leerEntidades(Iterator<String> claves, Iterator<XSComplexType> valores ){
+		 String tipo;
 		 XSComplexType complex;
 		 XSContentType contenido;
 		 XSParticle particle;
@@ -137,13 +138,13 @@ public class Parser {
 		 XSTerm term;
 		 XSModelGroup xsModelGroup;
 		 XSParticle[] particles;
-		 Vector<Entidad> entidades = new Vector<Entidad>();
-		
+		 //Vector<Entidad> entidades = new Vector<Entidad>();
+		 HashMap<String,Entidad> entidades = new HashMap(); 
 		 
 		  	while(claves.hasNext() && valores.hasNext())  {
 		  		Entidad nueva_entidad = new Entidad();
-		  		nombre = (String)claves.next();
-		  		nueva_entidad.setNombre_entidad(nombre);
+		  		tipo = (String)claves.next();
+		  		nueva_entidad.setTipo(tipo);
 		  		System.out.print("-------Entidad/ComplexType------  "+ nueva_entidad.getNombre_entidad() + "\n");
 	    	 
 		  		//Estamos en busqueda de examinar sus elements a nivel interno (atributos)
@@ -154,7 +155,6 @@ public class Parser {
 		  		//Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE
 		  		leerAtributos2(complex,nueva_entidad,decl);
 		  		
-	    	 
 		  		//Se verifica que el complexType sea diferente de nulo
 		  		if(particle != null){
 		  			term = particle.getTerm();
@@ -169,7 +169,7 @@ public class Parser {
 			            nueva_entidad=leerAtributos(particles,nueva_entidad);
 			        }
 			    }
-		  		entidades.add(nueva_entidad);
+		  		entidades.put(nueva_entidad.getTipo(), nueva_entidad);
 	    } return entidades;
 	}
 

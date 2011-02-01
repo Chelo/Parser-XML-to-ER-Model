@@ -17,7 +17,7 @@ public class MostrarEntidades {
 			while(j>=0){
 			System.out.println("	Nombre : "+ atributos.get(j).nombre);
 			System.out.println("		Tipo : "+ atributos.get(j).tipo);
-			System.out.println("		Valor : "+ atributos.get(j).valor);
+			System.out.println("		Valor : "+ atributos.get(j).valorPorDefecto);
 			System.out.println("		Nulo : "+ atributos.get(j).nulo);
 			
 			j--;
