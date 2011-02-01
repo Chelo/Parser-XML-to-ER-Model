@@ -15,9 +15,8 @@ public class MostrarEntidades {
 			j = entidades.get(i).getAtributos().size()-1;
 			Vector<Atributo> atributos = entidades.get(i).getAtributos();
 			while(j>=0){
-			System.out.println("	Nombre : "+ atributos.get(j).nombre);
+			System.out.println("	Nombre : "+ atributos.get(j).nombre +"	Clave : "+entidades.get(i).getClave() );
 			System.out.println("		Tipo : "+ atributos.get(j).tipo);
-			System.out.println("		Valor : "+ atributos.get(j).valor);
 			System.out.println("		Nulo : "+ atributos.get(j).nulo);
 			
 			j--;
