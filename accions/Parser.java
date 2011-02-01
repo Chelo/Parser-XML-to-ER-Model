@@ -81,6 +81,9 @@ public class Parser {
 			Atributo nuevo_atributo = new Atributo();
   			decl = attributeUse.getDecl();
   			nuevo_atributo.setNombre(decl.getName());
+  			if (decl.getType().getName().contentEquals("ID")){
+  				entidad.setClave(decl.getType().getName());
+  			}
   			nuevo_atributo.setTipo(decl.getType().getName());
   			nuevo_atributo.setNulo(attributeUse.isRequired());
   			
@@ -111,6 +114,9 @@ public class Parser {
                 	//Se obtiene el tipo del atributo
                 	String tipoAttr = pterm.asElementDecl().getType().getName();
                 	nuevo_atributo.setNombre(nombreAttr);
+                	if (true ){
+          				entidad.setClave(tipoAttr);
+          			}
                 	nuevo_atributo.setTipo(tipoAttr);
                 	if (p.getMinOccurs()==1){
                 		nuevo_atributo.setNulo(false);
