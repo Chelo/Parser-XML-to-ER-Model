@@ -1,11 +1,12 @@
 package accions;
+import java.util.HashMap;
 import java.util.Vector;
 
 import beans.Atributo;
 import beans.Entidad;
 
 public class MostrarEntidades {
-	public void imprimirEntidades(Vector<Entidad> entidades){
+	public void imprimirEntidades(HashMap<String,Entidad> entidades){
 		int i =entidades.size()-1;
 		int j = 0;
 		while(i>=0){

@@ -1,5 +1,4 @@
 package beans;
-
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -74,4 +73,3 @@ public class Atributo {
 		this.dominio = dominio;
 	}
 }
-
