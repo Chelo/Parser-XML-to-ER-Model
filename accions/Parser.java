@@ -2,18 +2,15 @@ package accions;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
-
 import org.xml.sax.SAXException;
-
 import beans.Atributo;
 import beans.Entidad;
-
-import accions.MostrarEntidades;
-
 import com.sun.xml.xsom.XSAttributeDecl;
 import com.sun.xml.xsom.XSAttributeUse;
 import com.sun.xml.xsom.XSComplexType;
@@ -26,9 +23,12 @@ import com.sun.xml.xsom.XSRestrictionSimpleType;
 import com.sun.xml.xsom.XSSchema;
 import com.sun.xml.xsom.XSSchemaSet;
 import com.sun.xml.xsom.XSTerm;
+import com.sun.xml.xsom.XmlString;
 import com.sun.xml.xsom.parser.XSOMParser;
 
 public class Parser {
+	
+	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
 
 	public static XSSchemaSet CrearParser(File archivo) throws SAXException,
 			IOException {
@@ -37,190 +37,288 @@ public class Parser {
 		return parser.getResult();
 	}
 
-	public static void restricciones(XSRestrictionSimpleType restriction) {
-		System.out
-				.println("Tipo base : " + restriction.getBaseType().getName());
-
+	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
+		if (restriction.getBaseType().getName() != "anySimpleType"){
+		atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
+		
 		if (restriction != null) {
 
-			Iterator<? extends XSFacet> i = restriction.getDeclaredFacets()
-					.iterator();
+			Iterator<? extends XSFacet> i = restriction.getDeclaredFacets().iterator();
 			while (i.hasNext()) {
 
 				XSFacet facet = i.next();
 				if (facet.getName().equals(XSFacet.FACET_ENUMERATION)) {
-					System.out.println("Restriccion enumeracion: "
-							+ facet.getValue().value);
+					Vector<String> Dominio= atributo.getDominio();
+					Dominio.add(facet.getValue().value);
+					atributo.setDominio(Dominio);								
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXINCLUSIVE)) {
-					System.out.println("Restriccion maxinclusive : "
-							+ facet.getValue().value);
+					ArrayList<String> rango= atributo.getRango();
+					rango.add(1, facet.getValue().value);
+					atributo.setRango(rango);
+									
 				}
 				if (facet.getName().equals(XSFacet.FACET_MININCLUSIVE)) {
-					System.out.println("Restriccion mininclusive: "
-							+ facet.getValue().value);
+					ArrayList<String> rango= atributo.getRango();
+					rango.add(0, facet.getValue().value);
+					atributo.setRango(rango);
+					
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXEXCLUSIVE)) {
-					System.out
-							.println("Restriccion maxExclusive: "
-									+ String.valueOf(Integer.parseInt(facet
-											.getValue().value) - 1));
+					
+					System.out.println("AVERTENCIA: este Maximo se tomará como inclusivo");
+					ArrayList<String> rango= atributo.getRango();
+					rango.add(1, facet.getValue().value);
+					atributo.setRango(rango);
 				}
 				if (facet.getName().equals(XSFacet.FACET_MINEXCLUSIVE)) {
-					System.out
-							.println("Restriccion MinExclusive : "
-									+ String.valueOf(Integer.parseInt(facet
-											.getValue().value) + 1));
+					System.out.println("AVERTENCIA: este Maximo se tomará como inclusivo");
+					ArrayList<String> rango= atributo.getRango();
+					rango.add(0, facet.getValue().value);
+					atributo.setRango(rango);
 				}
 				if (facet.getName().equals(XSFacet.FACET_LENGTH)) {
-					System.out.println("Restriccion Longitud : "
-							+ facet.getValue().value);
+					atributo.setLongitud(facet.getValue().value);
+					
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXLENGTH)) {
-					System.out.println("Restriccion MaxLongitud: "
-							+ facet.getValue().value);
+					atributo.setLongitud(facet.getValue().value);
 				}
 				if (facet.getName().equals(XSFacet.FACET_MINLENGTH)) {
-					System.out.println("Restriccion MinLongitud: "
-							+ facet.getValue().value);
+					System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción minLength es inválido en el modelo ER"); 
 				}
 				if (facet.getName().equals(XSFacet.FACET_PATTERN)) {
-					System.out.println("Restriccion patrones: "
-							+ facet.getValue().value);
+					System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción pattern value es inválido en el modelo ER");
 				}
 
 			}
-		}
+		}return atributos;
 	}
 
-	public static Entidad leerAtributos2(XSComplexType complex,
-			Entidad entidad, XSAttributeDecl decl) {
-		Vector<Atributo> atributos = new Vector();
+	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
+		
+		XSAttributeDecl decl = null;
+		Vector<Atributo> atributos = new Vector<Atributo>();
+	
+		
 		for (XSAttributeUse attributeUse : complex.getAttributeUses()) {
+		
 			Atributo nuevo_atributo = new Atributo();
 
 			decl = attributeUse.getDecl();
 			nuevo_atributo.setNombre(decl.getName());
 			nuevo_atributo.setTipo(decl.getType().getName());
 			nuevo_atributo.setNulo(attributeUse.isRequired());
-
 			atributos.add(nuevo_atributo);
 		}
 
-		entidad.setAtributos(atributos);
-		return entidad;
+			Entidad entidad = entidades.get(tipoEntidad);
+			entidad.setAtributos(atributos);
+		
+		
 
 	}
 
-	public static Entidad leerAtributos(XSParticle[] particles, Entidad entidad) {
+	public static void leerElementos(XSParticle[] particles, String tipo) {
 		XSTerm pterm;
 		XSRestrictionSimpleType restriction;
-		Vector<Atributo> atributos = new Vector();
+		Vector<Atributo> atributos = new Vector<Atributo>();
+		Vector<Atributo> referencias= new Vector<Atributo>();
 
+		// Se crea el vector de los tipos básicos y se le meten esos valores
+		
+		Vector<String> tiposBasicos = new Vector<String>();
+		tiposBasicos.add("string");
+		tiposBasicos.add("decimal");
+		tiposBasicos.add("integer");
+		tiposBasicos.add("boolean");
+		tiposBasicos.add("date");
+		tiposBasicos.add("time");
+		//OJO ESTO PUEDE SER PELIGROSO
+		tiposBasicos.add("anySimpleType");
+		tiposBasicos.add("null");
+		
+		
+		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
+		String tipoAttr=null;
+		
 		for (XSParticle p : particles) {
 			Atributo nuevo_atributo = new Atributo();
 			pterm = p.getTerm();
+			
 			if (pterm.isElementDecl()) { // xs:element inside complex type
 				// Se verifica si tiene SimpleType y Restricciones
+				
+				// Se obtiene el nombre del atributo
+				String nombreAttr = pterm.asElementDecl().getName();
+				
+				// Se obtiene el tipo del atributo
+				tipoAttr = pterm.asElementDecl().getType().getName();
+				//Se obtiene el valor por defecto OJOO: Aun no esta implementado
+				/*String def=null;
+				if(pterm.asElementDecl().getDefaultValue().value != ("null"))
+				{
+					def= pterm.asElementDecl().getDefaultValue().toString();
+				}
+				else
+				{
+				
+					System.out.print(pterm.asElementDecl().getDefaultValue());
+				}*/
+				nuevo_atributo.setNombre(nombreAttr);
+				nuevo_atributo.setTipo(tipoAttr);
+				//nuevo_atributo.setValor(def);
+				
+				//Se obtienen las retricciones
 				if (pterm.asElementDecl().getType().isSimpleType()) {
 					// System.out.println("Tiene Restriccion : "+pterm.asElementDecl().getType().asSimpleType().isRestriction());
 					// Se verifican las restricciones existentes
-					restriction = pterm.asElementDecl().getType()
-							.asSimpleType().asRestriction();
-					restricciones(restriction);
+					restriction = pterm.asElementDecl().getType().asSimpleType().asRestriction();
+					atributos = restricciones(restriction,nuevo_atributo,atributos);
+					
 				}
-				// Se obtiene el nombre del atributo
-				String nombreAttr = pterm.asElementDecl().getName();
-				// Se obtiene el tipo del atributo
-				String tipoAttr = pterm.asElementDecl().getType().getName();
-				nuevo_atributo.setNombre(nombreAttr);
-				nuevo_atributo.setTipo(tipoAttr);
+				
+				//Se obtiene el minOccurs y maxOccurs, así como si el atributo es null o not null
 				if (p.getMinOccurs() == 1) {
 					nuevo_atributo.setNulo(false);
 				}
-				// System.out.println("	Atributo: "+ nombreAttr);
-				// System.out.println("	Tipo: "+ tipoAttr);
+				nuevo_atributo.setMinOccurs(p.getMinOccurs());
+				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
+				
+				
+				 
 				// Se obtiene el min y max de los atributos
 				// System.out.println("	MaxOccurs : " + p.getMaxOccurs() +
 				// "    MinOccurs :" + p.getMinOccurs());
 				// System.out.println("");
 			}
-			atributos.add(nuevo_atributo);
+			
+			//Coloca el atributo en el vector al que pertenece
+			if(tipoAttr == null )
+			{}
+			else if (tiposBasicos.contains(tipoAttr)){
+				atributos.add(nuevo_atributo);
+				}
+			else{
+				
+				referencias.add(nuevo_atributo);
+			}
 
 		}
 		entidad.setAtributos(atributos);
-		return entidad;
+		entidad.setReferencias(referencias);
+
 
 	}
 
-	public static HashMap<String, Entidad> leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
-		String tipo;
-		XSComplexType complex;
-		XSContentType contenido;
-		XSParticle particle;
-		XSAttributeDecl decl = null;
-		XSTerm term;
-		XSModelGroup xsModelGroup;
-		XSParticle[] particles;
-		HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
-	
-		// -----------------CAMBIO DE CHELO -----------//
+
+
+	private static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
 
 		
+		String tipo;
 		while (claves.hasNext() && valores.hasNext()) {
 			Entidad nueva_entidad = new Entidad();
 			String nombre = (String) claves.next();
 			XSElementDecl element = (XSElementDecl) valores.next();
 			tipo = element.getType().getName();
-			System.out.print("Entidad: " + nombre + "\n" + element.getType().getName());
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
+			entidades.put(tipo, nueva_entidad);			
 		}
+		
+	}
 
-		// --------------- CAMBIO DE CHELO ------------//
-		/*
+	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores){	
+		
+		XSComplexType complex;
+		XSContentType contenido;
+		XSParticle particle;
+		XSTerm term;
+		XSModelGroup xsModelGroup;
+		XSParticle[] particles;
+		
 		while (claves.hasNext() && valores.hasNext()) {
-			Entidad nueva_entidad = new Entidad();
-			tipo = (String) claves.next();
-			nueva_entidad.setTipo(tipo);
-			System.out.print("-------Entidad/ComplexType------  "
-					+ nueva_entidad.getNombre_entidad() + "\n");
-
-			// Estamos en busqueda de examinar sus elements a nivel interno
-			// (atributos)
-			complex = (XSComplexType) valores.next();
-			contenido = complex.getContentType();
-			particle = contenido.asParticle(); // Se optienen los elementos
-												// dentro del complexType
-
-			// Se verifica si los elementos tienen atributos con el tipo
-			// ATTRIBUTE
-			leerAtributos2(complex, nueva_entidad, decl);
-
-			// Se verifica que el complexType sea diferente de nulo
-			if (particle != null) {
-				term = particle.getTerm();
-				if (term.isModelGroup()) {
-					xsModelGroup = term.asModelGroup();
-					particles = xsModelGroup.getChildren();
-
-					// se verifica que sea sequence, all o choice
-					System.out.println("Compositor "
-							+ xsModelGroup.getCompositor().toString());
-
-					// Se leen los atributos de las entidades
-					nueva_entidad = leerAtributos(particles, nueva_entidad);
+			
+			String tipo = (String) claves.next();
+			if(!entidades.containsKey(tipo)){
+				System.out.print("ALERTA: El elemento del tipo "+ tipo +" no esta definido.\n");
+			}
+			else
+			{
+			
+				// Estamos en busqueda de examinar los elements a nivel interno (atributos)
+				complex = (XSComplexType) valores.next();
+				contenido = complex.getContentType();
+				particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
+	
+				// Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE y se agregan estos a su respectiva entidad
+				leerAtributos2(complex,tipo);
+	
+				// Se verifica que el complexType sea diferente de nulo
+				if (particle != null) {
+					term = particle.getTerm();
+					if (term.isModelGroup()) {
+						xsModelGroup = term.asModelGroup();
+						particles = xsModelGroup.getChildren();
+	
+						// se verifica que sea sequence, all o choice
+						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
+						
+						// Se leen los atributos de las entidades
+						leerElementos(particles, tipo);
+					}
 				}
 			}
-			*/
-			entidades.put(nueva_entidad.getTipo(), nueva_entidad);
 		}
-		return entidades;
 	}
-}
-	public static void main(final String[] args) throws SAXException,
-			IOException {
-		MostrarEntidades m = new MostrarEntidades();
+	
+	public static void ImprimirEntidades() {
+
+		Set<String> tipos = entidades.keySet();
+		Iterator<String> cadaTipo = tipos.iterator();
+
+		while (cadaTipo.hasNext()) {
+			Entidad entidad = entidades.get(cadaTipo.next());
+
+			System.out.println("-- Entidad: " + entidad.getNombre_entidad()	+ " --");
+			System.out.println("-- Tipo:    " + entidad.getTipo() + " --");
+
+			int j = entidad.getAtributos().size()-1;
+
+			Vector<Atributo> atributos = entidad.getAtributos();
+			System.out.println("-- Atributos básicos --");
+
+			while (j >= 0) {
+				System.out.println("	Nombre : " + atributos.get(j).getNombre());
+				System.out.println("		Tipo : " + atributos.get(j).getTipo());
+				System.out.println("		Nulo : " + atributos.get(j).isNulo());
+
+				j--;
+			}
+			Vector<Atributo> referencias = entidad.getReferencias();
+			System.out.println("-- Atributos Hechos por el usuario--");
+			
+			j= entidad.getReferencias().size()-1;
+			
+			while (j >= 0) {
+				System.out.println("	Nombre : " + referencias.get(j).getNombre());
+				System.out.println("		Tipo : " + referencias.get(j).getTipo());
+				System.out.println("		Nulo : " + referencias.get(j).isNulo());
+
+				j--;
+			}
+			
+
+		}
+		
+	}
+
+
+
+
+	public static void main(final String[] args) throws SAXException, IOException {
+
 		File file = new File("ejemplo.xml");
 		try {
 
@@ -232,30 +330,36 @@ public class Parser {
 			Iterator<XSSchema> itr = result.iterateSchema();
 			while (itr.hasNext()) {
 				// Ahora iteramos sobre cada uno de los schemas individualmente
+				itr.next();
 				XSSchema schema = (XSSchema) itr.next();
 				System.out.print("Esquema nuevo: \n ");
 
-				/*
-				 * //ComplexTypes (al menos los del nivel más externo//
-				 * Map<String, XSComplexType> mapa = (Map<String,
-				 * XSComplexType>) schema.getComplexTypes();
-				 * System.out.print("Tamano: "+ ((Map<String, XSComplexType>)
-				 * mapa).size()+ "\n"); Iterator<String> claves = ((Map<String,
-				 * XSComplexType>) mapa).keySet().iterator(); //Se obtienen
-				 * todos los complexTypes Iterator<XSComplexType> valores =
-				 * ((Map<String, XSComplexType>) mapa).values().iterator();
+				
+				/* 
+				 * Elements (al menos del nivel mas externo)
+				 * (Entidades)(verificar que sean de un tipo definido por el
+				 * usuario
+				 * (algún complexType))
 				 */
-
-				// Elements (al menos del nivel mas externo)
-				// (Entidades)(verificar que sean de un tipo definido por el
-				// usuario
-				// (algún complexType))
+				
 				Map<String, XSElementDecl> mapa1 = (Map<String, XSElementDecl>) schema.getElementDecls();
 				Iterator<String> claves = ((Map<String, XSElementDecl>) mapa1).keySet().iterator();
 				Iterator<XSElementDecl> valores = ((Map<String, XSElementDecl>) mapa1).values().iterator();
+				
+				leerEntidades(claves, valores);
+												 
+				// ComplexTypes (al menos los del nivel más externo//
+				Map<String, XSComplexType> mapa = (Map<String, XSComplexType>) schema.getComplexTypes();
+				System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
+				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator(); 
+				// Se obtienentodos los complexTypes Iterator<XSComplexType>
+				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
+				LeerAtributosEntidades(claves1, valores1);
+				 
 
-				m.imprimirEntidades(leerEntidades(claves, valores));
-
+				ImprimirEntidades();
+		
+				
 			}
 		} catch (Exception exp) {
 			exp.printStackTrace(System.out);

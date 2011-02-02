@@ -24,12 +24,26 @@ public class Atributo {
 	public String nombre = null; 
 	public String tipo = null;
 	public String valorPorDefecto = null;
-	public int longitud = 0;
+	public String longitud = null;
 	public boolean nulo =  true;
-	public ArrayList<Integer> rango; 
-	public Vector<String> dominio;
+	public ArrayList<String> rango= new ArrayList<String>(); 
+	public Vector<String> dominio= new Vector<String>();
+	public int minOccurs = 0;
+	public int maxOccurs = 0;
 	
 	
+	public int getMinOccurs() {
+		return minOccurs;
+	}
+	public void setMinOccurs(int minOccurs) {
+		this.minOccurs = minOccurs;
+	}
+	public int getMaxOccurs() {
+		return maxOccurs;
+	}
+	public void setMaxOccurs(int maxOccurs) {
+		this.maxOccurs = maxOccurs;
+	}
 	public String getNombre() {
 		return nombre;
 	}
@@ -48,10 +62,10 @@ public class Atributo {
 	public void setValor(String valor) {
 		this.valorPorDefecto = valor;
 	}
-	public int getLongitud() {
+	public String getLongitud() {
 		return longitud;
 	}
-	public void setLongitud(int longitud) {
+	public void setLongitud(String longitud) {
 		this.longitud = longitud;
 	}
 	public boolean isNulo() {
@@ -60,10 +74,10 @@ public class Atributo {
 	public void setNulo(boolean nulo) {
 		this.nulo = nulo;
 	}
-	public void setRango(ArrayList<Integer> rango) {
+	public void setRango(ArrayList<String> rango) {
 		this.rango = rango;
 	}
-	public ArrayList<Integer> getRango() {
+	public ArrayList<String> getRango() {
 		return rango;
 	}
 	public Vector<String> getDominio() {
@@ -72,4 +86,5 @@ public class Atributo {
 	public void setDominio(Vector<String> dominio) {
 		this.dominio = dominio;
 	}
+	
 }

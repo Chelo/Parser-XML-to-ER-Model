@@ -6,8 +6,8 @@ import java.util.Vector;
 public class Entidad {
 	
 	public String nombre_entidad;
-	public Vector<Atributo> atributos;
-	public Vector<Atributo> referencias;
+	public Vector<Atributo> atributos=  new Vector<Atributo>();
+	public Vector<Atributo> referencias = new Vector<Atributo>();
 	public String clave;
 	public Vector<ArrayList<String>> foraneo; 
 	public String tipo;
