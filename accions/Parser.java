@@ -38,7 +38,9 @@ public class Parser {
 	}
 
 	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
-		if (restriction.getBaseType().getName() != "anySimpleType"){
+		String id = "ID";
+		if (restriction.getBaseType().getName() != "anySimpleType" && (atributo.getTipo()!=null) && !(atributo.getTipo().equals(id))){
+		System.out.println("Esto en restriccion con el atribbuto "+!atributo.getTipo().equals(id));
 		atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
 		
 		if (restriction != null) {
@@ -124,6 +126,7 @@ public class Parser {
 		XSRestrictionSimpleType restriction;
 		Vector<Atributo> atributos = new Vector<Atributo>();
 		Vector<Atributo> referencias= new Vector<Atributo>();
+		String id = "ID";
 
 		// Se crea el vector de los tipos básicos y se le meten esos valores
 		
@@ -135,8 +138,9 @@ public class Parser {
 		tiposBasicos.add("date");
 		tiposBasicos.add("time");
 		//OJO ESTO PUEDE SER PELIGROSO
-		tiposBasicos.add("anySimpleType");
-		tiposBasicos.add("null");
+		//tiposBasicos.add("anySimpleType");
+		//tiposBasicos.add("null");
+		tiposBasicos.add("ID");
 		
 		
 		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
@@ -151,7 +155,7 @@ public class Parser {
 				
 				// Se obtiene el nombre del atributo
 				String nombreAttr = pterm.asElementDecl().getName();
-				
+				System.out.println("Nombre atributo "+nombreAttr);
 				// Se obtiene el tipo del atributo
 				tipoAttr = pterm.asElementDecl().getType().getName();
 				//Se obtiene el valor por defecto OJOO: Aun no esta implementado
@@ -167,6 +171,7 @@ public class Parser {
 				}*/
 				nuevo_atributo.setNombre(nombreAttr);
 				nuevo_atributo.setTipo(tipoAttr);
+				//System.out.println("TIPOOOOOOOOOOOOOO atributo "+tipoAttr);
 				//nuevo_atributo.setValor(def);
 				
 				//Se obtienen las retricciones
@@ -194,17 +199,26 @@ public class Parser {
 			}
 			
 			//Coloca el atributo en el vector al que pertenece
+			// si es nulo ver si es elemento?
+			
 			if(tipoAttr == null )
 			{}
 			else if (tiposBasicos.contains(tipoAttr)){
 				atributos.add(nuevo_atributo);
+				
+				//Se verifica si el atributo es clave y se coloca la clave en la entidad
+				if ((tipoAttr.equals(id))){
+					
+					entidad.setClave(nuevo_atributo.getNombre());
 				}
+			}
 			else{
 				
 				referencias.add(nuevo_atributo);
 			}
 
 		}
+		System.out.println("");
 		entidad.setAtributos(atributos);
 		entidad.setReferencias(referencias);
 
@@ -263,7 +277,7 @@ public class Parser {
 						particles = xsModelGroup.getChildren();
 	
 						// se verifica que sea sequence, all o choice
-						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
+						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString()+"En el tipo "+tipo);
 						
 						// Se leen los atributos de las entidades
 						leerElementos(particles, tipo);
@@ -282,7 +296,7 @@ public class Parser {
 			Entidad entidad = entidades.get(cadaTipo.next());
 
 			System.out.println("-- Entidad: " + entidad.getNombre_entidad()	+ " --");
-			System.out.println("-- Tipo:    " + entidad.getTipo() + " --");
+			System.out.println("-- Tipo:    " + entidad.getTipo() + " --"+ "Clave :"+entidad.getClave()+ " --");
 
 			int j = entidad.getAtributos().size()-1;
 
@@ -311,6 +325,8 @@ public class Parser {
 			
 
 		}
+	System.out.println("Entidades "+	entidades.get("Libro").getAtributos().size());
+		
 		
 	}
 
@@ -355,7 +371,6 @@ public class Parser {
 				// Se obtienentodos los complexTypes Iterator<XSComplexType>
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-				 
 
 				ImprimirEntidades();
 		
