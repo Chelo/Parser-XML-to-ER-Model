@@ -39,9 +39,15 @@ public class Parser {
 
 	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
 		String id = "ID";
-		if (restriction.getBaseType().getName() != "anySimpleType" && (atributo.getTipo()!=null) && !(atributo.getTipo().equals(id))){
-		System.out.println("Esto en restriccion con el atribbuto "+!atributo.getTipo().equals(id));
-		atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
+		
+		//Se verifica los tipos claves y los tipos setteados en las resticciones
+		if (restriction.getBaseType().getName() != "anySimpleType"){
+			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id))){
+				
+				atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
+			else if ((atributo.getTipo()==null)){atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
+		}
+	
 		
 		if (restriction != null) {
 
@@ -155,25 +161,19 @@ public class Parser {
 				
 				// Se obtiene el nombre del atributo
 				String nombreAttr = pterm.asElementDecl().getName();
-				System.out.println("Nombre atributo "+nombreAttr);
+				
 				// Se obtiene el tipo del atributo
 				tipoAttr = pterm.asElementDecl().getType().getName();
-				//Se obtiene el valor por defecto OJOO: Aun no esta implementado
-				/*String def=null;
-				if(pterm.asElementDecl().getDefaultValue().value != ("null"))
-				{
-					def= pterm.asElementDecl().getDefaultValue().toString();
+			
+				// Se verifica si existe un valor por defecto
+				if(!(pterm.asElementDecl().getDefaultValue()== null))
+				{	
+					nuevo_atributo.setValor(pterm.asElementDecl().getDefaultValue().toString());
 				}
-				else
-				{
 				
-					System.out.print(pterm.asElementDecl().getDefaultValue());
-				}*/
 				nuevo_atributo.setNombre(nombreAttr);
 				nuevo_atributo.setTipo(tipoAttr);
-				//System.out.println("TIPOOOOOOOOOOOOOO atributo "+tipoAttr);
-				//nuevo_atributo.setValor(def);
-				
+			
 				//Se obtienen las retricciones
 				if (pterm.asElementDecl().getType().isSimpleType()) {
 					// System.out.println("Tiene Restriccion : "+pterm.asElementDecl().getType().asSimpleType().isRestriction());
@@ -189,13 +189,7 @@ public class Parser {
 				}
 				nuevo_atributo.setMinOccurs(p.getMinOccurs());
 				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-				
-				
-				 
-				// Se obtiene el min y max de los atributos
-				// System.out.println("	MaxOccurs : " + p.getMaxOccurs() +
-				// "    MinOccurs :" + p.getMinOccurs());
-				// System.out.println("");
+			
 			}
 			
 			//Coloca el atributo en el vector al que pertenece
@@ -218,19 +212,17 @@ public class Parser {
 			}
 
 		}
-		System.out.println("");
+		
 		entidad.setAtributos(atributos);
 		entidad.setReferencias(referencias);
-
-
 	}
 
 
 
 	private static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
-
 		
 		String tipo;
+		
 		while (claves.hasNext() && valores.hasNext()) {
 			Entidad nueva_entidad = new Entidad();
 			String nombre = (String) claves.next();
@@ -277,7 +269,7 @@ public class Parser {
 						particles = xsModelGroup.getChildren();
 	
 						// se verifica que sea sequence, all o choice
-						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString()+"En el tipo "+tipo);
+						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
 						
 						// Se leen los atributos de las entidades
 						leerElementos(particles, tipo);
@@ -295,8 +287,8 @@ public class Parser {
 		while (cadaTipo.hasNext()) {
 			Entidad entidad = entidades.get(cadaTipo.next());
 
-			System.out.println("-- Entidad: " + entidad.getNombre_entidad()	+ " --");
-			System.out.println("-- Tipo:    " + entidad.getTipo() + " --"+ "Clave :"+entidad.getClave()+ " --");
+			System.out.println("===== Entidad: " + entidad.getNombre_entidad()	+ " -- Tipo: " + entidad.getTipo() + " -- Clave: "+entidad.getClave()+ " =====\n");
+			//System.out.println("-- Tipo:    " + entidad.getTipo() + " --"+ "Clave :"+entidad.getClave()+ " --");
 
 			int j = entidad.getAtributos().size()-1;
 
@@ -307,6 +299,7 @@ public class Parser {
 				System.out.println("	Nombre : " + atributos.get(j).getNombre());
 				System.out.println("		Tipo : " + atributos.get(j).getTipo());
 				System.out.println("		Nulo : " + atributos.get(j).isNulo());
+				System.out.println("		Default : " + atributos.get(j).getValor());
 
 				j--;
 			}
@@ -325,7 +318,7 @@ public class Parser {
 			
 
 		}
-	System.out.println("Entidades "+	entidades.get("Libro").getAtributos().size());
+
 		
 		
 	}
