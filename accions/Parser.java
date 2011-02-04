@@ -10,9 +10,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
 import org.xml.sax.SAXException;
+
 import beans.Atributo;
 import beans.Entidad;
+
 import com.sun.xml.xsom.XSAttributeDecl;
 import com.sun.xml.xsom.XSAttributeUse;
 import com.sun.xml.xsom.XSComplexType;
@@ -25,7 +28,6 @@ import com.sun.xml.xsom.XSRestrictionSimpleType;
 import com.sun.xml.xsom.XSSchema;
 import com.sun.xml.xsom.XSSchemaSet;
 import com.sun.xml.xsom.XSTerm;
-import com.sun.xml.xsom.XmlString;
 import com.sun.xml.xsom.parser.XSOMParser;
 
 public class Parser {
@@ -40,16 +42,16 @@ public class Parser {
 	}
 
 	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
-		String id = "ID";
-		
+		String id = "ID";		
 		//Se verifica los tipos claves y los tipos setteados en las resticciones
 		if (restriction.getBaseType().getName() != "anySimpleType"){
 			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id))){
-				
+
 				atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
 			else if ((atributo.getTipo()==null)){atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
 		}
-	
+
+		
 		
 		if (restriction != null) {
 
@@ -135,7 +137,8 @@ public class Parser {
 		Vector<Atributo> atributos = new Vector<Atributo>();
 		Vector<Atributo> referencias= new Vector<Atributo>();
 		String id = "ID";
-
+		String nombreAttr;
+		
 		// Se crea el vector de los tipos básicos y se le meten esos valores
 		
 		Vector<String> tiposBasicos = new Vector<String>();
@@ -158,11 +161,12 @@ public class Parser {
 			Atributo nuevo_atributo = new Atributo();
 			pterm = p.getTerm();
 			
+			
 			if (pterm.isElementDecl()) { // xs:element inside complex type
 				// Se verifica si tiene SimpleType y Restricciones
 				
 				// Se obtiene el nombre del atributo
-				String nombreAttr = pterm.asElementDecl().getName();
+				nombreAttr = pterm.asElementDecl().getName();
 				
 				// Se obtiene el tipo del atributo
 				tipoAttr = pterm.asElementDecl().getType().getName();
@@ -191,28 +195,31 @@ public class Parser {
 				}
 				nuevo_atributo.setMinOccurs(p.getMinOccurs());
 				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-			
-			}
-			
-			//Coloca el atributo en el vector al que pertenece
-			// si es nulo ver si es elemento?
-			
-			if(tipoAttr == null )
-			{}
-			else if (tiposBasicos.contains(tipoAttr)){
-				atributos.add(nuevo_atributo);
-				
-				//Se verifica si el atributo es clave y se coloca la clave en la entidad
-				if ((tipoAttr.equals(id))){
-					
-					entidad.setClave(nuevo_atributo.getNombre());
-				}
-			}
-			else{
-				
-				referencias.add(nuevo_atributo);
-			}
+						
+				//Coloca el atributo en el vector al que pertenece
+				// si es nulo ver si es elemento?
 
+				if (tiposBasicos.contains(tipoAttr)){
+					atributos.add(nuevo_atributo);
+
+					//Se verifica si el atributo es clave y se coloca la clave en la entidad
+					if ((tipoAttr.equals(id))){
+
+						entidad.setClave(nuevo_atributo.getNombre());
+					}
+				}
+				else{
+					if(entidades.containsKey(tipoAttr)) {
+
+						referencias.add(nuevo_atributo);
+					} 
+					else{
+						System.out.println("ERROR: el atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe");
+					}
+
+				}
+
+			}
 		}
 		
 		entidad.setAtributos(atributos);
@@ -234,7 +241,7 @@ public class Parser {
 			nueva_entidad.setNombre_entidad(nombre);
 			entidades.put(tipo, nueva_entidad);			
 		}
-		
+			
 	}
 
 	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores){	
@@ -251,6 +258,7 @@ public class Parser {
 			String tipo = (String) claves.next();
 			if(!entidades.containsKey(tipo)){
 				System.out.print("ALERTA: El elemento del tipo "+ tipo +" no esta definido.\n");
+				valores.next();
 			}
 			else
 			{
@@ -456,12 +464,13 @@ public class Parser {
 				
 				leerEntidades(claves, valores);
 												 
-				// ComplexTypes (al menos los del nivel más externo//
+				// ComplexTypes (al menos los del nivel más externo
 				Map<String, XSComplexType> mapa = (Map<String, XSComplexType>) schema.getComplexTypes();
 				System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
 				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator(); 
 				// Se obtienentodos los complexTypes Iterator<XSComplexType>
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
+				
 				LeerAtributosEntidades(claves1, valores1);
 
 				ImprimirEntidades();
