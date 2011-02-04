@@ -23,7 +23,7 @@ import java.util.Vector;
 public class Atributo {
 	public String nombre = null; 
 	public String tipo = null;
-	public String valorPorDefecto = null;
+	public String valorPorDefecto = "";
 	public String longitud = null;
 	public boolean nulo =  true;
 	public ArrayList<String> rango= new ArrayList<String>(); 

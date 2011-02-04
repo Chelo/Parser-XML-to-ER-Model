@@ -8,7 +8,7 @@ public class Entidad {
 	public String nombre_entidad;
 	public Vector<Atributo> atributos=  new Vector<Atributo>();
 	public Vector<Atributo> referencias = new Vector<Atributo>();
-	public String clave;
+	public String clave= "NULL";
 	public Vector<ArrayList<String>> foraneo; 
 	public String tipo;
 	

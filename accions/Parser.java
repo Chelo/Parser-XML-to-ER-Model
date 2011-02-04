@@ -1,6 +1,8 @@
 package accions;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -278,7 +280,99 @@ public class Parser {
 			}
 		}
 	}
+	public static String Nulidad(Atributo atributo){
+		if (!atributo.isNulo()){			
+			return "NOT NULL";
+		}
+		else return "NULL";
+	}
 	
+	public static String ValorDefecto(Atributo atributo){
+		if (atributo.getValor()==""){			
+			return "";
+		}
+		else return "DEFAULT "+atributo.valorPorDefecto;
+	}
+	
+	public static String Longitud(Atributo atributo){
+		if (!(atributo.getLongitud()==null)){
+			return "("+atributo.getLongitud()+")";
+		} else return "";
+	}
+			
+	
+	public static String TipoDato(Atributo atributo){
+		HashMap<String, String> tiposBasicos = new HashMap<String,String>();
+	
+		tiposBasicos.put("decimal","FLOAT");
+		tiposBasicos.put("integer","NUMBER");
+		tiposBasicos.put("ID","NUMBER");
+		tiposBasicos.put("date","DATE");
+		tiposBasicos.put("time","TIMESTAMP");
+		
+		
+		if (tiposBasicos.containsKey(atributo.getTipo())){
+			return tiposBasicos.get(atributo.getTipo())+Longitud(atributo);
+		} else return "VARCHAR"+Longitud(atributo);
+		
+	}
+	
+	public static void EscribirScript(){
+		try{
+		    // Create file 
+		    FileWriter fstream = new FileWriter("out.sql");
+		    BufferedWriter out = new BufferedWriter(fstream);
+		    
+		    
+		    Set<String> tipos = entidades.keySet();
+			Iterator<String> cadaTipo = tipos.iterator();
+
+			while (cadaTipo.hasNext()) {
+				Entidad entidad = entidades.get(cadaTipo.next());
+
+				out.write("CREATE TABLE "+ entidad.getNombre_entidad().toUpperCase()+" {\n");
+			
+				int j = entidad.getAtributos().size()-1;
+
+				Vector<Atributo> atributos = entidad.getAtributos();
+				//System.out.println("-- Atributos básicos --");
+
+				while (j >= 0) {
+					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+" "+ValorDefecto(atributos.get(j))+" ,\n");
+					
+					j--;
+				}
+				Vector<Atributo> referencias = entidad.getReferencias();
+				//System.out.println("-- Atributos Hechos por el usuario--");
+				
+				j= entidad.getReferencias().size()-1;
+				
+				while (j >= 0) {
+					out.write("	"+referencias.get(j).getNombre().toUpperCase()+"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+ Nulidad(referencias.get(j))+" ,\n");
+
+					j--;
+				}
+				
+				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().toUpperCase()+ " PRIMARY KEY "+ entidad.clave.toUpperCase()+" ,\n");
+				
+				j = entidad.getReferencias().size()-1;
+				while (j >= 0) {
+					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.get(referencias.get(j).getTipo()).nombre_entidad.toUpperCase()+" )"+" ,\n");
+
+					j--;
+				}
+				
+				out.write("}\n");
+			}
+		    
+		    
+		    
+		    //Close the output stream
+		    out.close();
+		    }catch (Exception e){//Catch exception if any
+		      System.err.println("Error: " + e.getMessage());
+		    }
+	}
 	public static void ImprimirEntidades() {
 
 		Set<String> tipos = entidades.keySet();
@@ -300,6 +394,9 @@ public class Parser {
 				System.out.println("		Tipo : " + atributos.get(j).getTipo());
 				System.out.println("		Nulo : " + atributos.get(j).isNulo());
 				System.out.println("		Default : " + atributos.get(j).getValor());
+				System.out.println("		Longitud : " + atributos.get(j).getLongitud());
+				System.out.println("		MinOccurs : " + atributos.get(j).getMinOccurs());
+				System.out.println("		MaxOccurs : " + atributos.get(j).getMaxOccurs());
 
 				j--;
 			}
@@ -312,6 +409,8 @@ public class Parser {
 				System.out.println("	Nombre : " + referencias.get(j).getNombre());
 				System.out.println("		Tipo : " + referencias.get(j).getTipo());
 				System.out.println("		Nulo : " + referencias.get(j).isNulo());
+				System.out.println("		MinOccurs : " + referencias.get(j).getMinOccurs());
+				System.out.println("		MaxOccurs : " + referencias.get(j).getMaxOccurs());
 
 				j--;
 			}
@@ -372,5 +471,6 @@ public class Parser {
 		} catch (Exception exp) {
 			exp.printStackTrace(System.out);
 		}
+		EscribirScript();
 	}
 }
