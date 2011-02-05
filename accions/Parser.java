@@ -319,9 +319,15 @@ public class Parser {
 		tiposBasicos.put("time","TIMESTAMP");
 		
 		
+		
 		if (tiposBasicos.containsKey(atributo.getTipo())){
+			
 			return tiposBasicos.get(atributo.getTipo())+Longitud(atributo);
-		} else return "VARCHAR"+Longitud(atributo);
+		}else if(atributo.getTipo().equals("boolean")){
+			System.out.println("TIPO BOOLEANO\n");
+			return "CHAR(1)";
+			
+		}else return "VARCHAR"+Longitud(atributo);
 		
 	}
 	
@@ -338,39 +344,53 @@ public class Parser {
 			while (cadaTipo.hasNext()) {
 				Entidad entidad = entidades.get(cadaTipo.next());
 
-				out.write("CREATE TABLE "+ entidad.getNombre_entidad().toUpperCase()+" {\n");
+				out.write("CREATE TABLE "+ entidad.getNombre_entidad().toUpperCase()+" (\n");
 			
 				int j = entidad.getAtributos().size()-1;
 
 				Vector<Atributo> atributos = entidad.getAtributos();
-				//System.out.println("-- Atributos básicos --");
-
+				Vector<Atributo> booleanos = new Vector<Atributo>();
+				
+				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
 					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+" "+ValorDefecto(atributos.get(j))+" ,\n");
-					
+					if (atributos.get(j).getTipo().equals("boolean")){
+						booleanos.add(atributos.get(j));
+					}
 					j--;
 				}
+				
 				Vector<Atributo> referencias = entidad.getReferencias();
-				//System.out.println("-- Atributos Hechos por el usuario--");
 				
 				j= entidad.getReferencias().size()-1;
-				
+				//Se agregan los atributos que hacen referencias en la entidad
 				while (j >= 0) {
 					out.write("	"+referencias.get(j).getNombre().toUpperCase()+"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+ Nulidad(referencias.get(j))+" ,\n");
 
 					j--;
 				}
 				
-				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().toUpperCase()+ " PRIMARY KEY "+ entidad.clave.toUpperCase()+" ,\n");
 				
 				j = entidad.getReferencias().size()-1;
+				
+				//Se agregan los contraints de clave foranea a la entidad.
 				while (j >= 0) {
 					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.get(referencias.get(j).getTipo()).nombre_entidad.toUpperCase()+" )"+" ,\n");
 
 					j--;
 				}
 				
-				out.write("}\n");
+				int k = booleanos.size()-1;
+				while (k >= 0) {
+					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).getNombre().toUpperCase() + " IN ('0','1')),\n");
+					k--;
+				}
+				
+				
+				
+				//Se agrega la clave primaria a la entidad
+					out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().toUpperCase()+ " PRIMARY KEY "+ entidad.clave.toUpperCase()+" );\n\n");
+				
 			}
 		    
 		    
