@@ -331,6 +331,16 @@ public class Parser {
 		
 	}
 	
+	public static String DominioAtributo(Vector<String> valores){
+		String str = "";
+		int i = valores.size()-1;
+		while (i>=0){
+			str = str + "'"+valores.get(i)+"',";
+			i--;
+		}
+		return str.substring(0, str.length()-1);
+	}
+	
 	public static void EscribirScript(){
 		try{
 		    // Create file 
@@ -350,12 +360,17 @@ public class Parser {
 
 				Vector<Atributo> atributos = entidad.getAtributos();
 				Vector<Atributo> booleanos = new Vector<Atributo>();
+				Vector<Atributo> dominios = new Vector<Atributo>();
 				
 				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
 					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+" "+ValorDefecto(atributos.get(j))+" ,\n");
 					if (atributos.get(j).getTipo().equals("boolean")){
 						booleanos.add(atributos.get(j));
+					}
+					if (atributos.get(j).getDominio().size()>0){
+						dominios.add(atributos.get(j));
+						System.out.println("tiene dominio longuitud"+atributos.get(j).getDominio().size());
 					}
 					j--;
 				}
@@ -386,6 +401,12 @@ public class Parser {
 					k--;
 				}
 				
+				int l = dominios.size()-1;
+				while (l >= 0) {
+				
+					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.get(l).getDominio())+")),\n");
+					l--;
+				}
 				
 				
 				//Se agrega la clave primaria a la entidad
