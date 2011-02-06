@@ -1,5 +1,4 @@
 package beans;
-import java.util.ArrayList;
 import java.util.Vector;
 
 
@@ -26,7 +25,9 @@ public class Atributo {
 	public String valorPorDefecto = "";
 	public String longitud = null;
 	public boolean nulo =  true;
-	public ArrayList<String> rango= new ArrayList<String>(); 
+	//public ArrayList<String> rango= new ArrayList<String>();
+	public String minRango= "-1" ;
+	public String maxRango=  "-1";
 	public Vector<String> dominio= new Vector<String>();
 	public int minOccurs = 0;
 	public int maxOccurs = 0;
@@ -74,11 +75,19 @@ public class Atributo {
 	public void setNulo(boolean nulo) {
 		this.nulo = nulo;
 	}
-	public void setRango(ArrayList<String> rango) {
-		this.rango = rango;
+
+
+	public String getMinRango() {
+		return minRango;
 	}
-	public ArrayList<String> getRango() {
-		return rango;
+	public void setMinRango(String minRango) {
+		this.minRango = minRango;
+	}
+	public String getMaxRango() {
+		return maxRango;
+	}
+	public void setMaxRango(String maxRango) {
+		this.maxRango = maxRango;
 	}
 	public Vector<String> getDominio() {
 		return dominio;

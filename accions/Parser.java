@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -65,29 +64,21 @@ public class Parser {
 					atributo.setDominio(Dominio);								
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXINCLUSIVE)) {
-					ArrayList<String> rango= atributo.getRango();
-					rango.add(1, facet.getValue().value);
-					atributo.setRango(rango);
+					atributo.setMaxRango(facet.getValue().value);
+					
 									
 				}
 				if (facet.getName().equals(XSFacet.FACET_MININCLUSIVE)) {
-					ArrayList<String> rango= atributo.getRango();
-					rango.add(0, facet.getValue().value);
-					atributo.setRango(rango);
-					
+					atributo.setMinRango(facet.getValue().value);
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXEXCLUSIVE)) {
 					
 					System.out.println("AVERTENCIA: este Maximo se tomará como inclusivo");
-					ArrayList<String> rango= atributo.getRango();
-					rango.add(1, facet.getValue().value);
-					atributo.setRango(rango);
+					atributo.setMaxRango(facet.getValue().value);
 				}
 				if (facet.getName().equals(XSFacet.FACET_MINEXCLUSIVE)) {
 					System.out.println("AVERTENCIA: este Maximo se tomará como inclusivo");
-					ArrayList<String> rango= atributo.getRango();
-					rango.add(0, facet.getValue().value);
-					atributo.setRango(rango);
+					atributo.setMinRango(facet.getValue().value);
 				}
 				if (facet.getName().equals(XSFacet.FACET_LENGTH)) {
 					atributo.setLongitud(facet.getValue().value);
@@ -347,12 +338,15 @@ public class Parser {
 		tiposBasicos.put("date","DATE");
 		tiposBasicos.put("time","TIMESTAMP");
 	
-		if (tiposBasicos.containsKey(atributo.getTipo())){	
+		if (tiposBasicos.containsKey(atributo.getTipo())){
+			
 			return tiposBasicos.get(atributo.getTipo())+Longitud(atributo);
 		}else if(atributo.getTipo().equals("boolean")){
-			System.out.println("TIPO BOOLEANO\n");
+			
 			return "CHAR(1)";
-		}else return "VARCHAR"+Longitud(atributo);
+		}else
+			
+			return "VARCHAR"+Longitud(atributo);
 		
 	}
 	
@@ -426,10 +420,9 @@ public class Parser {
 					if (atributos.get(j).getDominio().size()>0){
 						dominios.add(atributos.get(j));
 					}
-					if (atributos.get(j).getRango().size()>0){
+					if ( !(atributos.get(j).getMaxRango()=="-1") |
+							!(atributos.get(j).getMinRango()=="-1") ){
 						rangos.add(atributos.get(j));
-						System.out.println("tiene rango longitud"+
-						atributos.get(j).getRango().size());
 					}
 					j--;
 				}
@@ -481,19 +474,35 @@ public class Parser {
 				l = rangos.size()-1;
 				//Se agregan los contraint de rango a la entidad
 				while (l >= 0) {
-				
-					if (rangos.get(l).getRango().size()>1){
+					
+					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
+							!(rangos.get(l).getMinRango().equals("-1"))){
+						
 					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
 					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
-					getRango().get(0)+" AND "+rangos.get(l).getRango().
-					get(1)+ "),\n");
+					getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
+					
+					}else if ((rangos.get(l).getMaxRango()=="-1") &&
+							!(rangos.get(l).getMinRango()=="-1")){
+		
+						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+						getNombre().toUpperCase() + " >= "+rangos.get(l).
+						getMinRango()+ "),\n");
+						
+					}else{
+						
+						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+						getNombre().toUpperCase() + " <= "+rangos.get(l).
+						getMaxRango()+"),\n");
+						
 					}
-					else if (rangos.get(l).getRango().size()==1){
-					//	System.out.println(rangos.get(l).getRango().get(0));		
-					}
+					
 					l--;
 				}
+				
 				
 				//Se agrega la clave primaria a la entidad
 				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
