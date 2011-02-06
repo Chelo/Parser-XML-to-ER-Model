@@ -107,6 +107,7 @@ public class Parser {
 		}return atributos;
 	}
 
+	
 	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
 		
 		XSAttributeDecl decl = null;
@@ -288,6 +289,13 @@ public class Parser {
 			}
 		}
 	}
+	
+	/**
+	 * Retorna un String indicado si el atributo puede o no se nulo.
+	 * 
+	 * @param atributo
+	 * @return String que indica la nulidad del atributo
+	 */
 	public static String Nulidad(Atributo atributo){
 		if (!atributo.isNulo()){			
 			return "NOT NULL";
@@ -295,6 +303,13 @@ public class Parser {
 		else return "NULL";
 	}
 	
+	/**
+	 * Retorna un String indicando el valor por defecto de un atributo en caso
+	 * de que esté declarado
+	 * 
+	 * @param atributo
+	 * @return String que indica default del atributo
+	 */
 	public static String ValorDefecto(Atributo atributo){
 		if (atributo.getValor()==""){			
 			return "";
@@ -302,35 +317,52 @@ public class Parser {
 		else return "DEFAULT "+atributo.valorPorDefecto;
 	}
 	
+	/**
+	 * Retorna un String indicando la longitud del atributo en caso de que 
+	 * este indicada en el atributo
+	 * 
+	 * @param atributo
+	 * @return String con la longitud del atributo
+	 */
 	public static String Longitud(Atributo atributo){
 		if (!(atributo.getLongitud()==null)){
 			return "("+atributo.getLongitud()+")";
 		} else return "";
 	}
 			
-	
+	/**
+	 * Retorna el tipo equivalente en Oracle del atributo.
+	 * 
+	 * @param atributo
+	 * @return String con el tipo del atributo
+	 */
 	public static String TipoDato(Atributo atributo){
+		
 		HashMap<String, String> tiposBasicos = new HashMap<String,String>();
-	
+		//Se colocan las equivalencias de tipo correspondientes con el manejador
+		// de Oracle
 		tiposBasicos.put("decimal","FLOAT");
 		tiposBasicos.put("integer","NUMBER");
 		tiposBasicos.put("ID","NUMBER");
 		tiposBasicos.put("date","DATE");
 		tiposBasicos.put("time","TIMESTAMP");
-		
-		
-		
-		if (tiposBasicos.containsKey(atributo.getTipo())){
-			
+	
+		if (tiposBasicos.containsKey(atributo.getTipo())){	
 			return tiposBasicos.get(atributo.getTipo())+Longitud(atributo);
 		}else if(atributo.getTipo().equals("boolean")){
 			System.out.println("TIPO BOOLEANO\n");
 			return "CHAR(1)";
-			
 		}else return "VARCHAR"+Longitud(atributo);
 		
 	}
 	
+	/**
+	 * Retorna un String con el dominio de un Atributo
+	 * 
+	 * @param valores Vector que contiene los valores que puede tomar un
+	 * atributo
+	 * @return String con el dominio del un atributo
+	 */
 	public static String DominioAtributo(Vector<String> valores){
 		String str = "";
 		int i = valores.size()-1;
@@ -341,47 +373,76 @@ public class Parser {
 		return str.substring(0, str.length()-1);
 	}
 	
+	/**
+	 * Método que se encarga de crear el archivo sql correspondiente al xml 
+	 * schema proporcionado.
+	 * 
+	 */
 	public static void EscribirScript(){
+		
+		Set<String> tipos = entidades.keySet();
+		Iterator<String> cadaTipo = tipos.iterator();
+		Entidad entidad = new Entidad();
+		Vector<Atributo> atributos = new Vector<Atributo>();
+		Vector<Atributo> referencias = new Vector<Atributo>();
+		Vector<Atributo> booleanos = new Vector<Atributo>();
+		Vector<Atributo> dominios = new Vector<Atributo>();
+		Vector<Atributo> rangos = new Vector<Atributo>();
+		int k = 0,j = 0, l = 0;
+		
 		try{
-		    // Create file 
+		    //Se crea el archivo sql de salida.
 		    FileWriter fstream = new FileWriter("out.sql");
 		    BufferedWriter out = new BufferedWriter(fstream);
 		    
-		    
-		    Set<String> tipos = entidades.keySet();
-			Iterator<String> cadaTipo = tipos.iterator();
 
+			//Se iteran sobre las entidades que se van a crear.
 			while (cadaTipo.hasNext()) {
-				Entidad entidad = entidades.get(cadaTipo.next());
-
-				out.write("CREATE TABLE "+ entidad.getNombre_entidad().toUpperCase()+" (\n");
-			
-				int j = entidad.getAtributos().size()-1;
-
-				Vector<Atributo> atributos = entidad.getAtributos();
-				Vector<Atributo> booleanos = new Vector<Atributo>();
-				Vector<Atributo> dominios = new Vector<Atributo>();
+				
+				entidad = entidades.get(cadaTipo.next());
+				// Se realiza un 'CREATE  TABLE' por cada entidad encontrada
+				out.write("CREATE TABLE "+ entidad.getNombre_entidad().
+				toUpperCase()+" (\n");
+				
+				
+				j = entidad.getAtributos().size()-1;
+				// se inicializan las variables para la nueva entidad
+				atributos = entidad.getAtributos();
+				booleanos = new Vector<Atributo>();
+				dominios = new Vector<Atributo>();
+				rangos = new Vector<Atributo>();
 				
 				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
-					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+" "+ValorDefecto(atributos.get(j))+" ,\n");
+					out.write("	"+atributos.get(j).getNombre().toUpperCase()+
+					" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+
+					" "+ValorDefecto(atributos.get(j))+" ,\n");
+					
+					//Se verifica el tipo del atributo y se agrega al vector
+					//correspondiente
 					if (atributos.get(j).getTipo().equals("boolean")){
 						booleanos.add(atributos.get(j));
 					}
 					if (atributos.get(j).getDominio().size()>0){
 						dominios.add(atributos.get(j));
-						System.out.println("tiene dominio longuitud"+atributos.get(j).getDominio().size());
+					}
+					if (atributos.get(j).getRango().size()>0){
+						rangos.add(atributos.get(j));
+						System.out.println("tiene rango longitud"+
+						atributos.get(j).getRango().size());
 					}
 					j--;
 				}
 				
-				Vector<Atributo> referencias = entidad.getReferencias();
+				//Se obtiene los atributos que son referencias
+				referencias = entidad.getReferencias();
 				
 				j= entidad.getReferencias().size()-1;
 				//Se agregan los atributos que hacen referencias en la entidad
 				while (j >= 0) {
-					out.write("	"+referencias.get(j).getNombre().toUpperCase()+"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+ Nulidad(referencias.get(j))+" ,\n");
-
+					out.write("	"+referencias.get(j).getNombre().toUpperCase()+
+					"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+
+					Nulidad(referencias.get(j))+" ,\n");
 					j--;
 				}
 				
@@ -390,35 +451,60 @@ public class Parser {
 				
 				//Se agregan los contraints de clave foranea a la entidad.
 				while (j >= 0) {
-					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.get(referencias.get(j).getTipo()).nombre_entidad.toUpperCase()+" )"+" ,\n");
-
+					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
+					toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.
+					get(referencias.get(j).getTipo()).nombre_entidad.
+					toUpperCase()+" )"+" ,\n");
 					j--;
 				}
 				
-				int k = booleanos.size()-1;
+				k = booleanos.size()-1;
+				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
-					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).getNombre().toUpperCase() + " IN ('0','1')),\n");
+					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
+					getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
+					getNombre().toUpperCase() + " IN ('0','1')),\n");
 					k--;
 				}
 				
-				int l = dominios.size()-1;
+				l = dominios.size()-1;
+				//Se agregan los contraint de dominio a la entidad.
 				while (l >= 0) {
 				
-					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.get(l).getDominio())+")),\n");
+					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).
+					getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
+					getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
+					get(l).getDominio())+")),\n");
 					l--;
 				}
 				
+				l = rangos.size()-1;
+				//Se agregan los contraint de rango a la entidad
+				while (l >= 0) {
+				
+					if (rangos.get(l).getRango().size()>1){
+					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
+					getRango().get(0)+" AND "+rangos.get(l).getRango().
+					get(1)+ "),\n");
+					}
+					else if (rangos.get(l).getRango().size()==1){
+					//	System.out.println(rangos.get(l).getRango().get(0));		
+					}
+					l--;
+				}
 				
 				//Se agrega la clave primaria a la entidad
-					out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().toUpperCase()+ " PRIMARY KEY "+ entidad.clave.toUpperCase()+" );\n\n");
+				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
+				toUpperCase()+ " PRIMARY KEY "+ entidad.clave.
+				toUpperCase()+" );\n\n");
 				
-			}
-		    
-		    
-		    
-		    //Close the output stream
+			}  
+		    //Se cierra el output de escritura en el archivo sql
 		    out.close();
-		    }catch (Exception e){//Catch exception if any
+		// Se toma la exception si existe
+		}catch (Exception e){
 		      System.err.println("Error: " + e.getMessage());
 		    }
 	}
