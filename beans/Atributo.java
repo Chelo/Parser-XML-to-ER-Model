@@ -218,4 +218,6 @@ public class Atributo {
 		this.dominio = nuevo_dominio;
 	}
 	
+
+	
 }

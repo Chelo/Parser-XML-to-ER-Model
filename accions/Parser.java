@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -562,14 +563,140 @@ public class Parser {
 			
 
 		}
+	}
 
+	/**
+	 * Permite encontrar las relaciones entre las Entidades.
+	 */
+	public static void VerInterrelaciones(){
+		/*
+		 * CONVENCION: Cuando se deba crear una nueva tabla para una interrelación, se creará una ENTIDAD del nombre
+		 * de uno de los atributos que relacionan a las entidades. El tipo de la entidad debe ser un nombre único, por el hash
+		 * por ende colocaré el nombre DEL ATRIBUTO tambien, por ahora.
+		 */
+		Vector<String> EntidadesVisitadas=new Vector<String>(); //Permite saber que Entidades ya fueron vistas para no caer en ciclos.
 		
+		// Recorrere el hash de las entidades para ir viendo el vector de referencias de cada una
+		// y asi ir sacando las interrelaciones.
+		
+		Set<String> claves = entidades.keySet();
+		
+		
+		Iterator<String> itr = claves.iterator();
+		
+		//Recorro entidades.
+		while(itr.hasNext()){
+			
+			String tipoEntidad= itr.next();
+			EntidadesVisitadas.add(tipoEntidad);
+			Entidad ent = entidades.get(tipoEntidad); //Entidad a estudiar.
+			Vector<Atributo> referencias = ent.getReferencias(); // Referencias que tiene esa entidad.
+			
+			Iterator<Atributo> ref= referencias.iterator();
+			// Recorro cada atributo que hace referencia en la entidad.
+			
+			while(ref.hasNext()){
+				Atributo atributo = ref.next();//Atributo a estudiar.
+				String tipo= atributo.getTipo(); // Tipo de ese atributo
+				Entidad enti= entidades.get(tipo);  // Entidad relacionada con ent.
+				
+				int minOccur= atributo.getMinOccurs();
+				int maxOccur= atributo.getMaxOccurs();
+				
+				
+				int minOccurRef;
+				int maxOccurRef;
+				//Aqui se deberían verificar cosas como si min y max son cero, dar error, si min es 1 y max es cero tambien.
+				//De hecho no se deberían permitir guardar en referencias atributos con errores en los min y max.
+				
+				if (minOccur + maxOccur == 2) { //Es decir q el min y el max son 1, por lo tanto absorbe
+					AgregarForaneo(ent,enti);
+				}
+				else if (enti.getNombre_entidad().equals(ent.getNombre_entidad())) {
+					/*
+					 * Es una entidad que se relaciona consigo misma, quedamos que si tiene (1,1) se absorbe pero eso 
+					 * ya lo veo arriba, ahora como no es (1,1) ajuro creo una entidad nueva para la interrelacion.
+					 */
+					Entidad entidadNueva= new Entidad();
+					/*
+					 * Debo llenar los datos de la entidadNueva pero como saco la clave? si esta es la unión 
+					 * de la clave consigo misma.
+					 * Qué atributos le coloco? será que busco el atributo que es clave? y se lo paso como atributo?
+					 * no le coloco atributos?
+					 */
+					
+				}
+				else
+				{
+					Vector<Atributo> refsEnti= enti.getReferencias();//referencias de la enti.
+					Iterator<Atributo> refEnti = refsEnti.iterator();
+					Vector<Atributo> refDelmismoTipo= new Vector<Atributo>();//Vector q guardará los atributos que tengan el mismo tipo.
+					
+					//Recorro el vector de referencias de enti para encontrar referencia circular.
+					while(refEnti.hasNext()){
+						Atributo atrRef = refEnti.next(); //Atributo de enti a estuar.
+						String tipoRef= atrRef.getTipo(); //Tipo del atributo.
+						
+						if (tipoRef.equals(tipo)) {
+							refDelmismoTipo.add(atrRef);
+							
+						}
+					}
+					
+					Atributo at;
+					if (refDelmismoTipo.isEmpty()) {
+						//No se consiguio un atributo que referencie a ent por ende no hay referencia circular, hay error.
+						System.out.println("ERROR: No existe referencia circular entre la entidad "+ ent.getNombre_entidad()+" y la entidad "+enti.getNombre_entidad());
+					}else if (refDelmismoTipo.size()>= 2) {
+						//Quiere decir hay mas de una interrelacion entre las entidades, por ende debo buscar por nombre.
+						Iterator<Atributo> iter= refDelmismoTipo.iterator();
+						boolean hayRef= false;
+						while (iter.hasNext()) {
+							at = iter.next();
+							if (at.getNombre().equals(atributo.getNombre())) {
+								//Son los atributos correspondientes.
+								hayRef=true;
+								minOccurRef= at.getMinOccurs();
+								maxOccurRef= at.getMaxOccurs();
+								
+								//LLAMO A UNA RUTINA Q VEA LOS 1,1 - 1,0 - M,N
+							}
+							
+						}
+						if (!hayRef) {
+							//A pesar de haber atributos del mismo tipo, ocurre que ninguno se llama igual al atributo de ent. Por ende 
+							//no hay referencia.
+							System.out.println("ERROR: No existe referencia circular entre la entidad "+ ent.getNombre_entidad()+" y la entidad "+enti.getNombre_entidad());							
+						}
+					}
+					else{
+						//Existe una unica referencia con este tipo, por ende no debo ver si el nombre es igual ni nada.
+						at = refDelmismoTipo.get(0);
+						minOccurRef= at.getMinOccurs();
+						maxOccurRef= at.getMaxOccurs();
+						
+						//LLAMO A UNA RUTINA Q VEA LOS 1,1 - 1,0 - M,N
+					}
+				}
+			}
+		}
 		
 	}
 
-
-
-
+	/**
+	 * Permite insertar en la Entidad base los datos de otra entidad foránea
+	 * a la cual esta relacionada.
+	 * @param entidadBase Entidad que absorbe a la entidadForánea
+	 * @param entidadForanea Entidad cuyos datos serán colocados en la Entidad base.
+	 */
+	public static void AgregarForaneo(Entidad entidadBase, Entidad entidadForanea){
+		
+		ArrayList<String> tupla= new ArrayList<String>();//Genero la tupla a insertar
+		tupla.add(entidadForanea.getNombre_entidad()); // Introduzco el nombre
+		tupla.add(entidadForanea.getClave()); //Introduzco la clave.
+		entidadBase.AgregarForaneo(tupla);
+		
+	}
 	public static void main(final String[] args) throws SAXException, IOException {
 
 		File file = new File("ejemplo.xml");

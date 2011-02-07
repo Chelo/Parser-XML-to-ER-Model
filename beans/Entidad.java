@@ -25,7 +25,7 @@ public class Entidad {
 	public Vector<Atributo> atributos=  new Vector<Atributo>(); 	//Atributos de la entidad.
 	public Vector<Atributo> referencias = new Vector<Atributo>();	//Atributos que representan interrelación con otras Entidades.
 	public String clave= "NULL";									//Clave de la Entidad.
-	public Vector<ArrayList<String>> foraneo; 						//Valores foráneos.
+	public Vector<ArrayList<String>> foraneo; 						//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
 	public String tipo;												//Tipo de la Entidad según el XMLSchema.
 	
 	/**
@@ -143,5 +143,14 @@ public class Entidad {
 		this.atributos = atributos;
 	}
 	
+	/**
+	 * Agrega los datos (NombreEntidad, ClaveEntidad) de una Entidad foránea
+	 * a la Entidad actual.
+	 * 
+	 * @param foraneo ArrayList que funciona como tupla de la forma <NombreEntidad,ClaveEntidad>
+	 */
+	public void AgregarForaneo(ArrayList<String> foraneo){
+		this.foraneo.add(foraneo);
+	}
 
 }
