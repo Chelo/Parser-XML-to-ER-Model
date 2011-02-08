@@ -23,13 +23,36 @@ import com.sun.xml.xsom.XSRestrictionSimpleType;
 import com.sun.xml.xsom.XSSchema;
 import com.sun.xml.xsom.XSSchemaSet;
 import com.sun.xml.xsom.XSTerm;
-import com.sun.xml.xsom.XmlString;
 import com.sun.xml.xsom.parser.XSOMParser;
 
+
+/**
+ * La clase Parser parsea documentos XMLSchema y asocia los diferentes 
+ * elementos definidos dentro de estos esquemas con las estructuras de datos 
+ * que representar&#225n elementos dentro del modelo Relacional.
+ * 
+ * @author 
+ * Karina Aguiar
+ * Liliana Barrios y  
+ * Consuelo G&#243mez
+ * 
+ */
 public class Parser {
-	
+	 
+	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
 
+	
+	/**
+	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
+	 * XSOM parser y parsear el archivo (XMLSchema) indicado el 
+	 * cual se retornar&#225 en un XSSchemaSet
+	 * 
+	 * @param archivo El XMLSchema a parsear
+	 * @return Archivo parseado (XSSchemaSet)
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public static XSSchemaSet CrearParser(File archivo) throws SAXException,
 			IOException {
 		XSOMParser parser = new XSOMParser();
@@ -37,18 +60,30 @@ public class Parser {
 		return parser.getResult();
 	}
 
-	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
+	/**
+	 * La funci&#243n restricciones es la encargada de asociar las "restriction" tags
+	 * del XMLSchema con restricciones del modelo Relacional.
+	 * 
+	 * Alguna de las restricciones que se identifican son:
+	 * - Enumeraci&#243n (asociado a restricciones de dominio).
+	 * - El m&#237nimo y m&#225ximo valor que puede tomar un atributo num&#233rico.
+	 * - El m&#225ximo n&#250mero de caracteres que puede tomar un atributo de tipo String. 
+	 * 
+	 * @param restriction XSRestrictionSimpleType
+	 * @param atributo atributo al cual pertenecen las restricciones
+	 * @return atributo al cual pertenecen las restricciones con las restricciones incluidas
+	 */
+	public static Atributo restricciones(XSRestrictionSimpleType restriction, Atributo atributo) {
 		String id = "ID";
 		
 		//Se verifica los tipos claves y los tipos setteados en las resticciones
 		if (restriction.getBaseType().getName() != "anySimpleType"){
-			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id))){
-				
-				atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
-			else if ((atributo.getTipo()==null)){atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
+			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id)))
+				atributo.setTipo(restriction.getBaseType().getName()); 
+			else if ((atributo.getTipo()==null))
+				atributo.setTipo(restriction.getBaseType().getName()); 		
 		}
 	
-		
 		if (restriction != null) {
 
 			Iterator<? extends XSFacet> i = restriction.getDeclaredFacets().iterator();
@@ -100,9 +135,17 @@ public class Parser {
 				}
 
 			}
-		}return atributos;
+		}return atributo;
 	}
 
+	/**
+	 * La funci&#243n leerAtributos2 es la encargada de leer los atributos de una
+	 * entidad que est&#233n definidos bajo el tag "attribute"dentro de un ComplexType 
+	 *  
+	 * @param complex el ComplexType (Tipo que define a una entidad) del cual se quieren extraer (leer) 
+	 * sus atributos  
+	 * @param tipoEntidad nombre del ComplexType del cual se quieren extraer (leer) sus atributos. 
+	 */
 	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
 		
 		XSAttributeDecl decl = null;
@@ -122,20 +165,30 @@ public class Parser {
 
 			Entidad entidad = entidades.get(tipoEntidad);
 			entidad.setAtributos(atributos);
-		
-		
 
 	}
 
-	public static void leerElementos(XSParticle[] particles, String tipo) {
+	/**
+	 * La funci&#243n leerElementos es la encargada de leer los atributos de una
+	 * entidad que est&#233n definidos bajo el tag "element" dentro de un ComplexType 
+	 * 
+	 * @param particles es una arreglo unidimensional de XSParticle, el cual contiene en cada casilla la informaci&#243n
+	 * particular de cada uno de los elementos "element" definidos dentro de un ComplexType (Tipo que define
+	 * una entidad)
+	 * @param tipo nombre del ComplexType al cual pertenece el arreglo de XSParticles (particles) y del cual se 
+	 * quieren extraer (leer) sus atributos.
+	 * @param atributos arreglo unidimensional de Atributos, donde est&#225n almacenados los atributos de 
+	 * la entidad definida por el ComplexType bajo el nombre "tipo"   
+	 * @return arreglo unidimensional de Atributos, donde se almacenar&#225n el resto de los atributos 
+	 * que est&#233n definidos bajo el tag "element", pertenecientes a la entidad definida por el ComplexType de nombre "tipo" 
+	 * y que ser&#225n parseados por esta funci&#243n. 
+	 */
+	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos) {
 		XSTerm pterm;
 		XSRestrictionSimpleType restriction;
-		Vector<Atributo> atributos = new Vector<Atributo>();
-		Vector<Atributo> referencias= new Vector<Atributo>();
 		String id = "ID";
-
-		// Se crea el vector de los tipos básicos y se le meten esos valores
 		
+		// Se crea el vector de los tipos básicos y se le meten esos valores
 		Vector<String> tiposBasicos = new Vector<String>();
 		tiposBasicos.add("string");
 		tiposBasicos.add("decimal");
@@ -148,39 +201,43 @@ public class Parser {
 		//tiposBasicos.add("null");
 		tiposBasicos.add("ID");
 		
-		
-		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
+		String nombreAttr;
 		String tipoAttr=null;
+		String valorPorDefecto;
+		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
+
 		
-		for (XSParticle p : particles) {
+		int i = 0;
+		for (XSParticle p : particles) 
+		{
 			Atributo nuevo_atributo = new Atributo();
 			pterm = p.getTerm();
+			i++;
 			
 			if (pterm.isElementDecl()) { // xs:element inside complex type
-				// Se verifica si tiene SimpleType y Restricciones
 				
 				// Se obtiene el nombre del atributo
-				String nombreAttr = pterm.asElementDecl().getName();
+				nombreAttr = pterm.asElementDecl().getName();
+				nuevo_atributo.setNombre(nombreAttr);
 				
 				// Se obtiene el tipo del atributo
 				tipoAttr = pterm.asElementDecl().getType().getName();
-			
+				nuevo_atributo.setTipo(tipoAttr);
+				
 				// Se verifica si existe un valor por defecto
 				if(!(pterm.asElementDecl().getDefaultValue()== null))
 				{	
-					nuevo_atributo.setValor(pterm.asElementDecl().getDefaultValue().toString());
+					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
+					nuevo_atributo.setValor(valorPorDefecto);
 				}
 				
-				nuevo_atributo.setNombre(nombreAttr);
-				nuevo_atributo.setTipo(tipoAttr);
-			
 				//Se obtienen las retricciones
 				if (pterm.asElementDecl().getType().isSimpleType()) {
 					// System.out.println("Tiene Restriccion : "+pterm.asElementDecl().getType().asSimpleType().isRestriction());
 					// Se verifican las restricciones existentes
 					restriction = pterm.asElementDecl().getType().asSimpleType().asRestriction();
-					atributos = restricciones(restriction,nuevo_atributo,atributos);
-					
+					nuevo_atributo = restricciones(restriction,nuevo_atributo);
+					tipoAttr = nuevo_atributo.getTipo();
 				}
 				
 				//Se obtiene el minOccurs y maxOccurs, así como si el atributo es null o not null
@@ -189,36 +246,73 @@ public class Parser {
 				}
 				nuevo_atributo.setMinOccurs(p.getMinOccurs());
 				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-			
-			}
-			
-			//Coloca el atributo en el vector al que pertenece
-			// si es nulo ver si es elemento?
-			
-			if(tipoAttr == null )
-			{}
-			else if (tiposBasicos.contains(tipoAttr)){
-				atributos.add(nuevo_atributo);
 				
-				//Se verifica si el atributo es clave y se coloca la clave en la entidad
-				if ((tipoAttr.equals(id))){
+				
+				//Verificamos si es un atributo compuesto 
+				if(tipoAttr == null )
+				{
+					if  (!pterm.asElementDecl().getType().isSimpleType())
+					{
+						if (pterm.asElementDecl().getType().isComplexType())
+						{
+							XSComplexType atributo_compuesto = pterm.asElementDecl().getType().asComplexType();
+							XSContentType contenido = atributo_compuesto.getContentType();
+							XSParticle particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
+				
+							// Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE y se agregan estos a su respectiva entidad
+							leerAtributos2(atributo_compuesto,tipo);
+				
+							// Se verifica que el complexType sea diferente de nulo
+							if (particle != null) 
+							{
+								XSTerm term = particle.getTerm();
+								if (term.isModelGroup()) 
+								{
+									XSModelGroup xsModelGroup = term.asModelGroup();
+									XSParticle[] particles1 = xsModelGroup.getChildren();
+				
+									// se verifica que sea sequence, all o choice
+									System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
+									
+									// Se leen los atributos de las entidades
+									atributos = leerElementos(particles1, tipo, atributos); //Llamada RECURSIVA
+								}
+							}
+						}
+					}
+				}
+				
+				//Se termina de incluir los atributos, referencias o clave a la entidad correspondiente
+				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
+				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
+				if (tiposBasicos.contains(tipoAttr)){
+					atributos.add(nuevo_atributo);
 					
-					entidad.setClave(nuevo_atributo.getNombre());
+					//Se verifica si el atributo es clave y se coloca la clave en la entidad
+					if ((tipoAttr.equals(id))){
+						
+						entidad.setClave(nuevo_atributo.getNombre());
+					}
+				}
+				else if (tipoAttr!=null){
+					entidad.setReferencia(nuevo_atributo);
 				}
 			}
-			else{
-				
-				referencias.add(nuevo_atributo);
-			}
-
 		}
-		
-		entidad.setAtributos(atributos);
-		entidad.setReferencias(referencias);
+		return atributos;
 	}
 
 
 
+	/**
+	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
+	 *  a todas aquellas entidades definidas dentro del XMLSchema, (que no son más que todos los "element" 
+	 *  tags definidos en el nivel más externo de anidamiento) 
+	 * @param claves Iterador de String, en el que se almacenan los nombres de las Entidades (nombre del element)
+	 * @param valores Iterador de XSElementDecl que contiene la informaci&#243n de todos los "element" 
+	 * que representen a Entidades (que no son más que todos los "element" tags definidos en el nivel 
+	 * más externo de anidamiento) 
+	 */
 	private static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
 		
 		String tipo;
@@ -235,6 +329,14 @@ public class Parser {
 		
 	}
 
+	/**
+	 *  La funci&#243n leerAtributosEntidades es la encargada de leer y almacenar por cada ComplexType que defina a una 
+	 *  Entidad dentro del XMLSchema, todos sus atributos con sus restricciones. Esta funci&#243n se apoya de las funciones
+	 *  auxiliares leerAtributos2 y leerElementos
+	 * @param claves Iterador de String, en el que se almacenan los nombres de los ComplexTypes que pudieran definir Entidades.
+	 * @param valores Iterador de XSComplexType que contiene la informaci&#243n de cada uno de los ComplexType definidos
+	 * en el nivel m&#225s externo de anidamiento, que pudieran estar definiendo a Entidades.
+	 */
 	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores){	
 		
 		XSComplexType complex;
@@ -252,14 +354,14 @@ public class Parser {
 			}
 			else
 			{
-			
-				// Estamos en busqueda de examinar los elements a nivel interno (atributos)
 				complex = (XSComplexType) valores.next();
-				contenido = complex.getContentType();
-				particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
-	
+				
 				// Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE y se agregan estos a su respectiva entidad
 				leerAtributos2(complex,tipo);
+				
+				// Estamos en busqueda de examinar los atributos de tipo ELEMENT
+				contenido = complex.getContentType();
+				particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
 	
 				// Se verifica que el complexType sea diferente de nulo
 				if (particle != null) {
@@ -272,13 +374,19 @@ public class Parser {
 						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
 						
 						// Se leen los atributos de las entidades
-						leerElementos(particles, tipo);
+						Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
+						atributos = leerElementos(particles,tipo,atributos);
+						entidades.get(tipo).setAtributos(atributos);
 					}
 				}
 			}
 		}
 	}
 	
+	/**
+	 * El m&#233todo ImprimirEntidades es el encargado de desplegar por pantalla toda la informaci&#243n relevante 
+	 * de cada Entidad (nombre, clave, atributos b&#225sicos y referencias a otras entidades)
+	 */
 	public static void ImprimirEntidades() {
 
 		Set<String> tipos = entidades.keySet();
@@ -326,6 +434,14 @@ public class Parser {
 
 
 
+	/**
+	 * Parser de XMLSchema que almacena en determinadas estructuras de datos la informaci&#243n parseada, 
+	 * con la finalidad de llevar a cabo una posterior traducci&#243n del XMLSchema al esquema Relacional de base 
+	 * de datos
+	 * @param args
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public static void main(final String[] args) throws SAXException, IOException {
 
 		File file = new File("ejemplo.xml");

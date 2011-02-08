@@ -60,5 +60,13 @@ public class Entidad {
 		this.atributos = atributos;
 	}
 	
+	//Nuevos métodos agregados por KARINA
+	public void setAtributo(Atributo atributo) {
+		this.atributos.add(atributo);
+	}
+	
+	public void setReferencia(Atributo newreferencia) {
+		this.referencias.add(newreferencia);
+	}
 
 }
