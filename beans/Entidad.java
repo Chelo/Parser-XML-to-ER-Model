@@ -143,15 +143,6 @@ public class Entidad {
 		this.atributos = atributos;
 	}
 	
-<<<<<<< HEAD:beans/Entidad.java
-	//Nuevos métodos agregados por KARINA
-	public void setAtributo(Atributo atributo) {
-		this.atributos.add(atributo);
-	}
-	
-	public void setReferencia(Atributo newreferencia) {
-		this.referencias.add(newreferencia);
-=======
 	/**
 	 * Agrega los datos (NombreEntidad, ClaveEntidad) de una Entidad foránea
 	 * a la Entidad actual.
@@ -160,7 +151,15 @@ public class Entidad {
 	 */
 	public void AgregarForaneo(ArrayList<String> foraneo){
 		this.foraneo.add(foraneo);
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:beans/Entidad.java
+
 	}
 
-}
+	//Nuevos métodos agregados por KARINA
+	public void setAtributo(Atributo atributo) {
+		this.atributos.add(atributo);
+	}
+	
+	public void setReferencia(Atributo newreferencia) {
+		this.referencias.add(newreferencia);
+	}
+}	

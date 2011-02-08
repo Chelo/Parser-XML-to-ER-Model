@@ -58,6 +58,7 @@ public class Parser {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
+	
 	public static XSSchemaSet CrearParser(File archivo) throws SAXException,
 			IOException {
 		XSOMParser parser = new XSOMParser();
@@ -65,7 +66,6 @@ public class Parser {
 		return parser.getResult();
 	}
 
-<<<<<<< HEAD:accions/Parser.java
 	/**
 	 * La funci&#243n restricciones es la encargada de asociar las "restriction" tags
 	 * del XMLSchema con restricciones del modelo Relacional.
@@ -82,31 +82,14 @@ public class Parser {
 	public static Atributo restricciones(XSRestrictionSimpleType restriction, Atributo atributo) {
 		String id = "ID";
 		
-=======
-	public static Vector<Atributo> restricciones(XSRestrictionSimpleType restriction, Atributo atributo,Vector<Atributo> atributos) {
-		String id = "ID";		
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 		//Se verifica los tipos claves y los tipos setteados en las resticciones
 		if (restriction.getBaseType().getName() != "anySimpleType"){
-<<<<<<< HEAD:accions/Parser.java
 			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id)))
 				atributo.setTipo(restriction.getBaseType().getName()); 
 			else if ((atributo.getTipo()==null))
 				atributo.setTipo(restriction.getBaseType().getName()); 		
-=======
-			if (!(atributo.getTipo()==null) && !(atributo.getTipo().equals(id))){
-
-				atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
-			else if ((atributo.getTipo()==null)){atributo.setTipo(restriction.getBaseType().getName()); atributos.add(atributo);}
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 		}
-<<<<<<< HEAD:accions/Parser.java
-	
-=======
 
-		
-		
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 		if (restriction != null) {
 
 			Iterator<? extends XSFacet> i = restriction.getDeclaredFacets().iterator();
@@ -153,7 +136,6 @@ public class Parser {
 		}return atributo;
 	}
 
-<<<<<<< HEAD:accions/Parser.java
 	/**
 	 * La funci&#243n leerAtributos2 es la encargada de leer los atributos de una
 	 * entidad que est&#233n definidos bajo el tag "attribute"dentro de un ComplexType 
@@ -162,9 +144,7 @@ public class Parser {
 	 * sus atributos  
 	 * @param tipoEntidad nombre del ComplexType del cual se quieren extraer (leer) sus atributos. 
 	 */
-=======
-	
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
+
 	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
 		
 		XSAttributeDecl decl = null;
@@ -206,13 +186,7 @@ public class Parser {
 		XSTerm pterm;
 		XSRestrictionSimpleType restriction;
 		String id = "ID";
-<<<<<<< HEAD:accions/Parser.java
-=======
-		String nombreAttr;
-		
-		// Se crea el vector de los tipos básicos y se le meten esos valores
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
-		
+
 		// Se crea el vector de los tipos básicos y se le meten esos valores
 		Vector<String> tiposBasicos = new Vector<String>();
 		tiposBasicos.add("string");
@@ -244,10 +218,7 @@ public class Parser {
 				
 				// Se obtiene el nombre del atributo
 				nombreAttr = pterm.asElementDecl().getName();
-<<<<<<< HEAD:accions/Parser.java
 				nuevo_atributo.setNombre(nombreAttr);
-=======
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 				
 				// Se obtiene el tipo del atributo
 				tipoAttr = pterm.asElementDecl().getType().getName();
@@ -275,9 +246,7 @@ public class Parser {
 				}
 				nuevo_atributo.setMinOccurs(p.getMinOccurs());
 				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-<<<<<<< HEAD:accions/Parser.java
-				
-				
+
 				//Verificamos si es un atributo compuesto 
 				if(tipoAttr == null )
 				{
@@ -309,22 +278,8 @@ public class Parser {
 								}
 							}
 						}
-=======
-						
-				//Coloca el atributo en el vector al que pertenece
-				// si es nulo ver si es elemento?
-
-				if (tiposBasicos.contains(tipoAttr)){
-					atributos.add(nuevo_atributo);
-
-					//Se verifica si el atributo es clave y se coloca la clave en la entidad
-					if ((tipoAttr.equals(id))){
-
-						entidad.setClave(nuevo_atributo.getNombre());
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 					}
 				}
-<<<<<<< HEAD:accions/Parser.java
 				
 				//Se termina de incluir los atributos, referencias o clave a la entidad correspondiente
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
@@ -336,28 +291,23 @@ public class Parser {
 					if ((tipoAttr.equals(id))){
 						
 						entidad.setClave(nuevo_atributo.getNombre());
-=======
-				else{
-					if(entidades.containsKey(tipoAttr)) {
-
-						referencias.add(nuevo_atributo);
-					} 
-					else{
-						System.out.println("ERROR: el atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe");
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 					}
-<<<<<<< HEAD:accions/Parser.java
-=======
-
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 				}
-<<<<<<< HEAD:accions/Parser.java
 				else if (tipoAttr!=null){
-					entidad.setReferencia(nuevo_atributo);
-				}
-=======
+				 
+					 if(entidades.containsKey(tipoAttr)) {
+						
+						 entidad.setReferencia(nuevo_atributo);
+					 }
+					 else{
+						 System.out.println("ERROR: el atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe");
+					 }
 
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
+				}
+				else {
+					System.out.println("ERROR: debe definirle un tipo al atributo "+ nombreAttr + " \n");
+					
+				}
 			}
 		}
 		return atributos;
@@ -446,18 +396,12 @@ public class Parser {
 	}
 	
 	/**
-<<<<<<< HEAD:accions/Parser.java
-	 * El m&#233todo ImprimirEntidades es el encargado de desplegar por pantalla toda la informaci&#243n relevante 
-	 * de cada Entidad (nombre, clave, atributos b&#225sicos y referencias a otras entidades)
-=======
 	 * Retorna un String indicado si el atributo puede o no se nulo.
 	 * 
 	 * @param atributo
 	 * @return String que indica la nulidad del atributo
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 	 */
-<<<<<<< HEAD:accions/Parser.java
-=======
+
 	public static String Nulidad(Atributo atributo){
 		if (!atributo.isNulo()){			
 			return "NOT NULL";
@@ -560,7 +504,6 @@ public class Parser {
 		    FileWriter fstream = new FileWriter("out.sql");
 		    BufferedWriter out = new BufferedWriter(fstream);
 		    
-
 			//Se iteran sobre las entidades que se van a crear.
 			while (cadaTipo.hasNext()) {
 				
@@ -612,7 +555,7 @@ public class Parser {
 				
 				
 				j = entidad.getReferencias().size()-1;
-				
+		
 				//Se agregan los contraints de clave foranea a la entidad.
 				while (j >= 0) {
 					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
@@ -679,8 +622,8 @@ public class Parser {
 				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
 				toUpperCase()+ " PRIMARY KEY "+ entidad.clave.
 				toUpperCase()+" );\n\n");
-				
 			}  
+			
 		    //Se cierra el output de escritura en el archivo sql
 		    out.close();
 		// Se toma la exception si existe
@@ -689,7 +632,10 @@ public class Parser {
 		    }
 	}
 	
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
+	/**
+	 * El m&#233todo ImprimirEntidades es el encargado de desplegar por pantalla toda la informaci&#243n relevante 
+	 * de cada Entidad (nombre, clave, atributos b&#225sicos y referencias a otras entidades)
+	 */
 	public static void ImprimirEntidades() {
 
 		Set<String> tipos = entidades.keySet();
@@ -854,29 +800,13 @@ public class Parser {
 		
 	}
 
-<<<<<<< HEAD:accions/Parser.java
 
-
-
-=======
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
-	/**
-<<<<<<< HEAD:accions/Parser.java
-	 * Parser de XMLSchema que almacena en determinadas estructuras de datos la informaci&#243n parseada, 
-	 * con la finalidad de llevar a cabo una posterior traducci&#243n del XMLSchema al esquema Relacional de base 
-	 * de datos
-	 * @param args
-	 * @throws SAXException
-	 * @throws IOException
-=======
+	 /**
 	 * Permite insertar en la Entidad base los datos de otra entidad foránea
 	 * a la cual esta relacionada.
 	 * @param entidadBase Entidad que absorbe a la entidadForánea
 	 * @param entidadForanea Entidad cuyos datos serán colocados en la Entidad base.
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
 	 */
-<<<<<<< HEAD:accions/Parser.java
-=======
 	public static void AgregarForaneo(Entidad entidadBase, Entidad entidadForanea){
 		
 		ArrayList<String> tupla= new ArrayList<String>();//Genero la tupla a insertar
@@ -885,7 +815,15 @@ public class Parser {
 		entidadBase.AgregarForaneo(tupla);
 		
 	}
->>>>>>> 3d33666b0611bfeae65f29daad3a32d9f58d0db3:accions/Parser.java
+
+	/**
+	 * Parser de XMLSchema que almacena en determinadas estructuras de datos la informaci&#243n parseada, 
+	 * con la finalidad de llevar a cabo una posterior traducci&#243n del XMLSchema al esquema Relacional de base 
+	 * de datos
+	 * @param args
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public static void main(final String[] args) throws SAXException, IOException {
 
 		File file = new File("ejemplo.xml");
@@ -927,7 +865,6 @@ public class Parser {
 				LeerAtributosEntidades(claves1, valores1);
 
 				ImprimirEntidades();
-		
 				
 			}
 		} catch (Exception exp) {
