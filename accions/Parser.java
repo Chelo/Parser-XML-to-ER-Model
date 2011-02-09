@@ -633,6 +633,156 @@ public class Parser {
 	}
 	
 	/**
+	 * Método que se encarga de crear el archivo sql correspondiente al xml 
+	 * schema proporcionado, para "insertar" los datos en la Base de Datos
+	 * (para crear las tablas correspondientes al modelo ER en la BD)
+	 */
+	public static void InsertScript(){
+		
+		Set<String>      tipos    = entidades.keySet();
+		Iterator<String> cadaTipo = tipos.iterator();
+		Entidad          entidad  = new Entidad();
+		Vector<Atributo> atributos= new Vector<Atributo>();
+		Vector<Atributo> referencias = new Vector<Atributo>();
+		Vector<Atributo> booleanos   = new Vector<Atributo>();
+		Vector<Atributo> dominios    = new Vector<Atributo>();
+		Vector<Atributo> rangos      = new Vector<Atributo>();
+		int k = 0,j = 0, l = 0;
+		
+		try{
+		    //Se crea el archivo sql de salida.
+		    FileWriter fstream = new FileWriter("insert.sql");
+		    BufferedWriter out = new BufferedWriter(fstream);
+		    
+
+			//Se iteran sobre las entidades que se van a crear.
+			while (cadaTipo.hasNext()) {
+				
+				entidad = entidades.get(cadaTipo.next());
+				// Se realiza varios 'INSERT INTO *** VALUES (SERIES DE VALORES)' por cada entidad encontrada
+				out.write("INSERT INTO"+ entidad.getNombre_entidad().toUpperCase()+" (\n");
+				
+				
+				j = entidad.getAtributos().size()-1;
+				// se inicializan las variables para la nueva entidad
+				atributos = entidad.getAtributos();
+				booleanos = new Vector<Atributo>();
+				dominios = new Vector<Atributo>();
+				rangos = new Vector<Atributo>();
+				
+				//Se agregan los atributos basicos de la entidad.
+				while (j >= 0) {
+					out.write("	"+atributos.get(j).getNombre().toUpperCase()+
+					" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+
+					" "+ValorDefecto(atributos.get(j))+" ,\n");
+					
+					//Se verifica el tipo del atributo y se agrega al vector
+					//correspondiente
+					if (atributos.get(j).getTipo().equals("boolean")){
+						booleanos.add(atributos.get(j));
+					}
+					if (atributos.get(j).getDominio().size()>0){
+						dominios.add(atributos.get(j));
+					}
+					if ( !(atributos.get(j).getMaxRango()=="-1") |
+							!(atributos.get(j).getMinRango()=="-1") ){
+						rangos.add(atributos.get(j));
+					}
+					j--;
+				}
+				
+				//Se obtiene los atributos que son referencias
+				referencias = entidad.getReferencias();
+				
+				j= entidad.getReferencias().size()-1;
+				//Se agregan los atributos que hacen referencias en la entidad
+				while (j >= 0) {
+					out.write("	"+referencias.get(j).getNombre().toUpperCase()+
+					"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+
+					Nulidad(referencias.get(j))+" ,\n");
+					j--;
+				}
+				
+				
+				j = entidad.getReferencias().size()-1;
+				
+				//Se agregan los contraints de clave foranea a la entidad.
+				while (j >= 0) {
+					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
+					toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.
+					get(referencias.get(j).getTipo()).nombre_entidad.
+					toUpperCase()+" )"+" ,\n");
+					j--;
+				}
+				
+				k = booleanos.size()-1;
+				//Se agregan los contraint de atributo booleano
+				while (k >= 0) {
+					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
+					getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
+					getNombre().toUpperCase() + " IN ('0','1')),\n");
+					k--;
+				}
+				
+				l = dominios.size()-1;
+				//Se agregan los contraint de dominio a la entidad.
+				while (l >= 0) {
+				
+					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).
+					getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
+					getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
+					get(l).getDominio())+")),\n");
+					l--;
+				}
+				
+				l = rangos.size()-1;
+				//Se agregan los contraint de rango a la entidad
+				while (l >= 0) {
+					
+					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
+							!(rangos.get(l).getMinRango().equals("-1"))){
+						
+					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
+					getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
+					
+					}else if ((rangos.get(l).getMaxRango()=="-1") &&
+							!(rangos.get(l).getMinRango()=="-1")){
+		
+						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+						getNombre().toUpperCase() + " >= "+rangos.get(l).
+						getMinRango()+ "),\n");
+						
+					}else{
+						
+						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+						getNombre().toUpperCase() + " <= "+rangos.get(l).
+						getMaxRango()+"),\n");
+						
+					}
+					
+					l--;
+				}
+				
+				
+				//Se agrega la clave primaria a la entidad
+				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
+				toUpperCase()+ " PRIMARY KEY "+ entidad.clave.
+				toUpperCase()+" );\n\n");
+				
+			}  
+		    //Se cierra el output de escritura en el archivo sql
+		    out.close();
+		// Se toma la exception si existe
+		}catch (Exception e){
+		      System.err.println("Error: " + e.getMessage());
+		    }
+	}
+
+	/**
 	 * El m&#233todo ImprimirEntidades es el encargado de desplegar por pantalla toda la informaci&#243n relevante 
 	 * de cada Entidad (nombre, clave, atributos b&#225sicos y referencias a otras entidades)
 	 */
@@ -800,7 +950,6 @@ public class Parser {
 		
 	}
 
-
 	 /**
 	 * Permite insertar en la Entidad base los datos de otra entidad foránea
 	 * a la cual esta relacionada.
@@ -871,5 +1020,6 @@ public class Parser {
 			exp.printStackTrace(System.out);
 		}
 		EscribirScript();
+		InsertScript();
 	}
 }
