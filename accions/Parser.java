@@ -46,7 +46,7 @@ public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
-
+	static HashMap<String, Entidad> valores = new HashMap<String, Entidad>();
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -58,7 +58,6 @@ public class Parser {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	
 	public static XSSchemaSet CrearParser(File archivo) throws SAXException,
 			IOException {
 		XSOMParser parser = new XSOMParser();
@@ -312,7 +311,6 @@ public class Parser {
 		}
 		return atributos;
 	}
-
 
 
 	/**
@@ -660,7 +658,7 @@ public class Parser {
 				
 				entidad = entidades.get(cadaTipo.next());
 				// Se realiza varios 'INSERT INTO *** VALUES (SERIES DE VALORES)' por cada entidad encontrada
-				out.write("INSERT INTO"+ entidad.getNombre_entidad().toUpperCase()+" (\n");
+				out.write("INSERT INTO "+ entidad.getNombre_entidad().toUpperCase()+" (\n");
 				
 				
 				j = entidad.getAtributos().size()-1;
@@ -672,9 +670,7 @@ public class Parser {
 				
 				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
-					out.write("	"+atributos.get(j).getNombre().toUpperCase()+
-					" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+
-					" "+ValorDefecto(atributos.get(j))+" ,\n");
+					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" ,\n");
 					
 					//Se verifica el tipo del atributo y se agrega al vector
 					//correspondiente
