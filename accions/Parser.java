@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.xml.sax.SAXException;
@@ -64,6 +65,17 @@ public class Parser {
 		XSOMParser parser = new XSOMParser();
 		parser.parse(archivo);
 		return parser.getResult();
+	}
+	
+	public static Vector<String> separaRango(String rango){
+		Vector<String> salida = new Vector<String>();
+		StringTokenizer st = new StringTokenizer(rango, "|");
+		
+		while (st.hasMoreTokens()) {
+			salida.add(st.nextToken());
+		}
+		
+		return salida;
 	}
 
 	/**
@@ -129,8 +141,15 @@ public class Parser {
 					System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción minLength es inválido en el modelo ER"); 
 				}
 				if (facet.getName().equals(XSFacet.FACET_PATTERN)) {
-					System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción pattern value es inválido en el modelo ER");
-				}
+					Vector<String> dominio = new Vector<String>();
+					dominio =separaRango(facet.getValue().value);
+					if (dominio.size()>1){
+						atributo.setDominio(separaRango(facet.getValue().value));
+					}else{
+						System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción pattern value es inválido en el modelo ER");
+					}
+					
+					}
 
 			}
 		}return atributo;
@@ -149,7 +168,8 @@ public class Parser {
 		
 		XSAttributeDecl decl = null;
 		Vector<Atributo> atributos = new Vector<Atributo>();
-	
+		String id = "ID";
+		Entidad entidad = entidades.get(tipoEntidad);
 		
 		for (XSAttributeUse attributeUse : complex.getAttributeUses()) {
 		
@@ -158,13 +178,27 @@ public class Parser {
 			decl = attributeUse.getDecl();
 			nuevo_atributo.setNombre(decl.getName());
 			nuevo_atributo.setTipo(decl.getType().getName());
-			nuevo_atributo.setNulo(attributeUse.isRequired());
+			
+			if ((decl.getType().getName().equals(id))){
+				
+				entidad.setClave(nuevo_atributo.getNombre());
+			}
+			nuevo_atributo.setNulo(!(attributeUse.isRequired()));
 			atributos.add(nuevo_atributo);
 		}
 
-			Entidad entidad = entidades.get(tipoEntidad);
+			
 			entidad.setAtributos(atributos);
 
+	}
+	
+	public static void Multivaluado(Atributo atributo, Entidad entidad){
+		Entidad nueva = new Entidad();
+		nueva.setAtributo(atributo);
+		nueva.setNombre_entidad(atributo.nombre);
+		nueva.setClave(entidad.getTipo()+","+atributo.getNombre());
+		nueva.setTipo(atributo.getNombre());
+		entidades.put(atributo.getNombre(), nueva);
 	}
 
 	/**
@@ -285,7 +319,12 @@ public class Parser {
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
 				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
 				if (tiposBasicos.contains(tipoAttr)){
-					atributos.add(nuevo_atributo);
+					if (nuevo_atributo.getMaxOccurs()>1){
+						Multivaluado(nuevo_atributo,entidad);
+					}else{
+						atributos.add(nuevo_atributo);
+					}
+					
 					
 					//Se verifica si el atributo es clave y se coloca la clave en la entidad
 					if ((tipoAttr.equals(id))){
