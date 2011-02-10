@@ -12,6 +12,11 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.Attributes;
+import java.util.Vector;
+import org.xml.sax.*;
+import org.xml.sax.helpers.*;
 
 import beans.Atributo;
 import beans.Entidad;
@@ -46,7 +51,6 @@ public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
-	static HashMap<String, Entidad> valores = new HashMap<String, Entidad>();
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -143,7 +147,6 @@ public class Parser {
 	 * sus atributos  
 	 * @param tipoEntidad nombre del ComplexType del cual se quieren extraer (leer) sus atributos. 
 	 */
-
 	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
 		
 		XSAttributeDecl decl = null;
@@ -312,7 +315,6 @@ public class Parser {
 		return atributos;
 	}
 
-
 	/**
 	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
 	 *  a todas aquellas entidades definidas dentro del XMLSchema, (que no son más que todos los "element" 
@@ -399,7 +401,6 @@ public class Parser {
 	 * @param atributo
 	 * @return String que indica la nulidad del atributo
 	 */
-
 	public static String Nulidad(Atributo atributo){
 		if (!atributo.isNulo()){			
 			return "NOT NULL";
@@ -636,6 +637,7 @@ public class Parser {
 	 * (para crear las tablas correspondientes al modelo ER en la BD)
 	 */
 	public static void InsertScript(){
+		//Se trata de parsear ahora el archivo XMl
 		
 		Set<String>      tipos    = entidades.keySet();
 		Iterator<String> cadaTipo = tipos.iterator();
@@ -670,7 +672,7 @@ public class Parser {
 				
 				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
-					out.write("	"+atributos.get(j).getNombre().toUpperCase()+" ,\n");
+					out.write("VALUES	"+atributos.get(j).getNombre().toUpperCase()+" ,\n");
 					
 					//Se verifica el tipo del atributo y se agrega al vector
 					//correspondiente
@@ -691,83 +693,8 @@ public class Parser {
 				referencias = entidad.getReferencias();
 				
 				j= entidad.getReferencias().size()-1;
-				//Se agregan los atributos que hacen referencias en la entidad
-				while (j >= 0) {
-					out.write("	"+referencias.get(j).getNombre().toUpperCase()+
-					"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+
-					Nulidad(referencias.get(j))+" ,\n");
-					j--;
-				}
-				
-				
 				j = entidad.getReferencias().size()-1;
-				
-				//Se agregan los contraints de clave foranea a la entidad.
-				while (j >= 0) {
-					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
-					toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.
-					get(referencias.get(j).getTipo()).nombre_entidad.
-					toUpperCase()+" )"+" ,\n");
-					j--;
-				}
-				
-				k = booleanos.size()-1;
-				//Se agregan los contraint de atributo booleano
-				while (k >= 0) {
-					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
-					getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
-					getNombre().toUpperCase() + " IN ('0','1')),\n");
-					k--;
-				}
-				
 				l = dominios.size()-1;
-				//Se agregan los contraint de dominio a la entidad.
-				while (l >= 0) {
-				
-					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).
-					getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
-					getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
-					get(l).getDominio())+")),\n");
-					l--;
-				}
-				
-				l = rangos.size()-1;
-				//Se agregan los contraint de rango a la entidad
-				while (l >= 0) {
-					
-					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
-							!(rangos.get(l).getMinRango().equals("-1"))){
-						
-					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
-					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
-					getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
-					
-					}else if ((rangos.get(l).getMaxRango()=="-1") &&
-							!(rangos.get(l).getMinRango()=="-1")){
-		
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
-						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-						getNombre().toUpperCase() + " >= "+rangos.get(l).
-						getMinRango()+ "),\n");
-						
-					}else{
-						
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
-						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-						getNombre().toUpperCase() + " <= "+rangos.get(l).
-						getMaxRango()+"),\n");
-						
-					}
-					
-					l--;
-				}
-				
-				
-				//Se agrega la clave primaria a la entidad
-				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
-				toUpperCase()+ " PRIMARY KEY "+ entidad.clave.
-				toUpperCase()+" );\n\n");
 				
 			}  
 		    //Se cierra el output de escritura en el archivo sql
