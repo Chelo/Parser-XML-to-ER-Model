@@ -13,6 +13,11 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.Attributes;
+import java.util.Vector;
+import org.xml.sax.*;
+import org.xml.sax.helpers.*;
 
 import beans.Atributo;
 import beans.Entidad;
@@ -47,7 +52,6 @@ public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
-
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -59,7 +63,6 @@ public class Parser {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	
 	public static XSSchemaSet CrearParser(File archivo) throws SAXException,
 			IOException {
 		XSOMParser parser = new XSOMParser();
@@ -163,7 +166,6 @@ public class Parser {
 	 * sus atributos  
 	 * @param tipoEntidad nombre del ComplexType del cual se quieren extraer (leer) sus atributos. 
 	 */
-
 	public static void leerAtributos2(XSComplexType complex, String tipoEntidad) {
 		
 		XSAttributeDecl decl = null;
@@ -352,8 +354,6 @@ public class Parser {
 		return atributos;
 	}
 
-
-
 	/**
 	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
 	 *  a todas aquellas entidades definidas dentro del XMLSchema, (que no son más que todos los "element" 
@@ -440,7 +440,6 @@ public class Parser {
 	 * @param atributo
 	 * @return String que indica la nulidad del atributo
 	 */
-
 	public static String Nulidad(Atributo atributo){
 		if (!atributo.isNulo()){			
 			return "NOT NULL";
@@ -672,6 +671,80 @@ public class Parser {
 	}
 	
 	/**
+	 * Método que se encarga de crear el archivo sql correspondiente al xml 
+	 * schema proporcionado, para "insertar" los datos en la Base de Datos
+	 * (para crear las tablas correspondientes al modelo ER en la BD)
+	 */
+	public static void InsertScript(){
+		//Se trata de parsear ahora el archivo XMl
+		
+		Set<String>      tipos    = entidades.keySet();
+		Iterator<String> cadaTipo = tipos.iterator();
+		Entidad          entidad  = new Entidad();
+		Vector<Atributo> atributos= new Vector<Atributo>();
+		Vector<Atributo> referencias = new Vector<Atributo>();
+		Vector<Atributo> booleanos   = new Vector<Atributo>();
+		Vector<Atributo> dominios    = new Vector<Atributo>();
+		Vector<Atributo> rangos      = new Vector<Atributo>();
+		int k = 0,j = 0, l = 0;
+		
+		try{
+		    //Se crea el archivo sql de salida.
+		    FileWriter fstream = new FileWriter("insert.sql");
+		    BufferedWriter out = new BufferedWriter(fstream);
+		    
+
+			//Se iteran sobre las entidades que se van a crear.
+			while (cadaTipo.hasNext()) {
+				
+				entidad = entidades.get(cadaTipo.next());
+				// Se realiza varios 'INSERT INTO *** VALUES (SERIES DE VALORES)' por cada entidad encontrada
+				out.write("INSERT INTO "+ entidad.getNombre_entidad().toUpperCase()+" (\n");
+				
+				
+				j = entidad.getAtributos().size()-1;
+				// se inicializan las variables para la nueva entidad
+				atributos = entidad.getAtributos();
+				booleanos = new Vector<Atributo>();
+				dominios = new Vector<Atributo>();
+				rangos = new Vector<Atributo>();
+				
+				//Se agregan los atributos basicos de la entidad.
+				while (j >= 0) {
+					out.write("VALUES	"+atributos.get(j).getNombre().toUpperCase()+" ,\n");
+					
+					//Se verifica el tipo del atributo y se agrega al vector
+					//correspondiente
+					if (atributos.get(j).getTipo().equals("boolean")){
+						booleanos.add(atributos.get(j));
+					}
+					if (atributos.get(j).getDominio().size()>0){
+						dominios.add(atributos.get(j));
+					}
+					if ( !(atributos.get(j).getMaxRango()=="-1") |
+							!(atributos.get(j).getMinRango()=="-1") ){
+						rangos.add(atributos.get(j));
+					}
+					j--;
+				}
+				
+				//Se obtiene los atributos que son referencias
+				referencias = entidad.getReferencias();
+				
+				j= entidad.getReferencias().size()-1;
+				j = entidad.getReferencias().size()-1;
+				l = dominios.size()-1;
+				
+			}  
+		    //Se cierra el output de escritura en el archivo sql
+		    out.close();
+		// Se toma la exception si existe
+		}catch (Exception e){
+		      System.err.println("Error: " + e.getMessage());
+		    }
+	}
+
+	/**
 	 * El m&#233todo ImprimirEntidades es el encargado de desplegar por pantalla toda la informaci&#243n relevante 
 	 * de cada Entidad (nombre, clave, atributos b&#225sicos y referencias a otras entidades)
 	 */
@@ -839,7 +912,6 @@ public class Parser {
 		
 	}
 
-
 	 /**
 	 * Permite insertar en la Entidad base los datos de otra entidad foránea
 	 * a la cual esta relacionada.
@@ -910,5 +982,6 @@ public class Parser {
 			exp.printStackTrace(System.out);
 		}
 		EscribirScript();
+		InsertScript();
 	}
 }
