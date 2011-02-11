@@ -200,22 +200,16 @@ public class Parser {
 		Atributo clave_entidad = entidad.getClave().get(0);
 		Vector<Atributo> clave = entidad.getClave();
 		
+		
 		clave_entidad.setTipo(entidad.getTipo());
-		
-		
 		nueva.setNombre_entidad(atributo.nombre);
 		nueva.setAtributo(atributo);
 		nueva.setAtributo(clave.get(0));
-		
 		nueva.setReferencia(clave_entidad);
-		
-		
 		nueva.setTipo(atributo.getNombre());
 		clave.add(atributo);
-		
-	
 		nueva.setClave(clave);
-		System.out.println("referencias MULTIVALUADO"+ nueva.getReferencias().size());
+		
 		entidades.put(atributo.getNombre(), nueva);
 	}
 
@@ -338,7 +332,7 @@ public class Parser {
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
 				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
 				if (tiposBasicos.contains(tipoAttr)){
-					System.out.println("ENTIDADA EN LA Q ESTOY "+entidad.nombre_entidad);
+				
 					if (nuevo_atributo.getMaxOccurs()>1){
 						Multivaluado(nuevo_atributo,entidades.get(tipo));
 					}else{
@@ -543,7 +537,7 @@ public class Parser {
 		int i = clave.size();
 		String salida = "(";
 			if (i==0){
-				return "Clave no definida";
+				return "(Clave no definida";
 			}
 			else if (i==1){
 				return "("+clave.get(0).getNombre().toUpperCase();
@@ -634,14 +628,13 @@ public class Parser {
 				
 				//Se agregan los contraints de clave foranea a la entidad.
 				while (j >= 0) {
-					System.out.println("ANTES"+referencias.get(j).getNombre()); 
-					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
-					toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.
+					out.write("	FOREIGN KEY "+"("+referencias.get(j).getNombre().
+					toUpperCase()+")"+" REFERENCES "+ "("+entidades.
 					get(referencias.get(j).getTipo()).nombre_entidad.
-					toUpperCase()+" )"+" ,\n");
+					toUpperCase()+")"+" ,\n");
 					j--;
 				}
-				System.out.println("DESPUES");
+				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
