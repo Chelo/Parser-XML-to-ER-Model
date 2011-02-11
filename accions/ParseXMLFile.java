@@ -88,11 +88,15 @@ public class ParseXMLFile {
         Set<Integer>      tipos    = entidades.keySet();
 		Iterator<Integer> cadaTipo = tipos.iterator();
         int             indentTemp = indent;          
-     
+
+    	Entidad entidad = new Entidad();
+    	entidad.setNombre_entidad(nodeName);
+    	
+    	entidades.put(indent, entidad);
+        
         
         if (!nodeValue.isEmpty()){
-        	Entidad entidad = new Entidad();
-        	entidades.put(indent, entidad);
+
         	System.out.println(getIndentSpaces(indent) + "<" + nodeName + "> " + nodeValue);
         }
         
