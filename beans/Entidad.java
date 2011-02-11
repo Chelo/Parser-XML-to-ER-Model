@@ -24,7 +24,7 @@ public class Entidad {
 	public String nombre_entidad;									//Nombre de la entidad.
 	public Vector<Atributo> atributos=  new Vector<Atributo>(); 	//Atributos de la entidad.
 	public Vector<Atributo> referencias = new Vector<Atributo>();	//Atributos que representan interrelación con otras Entidades.
-	public String clave= "NULL";									//Clave de la Entidad.
+	public Vector<Atributo> clave = new Vector<Atributo>();								//Clave de la Entidad.
 	public Vector<ArrayList<String>> foraneo; 						//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
 	public String tipo;												//Tipo de la Entidad según el XMLSchema.
 	
@@ -66,14 +66,7 @@ public class Entidad {
 		this.referencias = newreferencias;
 	}
 
-	/**
-	 * Retorna la clave de la Entidad.
-	 * 
-	 * @return String con la clave de la entidad.
-	 */
-	public String getClave() {
-		return clave;
-	}
+
 	
 	/**
 	 * Devuelve los datos de las tablas foráneas.
@@ -114,16 +107,16 @@ public class Entidad {
 		this.tipo = tipo;
 	}
 
-	/**
-	 * Coloca la clave a la Entidad.
-	 * 
-	 * @param clave String con el valor de la clave de la 
-	 * Entidad.
-	 */
-	public void setClave(String clave) {
+
+	
+	public Vector<Atributo> getClave() {
+		return clave;
+	}
+
+	public void setClave(Vector<Atributo> clave) {
 		this.clave = clave;
 	}
-	
+
 	/**
 	 * Devuelve los atributos de tipos básicos de la Entidad.
 	 * 

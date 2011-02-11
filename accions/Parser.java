@@ -170,6 +170,7 @@ public class Parser {
 		
 		XSAttributeDecl decl = null;
 		Vector<Atributo> atributos = new Vector<Atributo>();
+		Vector<Atributo> clave = new Vector<Atributo>();
 		String id = "ID";
 		Entidad entidad = entidades.get(tipoEntidad);
 		
@@ -182,8 +183,8 @@ public class Parser {
 			nuevo_atributo.setTipo(decl.getType().getName());
 			
 			if ((decl.getType().getName().equals(id))){
-				
-				entidad.setClave(nuevo_atributo.getNombre());
+				clave.add(nuevo_atributo);
+				entidad.setClave(clave);
 			}
 			nuevo_atributo.setNulo(!(attributeUse.isRequired()));
 			atributos.add(nuevo_atributo);
@@ -196,10 +197,25 @@ public class Parser {
 	
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
-		nueva.setAtributo(atributo);
+		Atributo clave_entidad = entidad.getClave().get(0);
+		Vector<Atributo> clave = entidad.getClave();
+		
+		clave_entidad.setTipo(entidad.getTipo());
+		
+		
 		nueva.setNombre_entidad(atributo.nombre);
-		nueva.setClave(entidad.getTipo()+","+atributo.getNombre());
+		nueva.setAtributo(atributo);
+		nueva.setAtributo(clave.get(0));
+		
+		nueva.setReferencia(clave_entidad);
+		
+		
 		nueva.setTipo(atributo.getNombre());
+		clave.add(atributo);
+		
+	
+		nueva.setClave(clave);
+		System.out.println("referencias MULTIVALUADO"+ nueva.getReferencias().size());
 		entidades.put(atributo.getNombre(), nueva);
 	}
 
@@ -240,6 +256,7 @@ public class Parser {
 		String tipoAttr=null;
 		String valorPorDefecto;
 		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
+		Vector<Atributo> clave = new Vector<Atributo>();
 
 		
 		int i = 0;
@@ -321,8 +338,9 @@ public class Parser {
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
 				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
 				if (tiposBasicos.contains(tipoAttr)){
+					System.out.println("ENTIDADA EN LA Q ESTOY "+entidad.nombre_entidad);
 					if (nuevo_atributo.getMaxOccurs()>1){
-						Multivaluado(nuevo_atributo,entidad);
+						Multivaluado(nuevo_atributo,entidades.get(tipo));
 					}else{
 						atributos.add(nuevo_atributo);
 					}
@@ -330,8 +348,8 @@ public class Parser {
 					
 					//Se verifica si el atributo es clave y se coloca la clave en la entidad
 					if ((tipoAttr.equals(id))){
-						
-						entidad.setClave(nuevo_atributo.getNombre());
+						clave.add(nuevo_atributo);
+						entidad.setClave(clave);
 					}
 				}
 				else if (tipoAttr!=null){
@@ -520,6 +538,26 @@ public class Parser {
 		return str.substring(0, str.length()-1);
 	}
 	
+	public static String retornaClave(Entidad entidad){
+		Vector<Atributo> clave = entidad.getClave();
+		int i = clave.size();
+		String salida = "(";
+			if (i==0){
+				return "Clave no definida";
+			}
+			else if (i==1){
+				return "("+clave.get(0).getNombre().toUpperCase();
+			}else{
+				i--;
+				while (i>=0) {
+					salida = salida+clave.get(i).getNombre()+",";
+				i--;	
+				}
+				return salida.substring(0, salida.length()-1);
+			}
+		
+	}
+	
 	/**
 	 * Método que se encarga de crear el archivo sql correspondiente al xml 
 	 * schema proporcionado.
@@ -593,16 +631,17 @@ public class Parser {
 				
 				
 				j = entidad.getReferencias().size()-1;
-		
+				
 				//Se agregan los contraints de clave foranea a la entidad.
 				while (j >= 0) {
+					System.out.println("ANTES"+referencias.get(j).getNombre()); 
 					out.write("	FOREIGN KEY "+"( "+referencias.get(j).getNombre().
 					toUpperCase()+" )"+" REFERENCES "+ "( "+entidades.
 					get(referencias.get(j).getTipo()).nombre_entidad.
 					toUpperCase()+" )"+" ,\n");
 					j--;
 				}
-				
+				System.out.println("DESPUES");
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
@@ -658,8 +697,8 @@ public class Parser {
 				
 				//Se agrega la clave primaria a la entidad
 				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
-				toUpperCase()+ " PRIMARY KEY "+ entidad.clave.
-				toUpperCase()+" );\n\n");
+				toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
+				toUpperCase()+");\n\n");
 			}  
 			
 		    //Se cierra el output de escritura en el archivo sql
@@ -922,7 +961,7 @@ public class Parser {
 		
 		ArrayList<String> tupla= new ArrayList<String>();//Genero la tupla a insertar
 		tupla.add(entidadForanea.getNombre_entidad()); // Introduzco el nombre
-		tupla.add(entidadForanea.getClave()); //Introduzco la clave.
+	//	tupla.add(entidadForanea.getClave()); //Introduzco la clave.
 		entidadBase.AgregarForaneo(tupla);
 		
 	}
