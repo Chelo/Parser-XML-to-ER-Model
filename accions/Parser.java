@@ -195,6 +195,11 @@ public class Parser {
 
 	}
 	
+	/**
+	 * Crea una nueva entidad para el atributo que es multivaluado
+	 * @param atributo al cual se le desea crear una nueva entidad
+	 * @param entidad en la cual se encuentra el atributo multivaluado
+	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
 		Atributo clave_entidad = entidad.getClave().get(0);
@@ -532,10 +537,17 @@ public class Parser {
 		return str.substring(0, str.length()-1);
 	}
 	
+	/**
+	 * Dada una entidad se varifica que tenga clave primaria y se returna
+	 * su valor
+	 * @param entidad en la cual se desea búscar la clave.
+	 * @return String que contiene la clave de la entidad.
+	 */
 	public static String retornaClave(Entidad entidad){
 		Vector<Atributo> clave = entidad.getClave();
 		int i = clave.size();
 		String salida = "(";
+		
 			if (i==0){
 				return "(Clave no definida";
 			}
@@ -698,7 +710,7 @@ public class Parser {
 		    out.close();
 		// Se toma la exception si existe
 		}catch (Exception e){
-		      System.err.println("Error: " + e.getMessage());
+		      System.err.println("Error escribiendo el script sql: " + e.getMessage());
 		    }
 	}
 	
@@ -930,13 +942,13 @@ public class Parser {
 				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator(); 
 				// Se obtienentodos los complexTypes Iterator<XSComplexType>
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
-				
 				LeerAtributosEntidades(claves1, valores1);
 
 				ImprimirEntidades();
 				
 			}
 		} catch (Exception exp) {
+			System.out.println("Error en la formacion del xml Schema\n");
 			exp.printStackTrace(System.out);
 		}
 		EscribirScript();
