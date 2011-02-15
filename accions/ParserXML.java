@@ -1,65 +1,57 @@
+package accions;
 
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.*;
-
 import org.xml.sax.helpers.DefaultHandler;
-
 import org.xml.sax.helpers.XMLReaderFactory;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.XMLReader;
-import org.xml.sax.XMLFilter;
-import org.xml.sax.helpers.ParserAdapter;
-import org.xml.sax.helpers.XMLReaderAdapter;
 
-class ParserXML extends DefaultHandler {
 
-    private final XMLReader xr;
+/** Esta clase permite obtener y manipular la informacion contenida en los tags correspondientes 
+ * a los archivos XML(puro) para generar comandos de insercion de datos SQL("INSERT INTO") para 
+ * aquellas tablas que se crearon anteriormente.<br><br>
+ * Lee los nodos XML y sus valores.<br><br>
+ * Retorna un archivo "insert.sql"
+ * @author Daniel Pedroza
+ */
+public class ParserXML extends DefaultHandler {
 
-    public LectorXML() throws SAXException {
-        xr = XMLReaderFactory.createXMLReader();
-        xr.setContentHandler(this);
-        xr.setErrorHandler(this);
-    }
-
-    public void leer(final String archivoXML) throws IOException, SAXException {
-        FileReader fr = new FileReader(archivoXML);
-        xr.parse(new InputSource(fr));
-    }
-
-    @Override
-    public void startDocument() {
-        System.out.println("Comienzo del Documento XML");
-    }
-
-    @Override
-    public void endDocument() {
-        System.out.println("Final del Documento XML");
-    }
-
-    @Override
-    public void startElement(String uri, String name,
-              String qName, Attributes atts) {
-        System.out.println("tElemento: " + name);
-
-        for (int i = 0; i < atts.getLength(); i++) {
-         System.out.println("ttAtributo: " +
-          atts.getLocalName(i) + " = "+ atts.getValue(i));
-        }
-    }
-
-    @Override
-    public void endElement(String uri, String name,
-                                 String qName) {
-        System.out.println("tFin Elemento: " + name);
-    }
-    
-    public static void main(String[] args) throws IOException, SAXException {
-        LectorXML lector = new LectorXML();
-        lector.leer("libro.xml");
-    }
+	private final static String xmlFileName    = "libro.xml";
+	private final static String targetFileName = "insert.sql";
+    private final static int identificador = 0;
+	
     
     
-}
+    /** Crear una instancia de ParserXML 
+     *
+    */
+    public ParserXML() {
+    	
+    	
+    	
+    	
+    	
+        //Parsear archivo xml
+    	//devuelve un tipo Document (usa libreria Dom)
+        //Document doc = parseFile(xmlFileName);
+        
+        //Obtener la raiz del arbol xml
+        //Node raiz = doc.getDocumentElement();
+        
+        //Imprimir contenido XML
+        System.out.println("______________________________\n");
+        //writeDocumentToOutput(raiz,0,identificador);
+        //insertScript();
+        System.out.println("______________________________\n");
+
+        //Crear el archivo sql insert
+        //saveXMLDocument(targetFileName, doc);
+       
+    }
+	
+	
+	
+}//fin clase ParserXML
