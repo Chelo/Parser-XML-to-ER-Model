@@ -6,7 +6,7 @@ public class OrigenXML {
 
 	private String nombreTag;
 	public Vector<Atributo> atributos =  new Vector<Atributo>(); 	//Atributos de la entidad.
-
+	public int indent;
 	
 	/**
 	 * Almacena el nombre del tag encontrado en el archivo XML.
@@ -30,5 +30,17 @@ public class OrigenXML {
 	 * @return Vector que contiene los valores del tag encontrado.
 	 */
 	public Vector<Atributo> getAtributos() { return atributos; }
+	
+	
+	/**
+	 * Almacena el valor de indentacion del tag encontrado en el archivo XML.
+	 * @param int inden
+	 */
+	public void setIndent(int inden) { this.indent = inden; }
+	/**
+	 * Devuelve el valor de indentacion del tag encontrado en el archivo XML.
+	 * @return int indent
+	 */
+	public int getIndent() { return indent;}
 
 }//fin clase OrigenXML
