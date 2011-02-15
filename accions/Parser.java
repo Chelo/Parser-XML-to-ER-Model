@@ -51,7 +51,7 @@ import com.sun.xml.xsom.parser.XSOMParser;
 public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
-	static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
+	public static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -380,7 +380,7 @@ public class Parser {
 	 * que representen a Entidades (que no son más que todos los "element" tags definidos en el nivel 
 	 * más externo de anidamiento) 
 	 */
-	private static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
+	public static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
 		
 		String tipo;
 		
@@ -905,9 +905,9 @@ public class Parser {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public static void main(final String[] args) throws SAXException, IOException {
+	 public static void ParsearXMLSchema(String archivo) throws SAXException, IOException {
 
-		File file = new File("ejemplo.xml");
+		File file = new File(archivo);
 		try {
 
 			XSSchemaSet result = CrearParser(file);
@@ -953,4 +953,5 @@ public class Parser {
 		}
 		EscribirScript();
 	}
+	
 }
