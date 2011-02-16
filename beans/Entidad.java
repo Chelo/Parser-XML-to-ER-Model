@@ -1,6 +1,7 @@
 package beans;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -21,12 +22,14 @@ import java.util.Vector;
 
 public class Entidad {
 	
-	public String nombre_entidad;									//Nombre de la entidad.
-	public Vector<Atributo> atributos=  new Vector<Atributo>(); 	//Atributos de la entidad.
-	public Vector<Atributo> referencias = new Vector<Atributo>();	//Atributos que representan interrelación con otras Entidades.
-	public Vector<Atributo> clave = new Vector<Atributo>();								//Clave de la Entidad.
-	public Vector<ArrayList<String>> foraneo; 						//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
-	public String tipo;												//Tipo de la Entidad según el XMLSchema.
+	public String nombre_entidad;																	//Nombre de la entidad.
+	public Vector<Atributo> atributos=  new Vector<Atributo>(); 									//Atributos de la entidad.
+	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	//Atributos que representan interrelación con otras Entidades.
+																									//Es un hashMap cuya clave es el tipo del atributo y el valor es un vector 
+																									// con atributos de ese tipo.
+	public Vector<Atributo> clave = new Vector<Atributo>();											//Clave de la Entidad.
+	public Vector<ArrayList<String>> foraneo; 														//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
 	/**
 	 * Retorna el nombre de la Entidad.
@@ -50,9 +53,10 @@ public class Entidad {
 	 * Obtiene los aributos del XMLSchema que representan las interrelaciones
 	 * entre las Entidades.
 	 * 
-	 * @return Vector con los atributos que hacen referecia a las interrelaciones.
+	 * @return HashMap cuya clave es el tipo de los atributos y el valor es un vector
+	 * 		   que contiene a los atributos de ese tipo.
 	 */
-	public Vector<Atributo> getReferencias() {
+	public HashMap<String,Vector<Atributo>> getReferencias() {
 		return referencias;
 	}
 	
@@ -60,13 +64,12 @@ public class Entidad {
 	 * Permite colocar los atributos que representan las relaciones con 
 	 * las cuales se interrelaciona la Entidad.
 	 * 
-	 * @param newreferencias Vector con los atributos que referencian.
+	 * @param newreferencias HashMap cuyas claves son los tipos de los Atributos
+	 * 		  y los valores son vectores que poseen los Atributos de ese tipo.
 	 */
-	public void setReferencias(Vector<Atributo> newreferencias) {
+	public void setReferencias(HashMap<String,Vector<Atributo>> newreferencias) {
 		this.referencias = newreferencias;
 	}
-
-
 	
 	/**
 	 * Devuelve los datos de las tablas foráneas.
@@ -148,11 +151,37 @@ public class Entidad {
 	}
 
 	//Nuevos métodos agregados por KARINA
+	/**
+	 * Permite colocar un atributo básico más dentro del vector de atributos.
+	 * @param atributo Atributo a agregar.
+	 */
 	public void setAtributo(Atributo atributo) {
 		this.atributos.add(atributo);
 	}
 	
+	/**
+	 * Permite colocar una referencia mas en el hash de referencias.
+	 * @param newreferencia Atributo que representa la referencia.
+	 */
 	public void setReferencia(Atributo newreferencia) {
-		this.referencias.add(newreferencia);
+		String tipo =newreferencia.getTipo();
+		if (referencias.containsKey(tipo)) {
+			/*
+			 * El tipo de este vector ya esta en el hash, entonces agrego
+			 * el atributo a su vector de atributos.
+			 */
+			referencias.get(tipo).add(newreferencia);
+			
+		} 
+		else{
+			/*
+			 * El tipo no esta en el vector, por ende debo agregar una nueva clave 
+			 * con ese valor.
+			 */
+			Vector<Atributo> nuevoVector= new Vector<Atributo>();
+			nuevoVector.add(newreferencia);
+			referencias.put(tipo, nuevoVector);
+			
+		}
 	}
 }	
