@@ -13,11 +13,6 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.Attributes;
-import java.util.Vector;
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
 
 import beans.Atributo;
 import beans.Entidad;
