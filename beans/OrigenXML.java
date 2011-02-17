@@ -12,8 +12,8 @@ public class OrigenXML {
 	/** constructor de la clase OrigenXML
 	 */
 	public OrigenXML(Entidad ent){
-		setNombreTag(ent.nombre_entidad);
-		setAtributos(ent.atributos);
+		this.nombreTag =ent.getNombre_entidad();
+		this.atributos =ent.getAtributos();
 	}
 	
 	/**
