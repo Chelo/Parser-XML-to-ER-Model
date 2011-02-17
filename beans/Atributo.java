@@ -1,4 +1,5 @@
 package beans;
+import java.util.Iterator;
 import java.util.Vector;
 
 
@@ -19,11 +20,11 @@ import java.util.Vector;
  * 
  */
 
-public class Atributo {
+public class Atributo implements Cloneable {
 	public String nombre = null;                         //Nombre del Atributo. 
 	public String tipo = null;   						 //Tipo del Atributo.
 	public String valorPorDefecto = ""; 				 //Valor por Defecto que puede tener el Atributo.
-	public String longitud = null; 						 //Longitud máxima que puede tener el Atributo.
+	public String longitud = ""; 						 //Longitud máxima que puede tener el Atributo.
 	public boolean nulo =  true; 						 // Permite saber si el atributo puede ser nulo o no.
 	public String minRango= "-1" ; 						 // Mínimo valor que puede tener el Atributo. 
 	public String maxRango=  "-1"; 						 // Máximo valor que puede tener el Atributo. 
@@ -218,6 +219,35 @@ public class Atributo {
 		this.dominio = nuevo_dominio;
 	}
 	
-
+	
+	
+	/* 
+	 * No se me permite generar javadoc para este tipo de funciones con Object.
+	 */
+	public Object clone(){
+		Object clon = null;
+		
+		try {
+			clon = super.clone();
+		}catch(CloneNotSupportedException ex){
+			System.out.println("No se puede duplicar");
+		}
+		
+		((Atributo)clon).nombre=new String(nombre);
+		((Atributo)clon).tipo=new String(tipo);
+		((Atributo)clon).valorPorDefecto=new String(valorPorDefecto);
+		((Atributo)clon).longitud= new String(longitud);
+		((Atributo)clon).minRango= new String(minRango);
+		((Atributo)clon).maxRango=new String(maxRango);
+		
+		Iterator<String> itera= dominio.iterator();
+	
+		while(itera.hasNext()){
+			((Atributo)clon).dominio.add(new String(itera.next()));
+		}
+		
+		return clon; 
+	}
+	
 	
 }

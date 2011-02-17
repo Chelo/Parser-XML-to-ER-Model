@@ -1,7 +1,7 @@
 package beans;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -28,7 +28,7 @@ public class Entidad {
 																									//Es un hashMap cuya clave es el tipo del atributo y el valor es un vector 
 																									// con atributos de ese tipo.
 	public Vector<Atributo> clave = new Vector<Atributo>();											//Clave de la Entidad.
-	public Vector<ArrayList<String>> foraneo; 														//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	public Vector<Atributo> foraneo= new Vector<Atributo>(); 																//Valores foráneos.
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
 	/**
@@ -77,7 +77,7 @@ public class Entidad {
 	 * @return Vector de ArrayList de tamano dos, donde cada ArrayList contiene
 	 * la Entidad a la cual se referencia, y su clave.
 	 */
-	public Vector<ArrayList<String>> getForaneo() {
+	public Vector<Atributo> getForaneo() {
 		return foraneo;
 	}
 
@@ -88,7 +88,7 @@ public class Entidad {
 	 * @param foraneo Vector de ArrayList de tamano dos, donde cada ArrayList contiene
 	 * la Entidad a la cual se referencia y su clave.
 	 */
-	public void setForaneo(Vector<ArrayList<String>> foraneo) {
+	public void setForaneo(Vector<Atributo> foraneo) {
 		this.foraneo = foraneo;
 	}
 
@@ -145,7 +145,7 @@ public class Entidad {
 	 * 
 	 * @param foraneo ArrayList que funciona como tupla de la forma <NombreEntidad,ClaveEntidad>
 	 */
-	public void AgregarForaneo(ArrayList<String> foraneo){
+	public void AgregarForaneo(Atributo foraneo){
 		this.foraneo.add(foraneo);
 
 	}
@@ -182,6 +182,30 @@ public class Entidad {
 			nuevoVector.add(newreferencia);
 			referencias.put(tipo, nuevoVector);
 			
+		}
+	}
+	
+	/**
+	 * Clona el vector de referencias del tipo ingresado.
+	 * 
+	 * @param tipo String que indica el tipo del vector a clonar.
+	 * @return Vector clonado.
+	 */
+	public Vector<Atributo> clona(String tipo){
+		Vector<Atributo> newRef = new Vector<Atributo>();
+		Vector<Atributo> refer = referencias.get(tipo);
+		
+		if (refer == null) {
+			return null;
+		}
+		else {
+			Iterator<Atributo>  itr=refer.iterator();
+		
+			while(itr.hasNext()){
+				Atributo clon = (Atributo)itr.next().clone();//Se clona el atributo.
+				newRef.add(clon); // Se mete en el nuevo vector.
+			}
+			return newRef;
 		}
 	}
 }	
