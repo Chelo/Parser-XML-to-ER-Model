@@ -1,12 +1,20 @@
 package beans;
 
 import java.util.Vector;
+import beans.Entidad;
 
 public class OrigenXML {
 
 	private String nombreTag;
 	public Vector<Atributo> atributos =  new Vector<Atributo>(); 	//Atributos de la entidad.
 	public int indent;
+	
+	/** constructor de la clase OrigenXML
+	 */
+	public OrigenXML(Entidad ent){
+		setNombreTag(ent.nombre_entidad);
+		setAtributos(ent.atributos);
+	}
 	
 	/**
 	 * Almacena el nombre del tag encontrado en el archivo XML.
