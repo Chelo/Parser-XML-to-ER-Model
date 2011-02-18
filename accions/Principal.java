@@ -16,5 +16,6 @@ public class Principal {
 		//System.out.print("Nombre de la primera entidad "+Parser.entidades.get("User").getNombre_entidad()+"\n");
 		//System.out.print("Nombre de su primer atributo "+Parser.entidades.get("User").getAtributos().get(0).getNombre()+"\n");
 
+		ParserXML.ParsearXML("libro.xml");
 	}
 }

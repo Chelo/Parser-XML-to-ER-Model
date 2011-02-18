@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -22,6 +23,7 @@ import com.sun.xml.xsom.XSComplexType;
 import com.sun.xml.xsom.XSContentType;
 import com.sun.xml.xsom.XSElementDecl;
 import com.sun.xml.xsom.XSFacet;
+import com.sun.xml.xsom.XSIdentityConstraint;
 import com.sun.xml.xsom.XSModelGroup;
 import com.sun.xml.xsom.XSParticle;
 import com.sun.xml.xsom.XSRestrictionSimpleType;
@@ -196,8 +198,10 @@ public class Parser {
 	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
+		//suponiendo que la clave no es compuestas
 		Atributo clave_entidad = entidad.getClave().get(0);
-		Vector<Atributo> clave = entidad.getClave();
+		Vector<Atributo> clave = new Vector<Atributo>();
+		clave.add(clave_entidad);
 		
 		
 		clave_entidad.setTipo(entidad.getTipo());
@@ -377,11 +381,28 @@ public class Parser {
 	public static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
 		
 		String tipo;
+		List<XSIdentityConstraint> constraint;
+		int i = 0;
 		
 		while (claves.hasNext() && valores.hasNext()) {
 			Entidad nueva_entidad = new Entidad();
 			String nombre = (String) claves.next();
 			XSElementDecl element = (XSElementDecl) valores.next();
+			
+			System.out.println("CONSTRAINT "+element.getIdentityConstraints().toString());
+			constraint = element.getIdentityConstraints();
+			i = constraint.size()-1;
+			while (i>=0){
+				System.out.println("Name :"+constraint.get(i).getName());
+				System.out.println("Categoria :"+constraint.get(i).getCategory());
+				System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
+				System.out.println("Parent :"+constraint.get(i).getParent());
+				System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
+				System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
+			
+				i--;
+			}
+			
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
