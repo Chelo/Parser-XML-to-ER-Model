@@ -48,6 +48,7 @@ public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	public static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
+	public static HashMap<String, String> nombreEntidades = new HashMap<String, String>();
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -113,9 +114,7 @@ public class Parser {
 					atributo.setDominio(Dominio);								
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXINCLUSIVE)) {
-					atributo.setMaxRango(facet.getValue().value);
-					
-									
+					atributo.setMaxRango(facet.getValue().value);					
 				}
 				if (facet.getName().equals(XSFacet.FACET_MININCLUSIVE)) {
 					atributo.setMinRango(facet.getValue().value);
@@ -406,7 +405,8 @@ public class Parser {
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
-			entidades.put(tipo, nueva_entidad);			
+			entidades.put(tipo, nueva_entidad);	
+			nombreEntidades.put(nombre, tipo);
 		}
 			
 	}
