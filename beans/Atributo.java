@@ -30,7 +30,7 @@ public class Atributo implements Cloneable {
 	public String maxRango=  "-1"; 						 // Máximo valor que puede tener el Atributo. 
 	public Vector<String> dominio= new Vector<String>(); // Contiene todos los valores que puede tener el Atributo.
 	public int minOccurs = 0; 							 // Mínima cantidad de ocurrencias del Atributo.
-	public int maxOccurs = 0; 							 // Máxima cantidad de ocurrencias del Atributo.
+	public int maxOccurs = 1; 							 // Máxima cantidad de ocurrencias del Atributo.
 
 	
 	/**
