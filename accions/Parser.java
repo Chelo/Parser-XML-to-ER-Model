@@ -922,6 +922,7 @@ public class Parser {
 		Set<String> claves = entidades.keySet();
 		Iterator<String> itr= claves.iterator();
 		Vector<String> vectTipos= new Vector<String>();
+			
 		
 		while(itr.hasNext()){
 			String types= new String(itr.next());
