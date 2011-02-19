@@ -226,11 +226,12 @@ public class Parser {
 	 * quieren extraer (leer) sus atributos.
 	 * @param atributos arreglo unidimensional de Atributos, donde est&#225n almacenados los atributos de 
 	 * la entidad definida por el ComplexType bajo el nombre "tipo"   
+	 * @param compuesto es un boleano que indica si estamos leyendo un "element" correspondiente a un atributo compuesto. 
 	 * @return arreglo unidimensional de Atributos, donde se almacenar&#225n el resto de los atributos 
 	 * que est&#233n definidos bajo el tag "element", pertenecientes a la entidad definida por el ComplexType de nombre "tipo" 
 	 * y que ser&#225n parseados por esta funci&#243n. 
 	 */
-	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos) {
+	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos, boolean parteDecompuesto) {
 		XSTerm pterm;
 		XSRestrictionSimpleType restriction;
 		String id = "ID";
@@ -251,6 +252,7 @@ public class Parser {
 		String nombreAttr;
 		String tipoAttr=null;
 		String valorPorDefecto;
+		boolean esCompuesto = false;
 		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 		Vector<Atributo> clave = new Vector<Atributo>();
 
@@ -261,8 +263,7 @@ public class Parser {
 			Atributo nuevo_atributo = new Atributo();
 			pterm = p.getTerm();
 			i++;
-			
-			
+
 			if (pterm.isElementDecl()) { // xs:element inside complex type
 				
 				// Se obtiene el nombre del atributo
@@ -290,12 +291,60 @@ public class Parser {
 				}
 				
 				//Se obtiene el minOccurs y maxOccurs, así como si el atributo es null o not null
-				if (p.getMinOccurs() == 1) {
+				//Verificar que pasa si el usuario no colocó nada
+				if (parteDecompuesto)
+				{
 					nuevo_atributo.setNulo(false);
+					nuevo_atributo.setMinOccurs(1);
+					//El maxOccurs por defecto ya es 1, por eso no se asigna.
+					//Si el usuario puso maxOccurs.. se ignora... no se permiten multivaluados 
+					//Esto puede cambiar en el futuro!
 				}
-				nuevo_atributo.setMinOccurs(p.getMinOccurs());
-				nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-
+				else
+				{	
+					if (tipoAttr!=null)//Para no tener problemas con el equals
+					{
+						if(tipoAttr.equals(id))
+						{
+							if((p.getMinOccurs()!=1) || (p.getMaxOccurs()!=1))
+							{
+								System.out.println("ALERTA: Tanto el minOccurs como maxOccurs de la clave " +nombreAttr+ 
+									    " de la entidad " +entidad.getNombre_entidad()+
+										" deben ser 1 \n Se le colocará minOccurs = 1 y maxOccurs = 1 \n");
+							}	
+							nuevo_atributo.setNulo(false);
+							nuevo_atributo.setMinOccurs(1);
+							nuevo_atributo.setMaxOccurs(1);
+						}	
+						else
+						{	
+							//MinOccurs
+							if (p.getMinOccurs() < 0){
+								System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor o igual a cero. Se colocará 0 por defecto \n");
+								nuevo_atributo.setMinOccurs(0);
+							}
+							else
+							{	
+								if (p.getMinOccurs() == 1) {
+									nuevo_atributo.setNulo(false);
+								}
+								nuevo_atributo.setMinOccurs(p.getMinOccurs());
+							}
+							//MaxOccurs
+							if (p.getMaxOccurs() <= 0) {
+								System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
+								nuevo_atributo.setMaxOccurs(1);
+							}
+							else
+							{	
+								nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
+							}
+						}
+					}	
+				}
+				//System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
+				//System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
+				
 				//Verificamos si es un atributo compuesto 
 				if(tipoAttr == null )
 				{
@@ -303,6 +352,7 @@ public class Parser {
 					{
 						if (pterm.asElementDecl().getType().isComplexType())
 						{
+							esCompuesto = true;
 							XSComplexType atributo_compuesto = pterm.asElementDecl().getType().asComplexType();
 							XSContentType contenido = atributo_compuesto.getContentType();
 							XSParticle particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
@@ -319,11 +369,22 @@ public class Parser {
 									XSModelGroup xsModelGroup = term.asModelGroup();
 									XSParticle[] particles1 = xsModelGroup.getChildren();
 				
-									// se verifica que sea sequence, all o choice
-									System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
-									
+									// se verifica que sea all
+									if (!xsModelGroup.getCompositor().toString().equals("all")){
+										System.out.println("ALERTA: Los atributos compuestos deben estar definidos " +
+												"entre el compositor <all> \n Se creará el atributo compuesto " +nombreAttr+ " de la entidad " +entidad.getNombre_entidad()+
+												", sin embargo agregue el compositor <all> para evitar inconsistencias al " +
+												"momento de cargar los datos. \n A cada uno de los atributos que constituyen a " +nombreAttr+ " " +
+												"se le colocará minOccurs = 1 y maxOccurs = 1 \n");
+										}
+									else
+									{
+										System.out.println("ALERTA: A cada uno de los atributos que constituyen al atributo compuesto " +nombreAttr+ 
+											    " de la entidad " +entidad.getNombre_entidad()+
+												" se le colocará minOccurs = 1 y maxOccurs = 1 \n");
+									}
 									// Se leen los atributos de las entidades
-									atributos = leerElementos(particles1, tipo, atributos); //Llamada RECURSIVA
+									atributos = leerElementos(particles1, tipo, atributos,true); //Llamada RECURSIVA
 								}
 							}
 						}
@@ -355,13 +416,23 @@ public class Parser {
 						 entidad.setReferencia(nuevo_atributo);
 					 }
 					 else{
-						 System.out.println("ERROR: el atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe");
+						 if(tipoAttr.equals("anyType"))
+						 {
+							 System.out.println("ERROR: Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ "\n " +
+							 		"El atributo no será creado hasta que no realice los cambios\n");
+						 }
+						 else
+						 { 	 
+							 System.out.println("ERROR: El atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe " + tipoAttr +
+									 "\n El atributo no será creado hasta que no realice los cambios\n");
+						 }	 
 					 }
 
 				}
 				else {
-					System.out.println("ERROR: debe definirle un tipo al atributo "+ nombreAttr + " \n");
-					
+					if(!esCompuesto)
+						System.out.println("ERROR: Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ "\n " +
+				 		"El atributo no será creado hasta que no realice los cambios\n");	
 				}
 			}
 		}
@@ -432,7 +503,8 @@ public class Parser {
 			
 			String tipo = (String) claves.next();
 			if(!entidades.containsKey(tipo)){
-				System.out.print("ALERTA: El elemento del tipo "+ tipo +" no esta definido.\n");
+				System.out.print("ALERTA: El elemento del tipo "+ tipo +" no esta definido.\n " +
+						"No se creará el tipo "+ tipo +", ni la Entidad hasta que no realice los cambios \n");
 				valores.next();
 			}
 			else
@@ -454,11 +526,17 @@ public class Parser {
 						particles = xsModelGroup.getChildren();
 	
 						// se verifica que sea sequence, all o choice
-						System.out.println("Compositor "+ xsModelGroup.getCompositor().toString());
-						
+						if(!xsModelGroup.getCompositor().toString().equals("sequence"))
+						{
+							//Ojo esto podría cambiar cuando se implementen las n-arias
+							System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
+									"> deben estar definidos entre el compositor <sequence> \n  Agregue el compositor <sequence> " +
+									"para evitar inconsistencias al momento de cargar los datos.");	
+						}		
+
 						// Se leen los atributos de las entidades
 						Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
-						atributos = leerElementos(particles,tipo,atributos);
+						atributos = leerElementos(particles,tipo,atributos,false);
 						entidades.get(tipo).setAtributos(atributos);
 					}
 				}
