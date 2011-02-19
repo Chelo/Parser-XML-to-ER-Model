@@ -27,7 +27,7 @@ public class Entidad {
 	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	//Atributos que representan interrelación con otras Entidades.
 																									//Es un hashMap cuya clave es el tipo del atributo y el valor es un vector 
 																									// con atributos de ese tipo.
-	public Vector<Atributo> clave = new Vector<Atributo>();											//Clave de la Entidad.
+	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();										//Clave de la Entidad.
 
 	public Vector<Atributo> foraneo = new Vector<Atributo>();																//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
 	
@@ -116,11 +116,13 @@ public class Entidad {
 
 
 	
-	public Vector<Atributo> getClave() {
+
+
+	public HashMap<String, Atributo> getClave() {
 		return clave;
 	}
 
-	public void setClave(Vector<Atributo> clave) {
+	public void setClave(HashMap<String, Atributo> clave) {
 		this.clave = clave;
 	}
 

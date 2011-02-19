@@ -165,7 +165,8 @@ public class Parser {
 		
 		XSAttributeDecl decl = null;
 		Vector<Atributo> atributos = new Vector<Atributo>();
-		Vector<Atributo> clave = new Vector<Atributo>();
+		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
+		
 		String id = "ID";
 		Entidad entidad = entidades.get(tipoEntidad);
 		
@@ -178,7 +179,7 @@ public class Parser {
 			nuevo_atributo.setTipo(decl.getType().getName());
 			
 			if ((decl.getType().getName().equals(id))){
-				clave.add(nuevo_atributo);
+				clave.put(nuevo_atributo.getNombre(),nuevo_atributo);
 				entidad.setClave(clave);
 			}
 			nuevo_atributo.setNulo(!(attributeUse.isRequired()));
@@ -199,17 +200,17 @@ public class Parser {
 		Entidad nueva = new Entidad();
 		//suponiendo que la clave no es compuestas
 		Atributo clave_entidad = entidad.getClave().get(0);
-		Vector<Atributo> clave = new Vector<Atributo>();
-		clave.add(clave_entidad);
+		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
+		clave.put(clave_entidad.nombre,clave_entidad);
 		
 		
 		clave_entidad.setTipo(entidad.getTipo());
 		nueva.setNombre_entidad(atributo.nombre);
 		nueva.setAtributo(atributo);
 		nueva.setAtributo(clave.get(0));
-		nueva.setReferencia(clave_entidad);
+		nueva.setReferencia(clave_entidad);//setforaneo
 		nueva.setTipo(atributo.getNombre());
-		clave.add(atributo);
+		clave.put(atributo.nombre,atributo);
 		nueva.setClave(clave);
 		
 		entidades.put(atributo.getNombre(), nueva);
@@ -254,7 +255,7 @@ public class Parser {
 		String valorPorDefecto;
 		boolean esCompuesto = false;
 		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
-		Vector<Atributo> clave = new Vector<Atributo>();
+		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
 
 		
 		int i = 0;
@@ -413,7 +414,7 @@ public class Parser {
 					
 					//Se verifica si el atributo es clave y se coloca la clave en la entidad
 					if ((tipoAttr.equals(id))){
-						clave.add(nuevo_atributo);
+						clave.put(nuevo_atributo.nombre,nuevo_atributo);
 						entidad.setClave(clave);
 					}
 				}
@@ -446,6 +447,29 @@ public class Parser {
 		}
 		return atributos;
 	}
+	
+	public static void TagRestriccion(List<XSIdentityConstraint> constraint, Entidad entidad){
+		System.out.println("CONSTRAINT ");
+		
+		int i = constraint.size()-1;
+		while (i>=0){
+			if (constraint.get(i).getCategory()== 0){
+				System.out.println("restriccion de clave");
+			}else if (constraint.get(i).getCategory()==2){
+				System.out.println("restriccion unique");
+			}else{
+				System.out.println("restriccion no valida");
+			}
+			System.out.println("Name :"+constraint.get(i).getName());
+			System.out.println("Categoria :"+constraint.get(i).getCategory());
+			System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
+			System.out.println("Parent :"+constraint.get(i).getParent());
+			System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
+			System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
+		
+			i--;
+		}
+	}
 
 	/**
 	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
@@ -466,20 +490,13 @@ public class Parser {
 			Entidad nueva_entidad = new Entidad();
 			String nombre = (String) claves.next();
 			XSElementDecl element = (XSElementDecl) valores.next();
+			List<XSIdentityConstraint> restricciones = element.getIdentityConstraints();
 			
-			System.out.println("CONSTRAINT "+element.getIdentityConstraints().toString());
-			constraint = element.getIdentityConstraints();
-			i = constraint.size()-1;
-			while (i>=0){
-				System.out.println("Name :"+constraint.get(i).getName());
-				System.out.println("Categoria :"+constraint.get(i).getCategory());
-				System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
-				System.out.println("Parent :"+constraint.get(i).getParent());
-				System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
-				System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
-			
-				i--;
+			if (restricciones.size()>0){
+				System.out.println("Tiene CONSTRAINT "+element.getIdentityConstraints().size());
+				TagRestriccion(restricciones, nueva_entidad);
 			}
+			
 			
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
@@ -645,7 +662,8 @@ public class Parser {
 	 * @return String que contiene la clave de la entidad.
 	 */
 	public static String retornaClave(Entidad entidad){
-		Vector<Atributo> clave = entidad.getClave();
+		HashMap<String,Atributo> clave = entidad.getClave();
+		
 		int i = clave.size();
 		String salida = "(";
 		
@@ -886,10 +904,10 @@ public class Parser {
 				}
 				
 				System.out.println("-----Atributos que forman la clave ---------");
-				Iterator<Atributo> iter= entidad.clave.iterator();
+			/*	Iterator<Atributo> iter= entidad.clave.
 				while(iter.hasNext()){
 					System.out.println("Nombre: " + iter.next().nombre);
-				}
+				}*/
 			}
 	}
 
@@ -912,6 +930,7 @@ public class Parser {
 		Set<String> claves = entidades.keySet();
 		Iterator<String> itr= claves.iterator();
 		Vector<String> vectTipos= new Vector<String>();
+			
 		
 		while(itr.hasNext()){
 			String types= new String(itr.next());
@@ -984,7 +1003,7 @@ public class Parser {
 								//Se debe insertar doble pues recordemos que se referencia a sí misma.
 								Vector<Atributo> clave = new Vector<Atributo>();
 								
-								Iterator<Atributo> iterador= ent.clave.iterator();
+								Iterator<Atributo> iterador= ent.clave.newValueIterator();
 								//OJO, estoy agregando una sola vez la clave, no la estoy poniendo doble
 								// aclarar duda para resolver esto.
 								
