@@ -28,7 +28,16 @@ public class Entidad {
 																									//Es un hashMap cuya clave es el tipo del atributo y el valor es un vector 
 																									// con atributos de ese tipo.
 	public Vector<Atributo> clave = new Vector<Atributo>();											//Clave de la Entidad.
-	public Vector<ArrayList<String>> foraneo; 														//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	public Vector<Atributo> foraneo = new Vector<Atributo>();																//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	
+	public void setForaneo(Vector<Atributo> foraneo) {
+		this.foraneo = foraneo;
+	}
+
+	public Vector<Atributo> getForaneo() {
+		return foraneo;
+	}
+
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
 	/**
@@ -71,26 +80,9 @@ public class Entidad {
 		this.referencias = newreferencias;
 	}
 	
-	/**
-	 * Devuelve los datos de las tablas foráneas.
-	 * 
-	 * @return Vector de ArrayList de tamano dos, donde cada ArrayList contiene
-	 * la Entidad a la cual se referencia, y su clave.
-	 */
-	public Vector<ArrayList<String>> getForaneo() {
-		return foraneo;
-	}
 
-	/**
-	 * Coloca los valores de los datos de las tablas que son foráneos
-	 * a la Entidad.
-	 * 
-	 * @param foraneo Vector de ArrayList de tamano dos, donde cada ArrayList contiene
-	 * la Entidad a la cual se referencia y su clave.
-	 */
-	public void setForaneo(Vector<ArrayList<String>> foraneo) {
-		this.foraneo = foraneo;
-	}
+
+
 
 	/**
 	 * Devuelve el tipo de la Entidad.
@@ -139,16 +131,7 @@ public class Entidad {
 		this.atributos = atributos;
 	}
 	
-	/**
-	 * Agrega los datos (NombreEntidad, ClaveEntidad) de una Entidad foránea
-	 * a la Entidad actual.
-	 * 
-	 * @param foraneo ArrayList que funciona como tupla de la forma <NombreEntidad,ClaveEntidad>
-	 */
-	public void AgregarForaneo(ArrayList<String> foraneo){
-		this.foraneo.add(foraneo);
-
-	}
+	
 
 	//Nuevos métodos agregados por KARINA
 	/**

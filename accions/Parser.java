@@ -929,7 +929,7 @@ public class Parser {
 		ArrayList<String> tupla= new ArrayList<String>();//Genero la tupla a insertar
 		tupla.add(entidadForanea.getNombre_entidad()); // Introduzco el nombre
 	//	tupla.add(entidadForanea.getClave()); //Introduzco la clave.
-		entidadBase.AgregarForaneo(tupla);
+		//entidadBase.AgregarForaneo(tupla);
 		
 	}
 
