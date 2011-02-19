@@ -1104,7 +1104,7 @@ public class Parser {
 		int max1= atr1.maxOccurs;
 		int min2= atr2.minOccurs;
 		int max2= atr2.maxOccurs;
-		if (min1+max1==2) {
+		if (min1==1 && max1==1) {
 			//atr1 es 1:1
 			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
 			System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
@@ -1112,7 +1112,7 @@ public class Parser {
 					entidades.get(atr1.tipo).nombre_entidad+"\n");
 			entidades.get(atr2.tipo).AgregarForaneo(atr1);//Entidad que absorbe.
 		} 
-		else if (min2+max2==2)
+		else if (min2==1 && max2==1)
 		{
 			//atr2 es 1:1
 			//Entidad del tipo atr1 absorbe a Entidad del atributo tipo atr2
