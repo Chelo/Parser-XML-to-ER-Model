@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +48,7 @@ public class Parser {
 	 
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	public static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
+	public static HashMap<String, String> nombreEntidades = new HashMap<String, String>();
 	
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
@@ -114,9 +114,7 @@ public class Parser {
 					atributo.setDominio(Dominio);								
 				}
 				if (facet.getName().equals(XSFacet.FACET_MAXINCLUSIVE)) {
-					atributo.setMaxRango(facet.getValue().value);
-					
-									
+					atributo.setMaxRango(facet.getValue().value);					
 				}
 				if (facet.getName().equals(XSFacet.FACET_MININCLUSIVE)) {
 					atributo.setMinRango(facet.getValue().value);
@@ -407,7 +405,8 @@ public class Parser {
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
-			entidades.put(tipo, nueva_entidad);			
+			entidades.put(tipo, nueva_entidad);	
+			nombreEntidades.put(nombre, tipo);
 		}
 			
 	}
@@ -639,10 +638,10 @@ public class Parser {
 				}
 				
 				//Se obtiene los atributos que son referencias
-				Iterator<Vector<Atributo>> itera = entidad.referencias.values().iterator();
 				
-				while (itera.hasNext()){
-					Vector<Atributo> referencias= itera.next();
+				
+			
+					Vector<Atributo> referencias= entidad.foraneo;
 					j= referencias.size()-1;
 					//Se agregan los atributos que hacen referencias en la entidad
 					while (j >= 0) {
@@ -650,7 +649,7 @@ public class Parser {
 						"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+
 						Nulidad(referencias.get(j))+" ,\n");
 						j--;
-					}
+					
 					
 					j= referencias.size()-1;					
 					//Se agregan los contraints de clave foranea a la entidad.
@@ -765,12 +764,10 @@ public class Parser {
 			//Se obitiene un iterador que recorre los vectores que poseen entidades.
 			Iterator<Vector<Atributo>> itera = entidad.referencias.values().iterator(); 
 			
-			
+			System.out.println("-- Atributos Hechos por el usuario--");
 			while(itera.hasNext()){
 				Vector<Atributo> referencias = itera.next();//Vector a trabajar.
-				
-				System.out.println("-- Atributos Hechos por el usuario--");
-				
+
 				j= referencias.size()-1;
 				
 				while (j >= 0) {
@@ -785,153 +782,304 @@ public class Parser {
 				
 			}
 			
+			Vector<Atributo> foraneos =entidad.foraneo;//Vector a trabajar.
 			
-
-		}
+			
+				System.out.println("-- Atributos foraneos!--");
+				
+				j= foraneos.size()-1;
+				
+				while (j >= 0) {
+					System.out.println("	Nombre : " + foraneos.get(j).getNombre());
+					System.out.println("		Tipo : " + foraneos.get(j).getTipo());
+					System.out.println("		Nulo : " + foraneos.get(j).isNulo());
+					System.out.println("		MinOccurs : " + foraneos.get(j).getMinOccurs());
+					System.out.println("		MaxOccurs : " + foraneos.get(j).getMaxOccurs());
+	
+					j--;
+				}
+				
+				System.out.println("-----Atributos que forman la clave ---------");
+				Iterator<Atributo> iter= entidad.clave.iterator();
+				while(iter.hasNext()){
+					System.out.println("Nombre: " + iter.next().nombre);
+				}
+			}
 	}
 
 	/**
 	 * Permite encontrar las relaciones entre las Entidades.
 	 */
-	/*public static void VerInterrelaciones(){
-		
+	public static void VerInterrelaciones(){
+		/*
 		 * CONVENCION: Cuando se deba crear una nueva tabla para una interrelación, se creará una ENTIDAD del nombre
 		 * de uno de los atributos que relacionan a las entidades. El tipo de la entidad debe ser un nombre único, por el hash
 		 * por ende colocaré el nombre DEL ATRIBUTO tambien, por ahora.
-		 
-		
-		Vector<String> EntidadesVisitadas=new Vector<String>(); //Permite saber que Entidades ya fueron vistas para no caer en ciclos.
-		
+		 */
 		// Recorrere el hash de las entidades para ir viendo el vector de referencias de cada una
 		// y asi ir sacando las interrelaciones.
 		
+		/*
+		 * Debo sacar las claves y copiarlas a un vector para asi recorrerlo y que no me genere error
+		 * de concurrencias al insertar en entidades las nuevas interrelaciones.
+		 */
 		Set<String> claves = entidades.keySet();
+		Iterator<String> itr= claves.iterator();
+		Vector<String> vectTipos= new Vector<String>();
 		
-		Iterator<String> itr = claves.iterator();
-		
-		//Recorro entidades.
 		while(itr.hasNext()){
+			String types= new String(itr.next());
+			vectTipos.add(types);
+		}
+		
+		//Recorro el vector nuevo vector de tipos de entidades.
+		Iterator<String> y= vectTipos.iterator();
+		while(y.hasNext()){
+			System.out.println("------------------Paso a la siguiente entidad-----------------------");
 			
-			String tipoEntidad= itr.next();
-			EntidadesVisitadas.add(tipoEntidad);
-			Entidad ent = entidades.get(tipoEntidad); //Entidad a estudiar.
+			String tipoEnt= y.next(); //Tipo de Ent.
+			Entidad ent = entidades.get(tipoEnt); //Entidad a estudiar.
+			System.out.println("Entidad a tratar "+ ent.nombre_entidad+"\n");
+			//Recorro los tipos de las referencias y voy trabajando con los vectores.
+			Iterator<String> iter = ent.referencias.keySet().iterator();
 			
-			//Recorro los vectores de atributos de referencias.
-			Iterator<Vector<Atributo>> iter = ent.referencias.values().iterator();
 			while(iter.hasNext()){
-				Vector<Atributo> vectRef = iter.next(); //Vector a tratar.
+				String tipoEnti = iter.next(); //Tipo a tratar de Enti.
+				Entidad enti= entidades.get(tipoEnti);  // Entidad relacionada con ent.
+				System.out.println(ent.nombre_entidad+" se relaciona con "+ enti.nombre_entidad+ "\n");	
 				
-				Iterator<Atributo> atr = vectRef.iterator(); 
-				while(atr.hasNext()){
-					Atributo atributo = atr.next(); //Atributo a estudiar.
-					String tipo= atributo.getTipo(); // Tipo de ese atributo
-					Entidad enti= entidades.get(tipo);  // Entidad relacionada con ent.
+				if (enti.getNombre_entidad().equals(ent.getNombre_entidad())) {
+					/*
+					 * Es una entidad que se relaciona consigo misma, quedamos que si tiene (1,1) se absorbe.
+					 * sino se crea otra entidad. 
+					 */
+					System.out.println("Es conmigo misma\n");
+					Vector<Atributo> refself= ent.referencias.get(tipoEnt); //Atributos de si mismo.
+					Iterator<Atributo> i= refself.iterator();
 					
-					//Obtengo el min y el max del atributo a estudiar.
-					int minOccur= atributo.getMinOccurs();
-					int maxOccur= atributo.getMaxOccurs();
-					
-					int minOccurRef;
-					int maxOccurRef;
-					//Aqui se deberían verificar cosas como si min y max son cero, dar error, si min es 1 y max es cero tambien.
-					//De hecho no se deberían permitir guardar en referencias atributos con errores en los min y max.
-					
-					if (minOccur + maxOccur == 2) { //Es decir q el min y el max son 1, por lo tanto absorbe
-						AgregarForaneo(ent,enti);
-					}
-					else if (enti.getNombre_entidad().equals(ent.getNombre_entidad())) {
-						
-						 * Es una entidad que se relaciona consigo misma, quedamos que si tiene (1,1) se absorbe pero eso 
-						 * ya lo veo arriba, ahora como no es (1,1) ajuro creo una entidad nueva para la interrelacion.
-						 
-						Entidad entidadNueva= new Entidad();
-						
-						 * Debo llenar los datos de la entidadNueva pero como saco la clave? si esta es la unión 
-						 * de la clave consigo misma.
-						 * Qué atributos le coloco? será que busco el atributo que es clave? y se lo paso como atributo?
-						 * no le coloco atributos?
-						 
-						
-					}
-					else
-					{
-						Vector<Atributo> refsEnti= enti.getReferencias();//referencias de la enti.
-						Iterator<Atributo> refEnti = refsEnti.iterator();
-						Vector<Atributo> refDelmismoTipo= new Vector<Atributo>();//Vector q guardará los atributos que tengan el mismo tipo.
-						
-						//Recorro el vector de referencias de enti para encontrar referencia circular.
-						while(refEnti.hasNext()){
-							Atributo atrRef = refEnti.next(); //Atributo de enti a estuar.
-							String tipoRef= atrRef.getTipo(); //Tipo del atributo.
+					while(i.hasNext()){
+						//Para cada atributo a mi mismo, veo si me absorbo o si creo otra entidad.
+						Atributo at = i.next();
+						if (at.minOccurs + at.maxOccurs == 2) {
+							//Se absorbe a si misma
+							ent.AgregarForaneo(at);
+							System.out.println("1:1, me absorvo\n");
+						} 
+						else 
+						{
+							//Se crea entidad.
+							System.out.println("No es 1:1, debo crear otra entidad.\n");
+							Entidad entidadNueva= new Entidad();
 							
-							if (tipoRef.equals(tipo)) {
-								refDelmismoTipo.add(atrRef);
-								
+							//Introduzco la clave doble.
+							//Se debe insertar doble pues recordemos que se referencia a sí misma.
+							Vector<Atributo> clave = new Vector<Atributo>();
+							
+							Iterator<Atributo> iterador= ent.clave.iterator();
+							//OJO, estoy agregando una sola vez la clave, no la estoy poniendo doble
+							// aclarar duda para resolver esto.
+							
+							while(iterador.hasNext()){
+								/*
+								 * Debo clonar cada atributo y pasarlo al nuevo vector, para evitar paso por
+								 * referencia
+								 */
+								Atributo unaClave= iterador.next();
+								clave.add((Atributo)unaClave.clone());
 							}
+							
+							
+							entidadNueva.setClave(clave);
+							
+							//Introduzco nombre de la entidad, que por ahora es el nombre del atributo.
+							entidadNueva.nombre_entidad= at.nombre;
+							 
+							//Coloco tipo.
+							entidadNueva.tipo= at.nombre; // POR AHORA
+							
+							//introduzco en el hash.
+							entidades.put(entidadNueva.tipo, entidadNueva);
+							System.out.println("Cree una nueva entidad llamada "+ entidadNueva.nombre_entidad+"y la introduje en el hash\n");
+							
+
 						}
+					}
+				}
+				else
+				{
+					Vector<Atributo> vectEnt = enti.clona(tipoEnt); //Referencias de Enti del tipo Ent.
+					Vector<Atributo> vectEnti = ent.clona(tipoEnti); //Referencias de Ent del tipo Enti.
+					/*
+					 * Estoy segura que el vector de Ent no es nulo porque de el fue que salio el tipo
+					 * de Enti 
+					 */
+					
+					if (vectEnt==null) {
+						//VIENE LA PARTE DE KARINA.
+						System.out.println("No hay referencia circular entre "+ent.nombre_entidad+" y "+enti.nombre_entidad+" parte de KArina");
 						
-						Atributo at;
-						if (refDelmismoTipo.isEmpty()) {
-							//No se consiguio un atributo que referencie a ent por ende no hay referencia circular, hay error.
-							System.out.println("ERROR: No existe referencia circular entre la entidad "+ ent.getNombre_entidad()+" y la entidad "+enti.getNombre_entidad());
-						}else if (refDelmismoTipo.size()>= 2) {
-							//Quiere decir hay mas de una interrelacion entre las entidades, por ende debo buscar por nombre.
-							Iterator<Atributo> iter= refDelmismoTipo.iterator();
-							boolean hayRef= false;
-							while (iter.hasNext()) {
-								at = iter.next();
-								if (at.getNombre().equals(atributo.getNombre())) {
-									//Son los atributos correspondientes.
-									hayRef=true;
-									minOccurRef= at.getMinOccurs();
-									maxOccurRef= at.getMaxOccurs();
-									
-									//LLAMO A UNA RUTINA Q VEA LOS 1,1 - 1,0 - M,N
+					} else {
+						if (vectEnt.size()+vectEnti.size()==2) {
+							//Ambos vectores son de tamaño 1 por ende debo asumir que se relacionan.
+							System.out.println(ent.nombre_entidad+" se relaciona bien con "+enti.nombre_entidad+"\n");
+							DefInterrelacion(vectEnt.get(0), vectEnti.get(0));
+						} 
+						else 
+						{
+							//Recorro un vector en otro buscando parejas por mismo nombre.
+							Iterator<Atributo> j=vectEnti.iterator();
+							boolean encontro=false;
+							while(j.hasNext()){
+								Atributo c= j.next();
+								String nombre= c.nombre;
+								Iterator<Atributo> k= vectEnt.iterator();
+								while(k.hasNext()){
+									Atributo b= k.next();
+									if (b.nombre.equals(nombre)) {
+										//Encontre la pareja.
+										//Saco a k del vector y los mando a Def.
+										vectEnt.remove(b);
+										encontro=true;
+										System.out.println(ent.nombre_entidad+" se relaciona con "+enti.nombre_entidad+" a través del atributo "+ b.nombre+"\n");
+										DefInterrelacion(b,c);
+										break;
+									}
 								}
-								
+								if (!encontro) {
+									//no hay referencia circular.
+									System.out.println("No hay ref circular para el atributo "+ c.nombre+" de la entidad "+ ent.nombre_entidad+ "puede que sea una generalizacion\n");
+									//Karina.
+								}
 							}
-							if (!hayRef) {
-								//A pesar de haber atributos del mismo tipo, ocurre que ninguno se llama igual al atributo de ent. Por ende 
-								//no hay referencia.
-								System.out.println("ERROR: No existe referencia circular entre la entidad "+ ent.getNombre_entidad()+" y la entidad "+enti.getNombre_entidad());							
+							if (vectEnt.size()!=0) {
+								Iterator<Atributo> t= vectEnt.iterator();
+								while(t.hasNext()){
+									System.out.println("No hay ref circular para el atributo "+ t.next().nombre+" de la entidad "+enti.nombre_entidad+" puede que sea una generalizacion");
+								}
+								//Quiere decir que aun quedaron atributos que no tenian pareja.
+								//Karina.
 							}
-						}
-						else{
-							//Existe una unica referencia con este tipo, por ende no debo ver si el nombre es igual ni nada.
-							at = refDelmismoTipo.get(0);
-							minOccurRef= at.getMinOccurs();
-							maxOccurRef= at.getMaxOccurs();
-							
-							//LLAMO A UNA RUTINA Q VEA LOS 1,1 - 1,0 - M,N
 						}
 					}
 				}
 			}
-			
+		}
+	}
 
+	/**
+	 * Analiza cual entidad absorbe a cual, de acuerdo a las reglas de la cardinalidad y 
+	 * participacion. (1:1,1:N,M:N)
+	 * 
+	 * @param atr1 Atributo que referencia a una dconditione las entidades.
+	 * @param atr2 Atributo que referencia a la otra entidad relacionada.
+	 */
+	public static void DefInterrelacion(Atributo atr1, Atributo atr2){
+		int min1= atr1.minOccurs;
+		int max1= atr1.maxOccurs;
+		int min2= atr2.minOccurs;
+		int max2= atr2.maxOccurs;
+		if (min1+max1==2) {
+			//atr1 es 1:1
+			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
+			System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
+					"por ende "+ entidades.get(atr2.tipo).nombre_entidad +" absorbe a "+
+					entidades.get(atr1.tipo).nombre_entidad+"\n");
+			entidades.get(atr2.tipo).AgregarForaneo(atr1);//Entidad que absorbe.
+		} 
+		else if (min2+max2==2)
+		{
+			//atr2 es 1:1
+			//Entidad del tipo atr1 absorbe a Entidad del atributo tipo atr2
+			System.out.println("el atributo "+ atr2.nombre+" tiene min y max 1:1, " +
+					"por ende "+ entidades.get(atr1.tipo).nombre_entidad +" absorbe a "+
+					entidades.get(atr2.tipo).nombre_entidad+"\n");
+			entidades.get(atr1.tipo).AgregarForaneo(atr2);//Entidad que absorbe.
+		}
+		else if(min1==0 && max1==1)
+		{
+			if (min2==0 && max2==1) {
+				//atr1 es 0:1 y atr2 es 0:1
+				System.out.println("Ambos atributos ("+atr1.nombre+ " , "+ atr2.nombre+") tienen 0:1"+
+						"por ende se crea una nueva entidad con uno de los dos como clave.");
+				//se crea una nueva entidad, donde uno de los dos sera clave y el otro ser alterno.
+				Entidad entNueva= CrearEntidadNueva(atr1);
+				//Coloco el otro atributo como un atributo foraneo.
+				entNueva.AgregarForaneo(atr2);
+				entidades.put(entNueva.tipo, entNueva);
+				System.out.println("Cree la entidad de nombre "+ entNueva.nombre_entidad+" y la meti en el hash\n");
 				
-				
-								
-				
+			} else {
+				// atr1 es 0:1 y atr2 es 0:N o 1:N
+				System.out.println("El atributo "+ atr1.nombre+" tiene 0:1, pero el atributo "+ atr2.nombre+
+						"tiene 0:N o 1:N\n");
+				// Se crea una nueva entidad donde atr1 sea clave y lo otro sea atributo normal.
+				Entidad nueva= CrearEntidadNueva(atr1);
+				//Coloco atr2 como foraneo.
+				nueva.AgregarForaneo(atr2);
+				entidades.put(nueva.tipo, nueva);
+				System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la meti en el hash\n");
 			}
 		}
-		
+		else if(min2==0 && max2==1){
+			//atr2 es 0:1, y atr1 ajuro debe ser 0:N o 1:N
+			System.out.println("El atributo "+atr2.nombre+" es 0:1 pero el atributo "+ atr1.nombre+ " es 0:N o 1:N"+
+					"por ende se debe crear una nueva entidad cuya clave sea la de la entidad "+ entidades.get(atr2.tipo).nombre_entidad);
+			//Se crea una nueva entidad donde atr2 sea clave y lo otro sea atributo normal.
+			Entidad nueva=CrearEntidadNueva(atr2);
+			
+			//coloco a atr1 como foraneo.
+			nueva.AgregarForaneo(atr1);
+			entidades.put(nueva.tipo, nueva);
+			System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la agregue al hash\n");
+		}
+		else {
+			System.out.println("Caso M:N Se crea una nueva entidad con clave de ambas entidades\n");
+			//M:N
+			// Se crea una nueva entidad con clave siendo la compuesta de los dos atr.
+			Entidad nueva= CrearEntidadNueva(atr1);
+			Vector<Atributo> claveEntAtr2= entidades.get(atr2.tipo).clave;
+			Iterator<Atributo> h= claveEntAtr2.iterator();
+			while(h.hasNext()){
+				//Clone cada atributo de la clave de la entidad de atr2 y la meti en el vector clave de la entidad nueva.
+				nueva.clave.add((Atributo)h.next().clone());
+			}
+			entidades.put(nueva.tipo, nueva);
+			System.out.println("Cree la entidad "+ nueva.nombre_entidad+" y la meti en el hash");
+		}
 	}
-*/
-	 /**
-	 * Permite insertar en la Entidad base los datos de otra entidad foránea
-	 * a la cual esta relacionada.
-	 * @param entidadBase Entidad que absorbe a la entidadForánea
-	 * @param entidadForanea Entidad cuyos datos serán colocados en la Entidad base.
+	
+	/**
+	 * Crea una nueva entidad que en realidad es ucna nueva tabla que permite representar una interrelacion.
+	 * Le coloca el nombre y el tipo segun el atributo dado y le pasa la clave de la entidad del atrobuto dado.
+	 * 
+	 * @param atr1 Atributo con datos para la nueva entidad
+	 * @return Entidad formada.
 	 */
-	public static void AgregarForaneo(Entidad entidadBase, Entidad entidadForanea){
+	public static Entidad CrearEntidadNueva(Atributo atr1){
+		Entidad entNueva= new Entidad();
+		Entidad entidadAtr1= entidades.get(atr1.tipo);// Entidad de Atributo1
+		//Coloco el nombre de la entidad
+		entNueva.nombre_entidad= atr1.nombre;
+		//Coloco el tipo de la entidad.
+		entNueva.tipo=atr1.nombre;
+		//Coloco la clave de la entidad, debe ser uno de los dos no mas, usare el de Atr1.
+		//Debo copiar y clonar el vector de clave para evitar paso por referencia.
+		Vector<Atributo> claveAtr1= entidadAtr1.clave;
+		Vector<Atributo> claveNew=new Vector<Atributo>();
 		
-		ArrayList<String> tupla= new ArrayList<String>();//Genero la tupla a insertar
-		tupla.add(entidadForanea.getNombre_entidad()); // Introduzco el nombre
-	//	tupla.add(entidadForanea.getClave()); //Introduzco la clave.
-		//entidadBase.AgregarForaneo(tupla);
+
+		Iterator<Atributo> g= claveAtr1.iterator();
+		while(g.hasNext()){
+			
+			claveNew.add((Atributo)g.next().clone());
+		}
+
 		
+		//Coloco la clave
+		entNueva.clave=claveNew;
+		return entNueva;
 	}
+	
 
 	/**
 	 * Parser de XMLSchema que almacena en determinadas estructuras de datos la informaci&#243n parseada, 
@@ -979,9 +1127,10 @@ public class Parser {
 				// Se obtienentodos los complexTypes Iterator<XSComplexType>
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-
-				ImprimirEntidades();
 				
+				VerInterrelaciones();
+				ImprimirEntidades();
+			
 			}
 		} catch (Exception exp) {
 			System.out.println("Error en la formacion del xml Schema\n");
