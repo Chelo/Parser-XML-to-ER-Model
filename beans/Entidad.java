@@ -28,7 +28,10 @@ public class Entidad {
 																									//Es un hashMap cuya clave es el tipo del atributo y el valor es un vector 
 																									// con atributos de ese tipo.
 	public Vector<Atributo> clave = new Vector<Atributo>();											//Clave de la Entidad.
-	public Vector<Atributo> foraneo= new Vector<Atributo>(); 																//Valores foráneos.
+
+	public Vector<Atributo> foraneo = new Vector<Atributo>();																//Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	
+
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
 	/**
@@ -71,6 +74,7 @@ public class Entidad {
 		this.referencias = newreferencias;
 	}
 	
+
 	/**
 	 * Devuelve los datos de las tablas foráneas.
 	 * 
