@@ -367,6 +367,29 @@ public class Parser {
 		}
 		return atributos;
 	}
+	
+	public static void TagRestriccion(List<XSIdentityConstraint> constraint, Entidad entidad){
+		System.out.println("CONSTRAINT ");
+		
+		int i = constraint.size()-1;
+		while (i>=0){
+			if (constraint.get(i).getCategory()== 0){
+				System.out.println("restriccion de clave");
+			}else if (constraint.get(i).getCategory()==2){
+				System.out.println("restriccion unique");
+			}else{
+				System.out.println("restriccion no valida");
+			}
+			System.out.println("Name :"+constraint.get(i).getName());
+			System.out.println("Categoria :"+constraint.get(i).getCategory());
+			System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
+			System.out.println("Parent :"+constraint.get(i).getParent());
+			System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
+			System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
+		
+			i--;
+		}
+	}
 
 	/**
 	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
@@ -387,20 +410,13 @@ public class Parser {
 			Entidad nueva_entidad = new Entidad();
 			String nombre = (String) claves.next();
 			XSElementDecl element = (XSElementDecl) valores.next();
+			List<XSIdentityConstraint> restricciones = element.getIdentityConstraints();
 			
-			System.out.println("CONSTRAINT "+element.getIdentityConstraints().toString());
-			constraint = element.getIdentityConstraints();
-			i = constraint.size()-1;
-			while (i>=0){
-				System.out.println("Name :"+constraint.get(i).getName());
-				System.out.println("Categoria :"+constraint.get(i).getCategory());
-				System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
-				System.out.println("Parent :"+constraint.get(i).getParent());
-				System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
-				System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
-			
-				i--;
+			if (restricciones.size()>0){
+				System.out.println("Tiene CONSTRAINT "+element.getIdentityConstraints().size());
+				TagRestriccion(restricciones, nueva_entidad);
 			}
+			
 			
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
