@@ -14,9 +14,9 @@ public class Principal {
 		//Estas tres líneas son solo para probar que dentro del main se puede 
 		//utilizar el hash de entidades (las pueden borrar)
 		//Para hacer uso del hash simplemente hacen Parser.entidades
-		System.out.print("Tamano del Hash de entidades/ Numero de entidades "+Parser.entidades.size()+ "\n");
-		System.out.print("Nombre de la primera entidad "+Parser.entidades.get("User").getNombre_entidad()+"\n");
-		System.out.print("Nombre de su primer atributo "+Parser.entidades.get("User").getAtributos().get(0).getNombre()+"\n");
+		//System.out.print("Tamano del Hash de entidades/ Numero de entidades "+Parser.entidades.size()+ "\n");
+		//System.out.print("Nombre de la primera entidad "+Parser.entidades.get("User").getNombre_entidad()+"\n");
+		//System.out.print("Nombre de su primer atributo "+Parser.entidades.get("User").getAtributos().get(0).getNombre()+"\n");
 
 		//Estas líneas son solo para probar el nuevo hash que necesita Daniel,(nombreEntidad, tipoEntidad) 
 		//(Luego se pueden borrar estas líneas)

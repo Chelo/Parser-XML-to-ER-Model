@@ -24,23 +24,28 @@ import org.xml.sax.helpers.XMLReaderFactory;
  */
 public class ParserXML extends DefaultHandler {
 
-	//private final static String targetFileName = "insert.sql";
-	private static String contenido      = "";
-	private static int    indent         = 0;
-	private static OrigenXML data;
-	private static int att; 
-	private final XMLReader xr;
+	private final static String targetFile = "insert.sql";
+	private static       String contenido      = "";
+	private static       int     indent         = 0;
+	private static       OrigenXML data;
+	private static       int       att; 
+	private final        XMLReader xr;
     
-    /** Crear una instancia de ParserXML */
+    /** Crear una instancia de ParserXML
+     *@throws SAXException 
+     */
     public ParserXML() throws SAXException {
     		xr = XMLReaderFactory.createXMLReader();
 	        xr.setContentHandler(this);
 	        xr.setErrorHandler(this);
 	        System.out.println("\nParserXML--");
     }
+    
+    /** Crear una instancia de ParserXML
+     *@throws SAXException IOExcepton 
+     */    
     public void leer(final String archivoXML) throws IOException, SAXException {
         FileReader fr = new FileReader(archivoXML);
-        System.out.println("Leer--");
         xr.parse(new InputSource(fr));
     }
 
@@ -48,11 +53,13 @@ public class ParserXML extends DefaultHandler {
      * @param int a
      */
     private void sumarIndent(int a) { indent=indent+a; }
+    
     /** Disminuye el valor de la variable Indent
      * @param int a
      */
     private void restarIndent(int a) { indent=indent-a; }  
-    /** Permite la indetacion dentro del  
+    
+    /** Permite la indetacion dentro del 
      * @param int indent
      * @return String buffer
 	 */
@@ -78,11 +85,16 @@ public class ParserXML extends DefaultHandler {
     	}
 		return false;
     }
+    /** Retorna un objeto Entidad, cuyo nombre_entidad es el mismo
+     *  que el parametro de entrada
+     * @param String name 
+     * @return Entidad
+	 */
     private Entidad buscarEntidadE(String name){
     	Entidad ent;
-    	
     	Set<String> tipos = Parser.entidades.keySet();
 		Iterator<String> cadaTipo = tipos.iterator();
+		
 		while ( cadaTipo.hasNext() ) {
 			String actual = cadaTipo.next();
 			if (Parser.entidades.get(actual).getNombre_entidad().compareTo(name)==0) {
@@ -99,6 +111,9 @@ public class ParserXML extends DefaultHandler {
 //    		System.out.println("nombre" + Parser.entidades.get(cadaTipo.next()).getNombre_entidad());
 //    	}
 //    }
+    /** Retorna un String con los campos finales que insertaran en la BD  
+     * @return String 
+	 */
     private static String listaCampos(){
     	String result = "";
     	int i=0;
@@ -111,30 +126,44 @@ public class ParserXML extends DefaultHandler {
     		}
     		i++;
     	}
+System.out.println("campos: " + result );
     	return result;
     }    
+    /** Retorna un String con los valores finales que insertaran en la BD  
+     * @return String 
+	 */
     private static String listaValores(){
     	String result = "";
-    	int i=0;
+    	String tipo   = "";
+    	int i         = 0;
     	while (i<data.getAtributos().size()) {
+    		tipo   = data.getAtributos().get(i).getTipo().toString();
+//System.out.println("i: "+ i);
+//System.out.println("tipo: "+ tipo);
+//System.out.println("result: "+ result);
     		if (i==0){
-    			result = result+data.getAtributos().get(0).getValor();
+    			if (tipo.compareTo("string")==0){//se compara con el tipo para colocar comillas
+    				result = "\""+data.getAtributos().get(0).getValor() + "\"";
+    			}else{
+    				result = data.getAtributos().get(0).getValor();
+    			}
     		}else {
-    			result = result + ", ";
-        		result = result+data.getAtributos().get(i).getValor();
+    			if (tipo.compareTo("string")==0){//se compara con el tipo para colocar comillas
+					result = result+", \""+data.getAtributos().get(0).getValor() + "\"" ;
+    			}else{
+    	        	result = result+ ", "+data.getAtributos().get(i).getValor();
+    			}
     		}
     		i++;
-    		System.out.println(result + data.getAtributos().size() );
+//System.out.println(result + data.getAtributos().size() );
     	}
     	return result;
-    }  
+    }
     private int buscarAtributo(String name){
     	int index = -1;
-    	int i=0;
+    	int i     =  0;
     	while (i<data.getAtributos().size()) {
-    		//System.out.println(data.getAtributos().get(i).getNombre().compareTo(name));
     		if ( data.getAtributos().get(i).getNombre().compareTo(name)==0){
-    			//System.out.println("entre____________");
     			return i;
     		}
     		i++;
@@ -147,7 +176,7 @@ public class ParserXML extends DefaultHandler {
     	//int k = 0;
 		try{
 		    //Se crea el archivo sql de salida.
-		    FileWriter fstream = new FileWriter("./insert.sql");
+		    FileWriter fstream = new FileWriter(targetFile);
 		    BufferedWriter insert = new BufferedWriter(fstream);
 		    
 		    //obtener lista de campos
@@ -180,6 +209,8 @@ public class ParserXML extends DefaultHandler {
     public void startElement(String uri, String name, String qName, Attributes atts) {
     	//listaEntidades();
    		if ( buscarEntidadB(name) ){
+   		//if (Parser./){    	
+   			System.out.println(getIndentSpaces(indent) +"<" + name + ">");
    			//obtener entidad
    			Entidad ent = buscarEntidadE(name);
 		
@@ -194,6 +225,7 @@ public class ParserXML extends DefaultHandler {
    			//data.setNombreTag(name);
    			//copiar los atributos
    		}else {
+   			sumarIndent(2);
    			//chequear si estan en mi vector atributos
    				//(deberia estar si el xml es valido)
    			att = buscarAtributo(name);
@@ -203,11 +235,12 @@ public class ParserXML extends DefaultHandler {
    			//System.out.println("encontrado: " + Parser.entidades.get(name).getNombre_entidad());
    			//imprimir indentacion
    			System.out.print(getIndentSpaces(indent) +"<" + name + ">");
+   			restarIndent(2);
    		}
     }
     @Override
     public void endElement(String uri, String name, String qName) {
-    	System.out.print(getIndentSpaces(indent) + "</" + name + ">");
+    	System.out.println(getIndentSpaces(indent) + "</" + name + ">");
     	if ( buscarEntidadB(name) ){
         	//llamar a InsertScript(); y los datos en data
     		InsertScript();
@@ -219,18 +252,16 @@ public class ParserXML extends DefaultHandler {
     	}
     }
     public void characters(char buf[], int offset, int len) throws SAXException {
-    	sumarIndent(2);
     	//guardar valor
     	contenido = new String(buf, offset, len);
     	//almacenar valor en el vector Atributo del atributo
     	if (att>-1){
     		data.getAtributos().get(att).setValor(contenido);
-    		System.out.print(getIndentSpaces(indent+2) + data.getAtributos().get(att).getValor());
+System.out.print(getIndentSpaces(indent+1) + data.getAtributos().get(att).getValor() + getIndentSpaces(indent+1));
     	}
-    	//System.out.print(getIndentSpaces(indent+2) + data.getAtributos().get(att).getValor());
-    	restarIndent(2);
-    }
+    }//end characters
 
+    
     
     
     /** Starts XML parsing example
