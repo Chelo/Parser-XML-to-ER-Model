@@ -832,137 +832,163 @@ public class Parser {
 			vectTipos.add(types);
 		}
 		
-		//Recorro el vector nuevo vector de tipos de entidades.
+		//Hash que controlará la visita de las entidades, para que nos e repitan.
+		HashMap<String,Vector<String>> visitados= new HashMap<String, Vector<String>>();
+		
+		//Recorro el vector nuevo de tipos de entidades.
 		Iterator<String> y= vectTipos.iterator();
 		while(y.hasNext()){
 			System.out.println("------------------Paso a la siguiente entidad-----------------------");
 			
 			String tipoEnt= y.next(); //Tipo de Ent.
 			Entidad ent = entidades.get(tipoEnt); //Entidad a estudiar.
+			
 			System.out.println("Entidad a tratar "+ ent.nombre_entidad+"\n");
 			//Recorro los tipos de las referencias y voy trabajando con los vectores.
 			Iterator<String> iter = ent.referencias.keySet().iterator();
 			
+			visitados.put(tipoEnt, new Vector<String>());
+			System.out.println("Meti a "+tipoEnt+" en el hash de visitados \n");
+			// Agrego al tipo en el hash de visitados.
+			
 			while(iter.hasNext()){
 				String tipoEnti = iter.next(); //Tipo a tratar de Enti.
-				Entidad enti= entidades.get(tipoEnti);  // Entidad relacionada con ent.
-				System.out.println(ent.nombre_entidad+" se relaciona con "+ enti.nombre_entidad+ "\n");	
-				
-				if (enti.getNombre_entidad().equals(ent.getNombre_entidad())) {
-					/*
-					 * Es una entidad que se relaciona consigo misma, quedamos que si tiene (1,1) se absorbe.
-					 * sino se crea otra entidad. 
-					 */
-					System.out.println("Es conmigo misma\n");
-					Vector<Atributo> refself= ent.referencias.get(tipoEnt); //Atributos de si mismo.
-					Iterator<Atributo> i= refself.iterator();
-					
-					while(i.hasNext()){
-						//Para cada atributo a mi mismo, veo si me absorbo o si creo otra entidad.
-						Atributo at = i.next();
-						if (at.minOccurs + at.maxOccurs == 2) {
-							//Se absorbe a si misma
-							ent.AgregarForaneo(at);
-							System.out.println("1:1, me absorvo\n");
-						} 
-						else 
-						{
-							//Se crea entidad.
-							System.out.println("No es 1:1, debo crear otra entidad.\n");
-							Entidad entidadNueva= new Entidad();
-							
-							//Introduzco la clave doble.
-							//Se debe insertar doble pues recordemos que se referencia a sí misma.
-							Vector<Atributo> clave = new Vector<Atributo>();
-							
-							Iterator<Atributo> iterador= ent.clave.iterator();
-							//OJO, estoy agregando una sola vez la clave, no la estoy poniendo doble
-							// aclarar duda para resolver esto.
-							
-							while(iterador.hasNext()){
-								/*
-								 * Debo clonar cada atributo y pasarlo al nuevo vector, para evitar paso por
-								 * referencia
-								 */
-								Atributo unaClave= iterador.next();
-								clave.add((Atributo)unaClave.clone());
-							}
-							
-							
-							entidadNueva.setClave(clave);
-							
-							//Introduzco nombre de la entidad, que por ahora es el nombre del atributo.
-							entidadNueva.nombre_entidad= at.nombre;
-							 
-							//Coloco tipo.
-							entidadNueva.tipo= at.nombre; // POR AHORA
-							
-							//introduzco en el hash.
-							entidades.put(entidadNueva.tipo, entidadNueva);
-							System.out.println("Cree una nueva entidad llamada "+ entidadNueva.nombre_entidad+"y la introduje en el hash\n");
-							
-
-						}
+				System.out.println("Busco si "+tipoEnti+ " esta en visitados y no soy yo mismo\n");
+				if(visitados.containsKey(tipoEnti) && !tipoEnt.equals(tipoEnti)){
+					System.out.println("si esta\nAhora busco si en su vector esta "+tipoEnt);
+					if(!visitados.get(tipoEnti).contains(tipoEnt))
+					{
+						System.out.println("Los atributos de tipo "+ tipoEnti+" de la entidad"+
+								entidades.get(tipoEnt).nombre_entidad+" no poseen referencia circular"+
+								" con la entidad" + entidades.get(tipoEnti).nombre_entidad);
 					}
 				}
 				else
 				{
-					Vector<Atributo> vectEnt = enti.clona(tipoEnt); //Referencias de Enti del tipo Ent.
-					Vector<Atributo> vectEnti = ent.clona(tipoEnti); //Referencias de Ent del tipo Enti.
-					/*
-					 * Estoy segura que el vector de Ent no es nulo porque de el fue que salio el tipo
-					 * de Enti 
-					 */
 					
-					if (vectEnt==null) {
-						//VIENE LA PARTE DE KARINA.
-						System.out.println("No hay referencia circular entre "+ent.nombre_entidad+" y "+enti.nombre_entidad+" parte de KArina");
+					visitados.get(tipoEnt).add(tipoEnti);//Lo agrego porq lo vi.
+					System.out.println("Meti a "+ tipoEnti+" en el vector de "+ tipoEnt);
+					Entidad enti= entidades.get(tipoEnti);  // Entidad relacionada con ent.
+					System.out.println(ent.nombre_entidad+" se relaciona con "+ enti.nombre_entidad+ "\n");	
+					
+					if (enti.getNombre_entidad().equals(ent.getNombre_entidad())) {
+						/*
+						 * Es una entidad que se relaciona consigo misma, quedamos que si tiene (1,1) se absorbe.
+						 * sino se crea otra entidad. 
+						 */
+						System.out.println("Es conmigo misma\n");
+						Vector<Atributo> refself= ent.referencias.get(tipoEnt); //Atributos de si mismo.
+						Iterator<Atributo> i= refself.iterator();
 						
-					} else {
-						if (vectEnt.size()+vectEnti.size()==2) {
-							//Ambos vectores son de tamaño 1 por ende debo asumir que se relacionan.
-							System.out.println(ent.nombre_entidad+" se relaciona bien con "+enti.nombre_entidad+"\n");
-							DefInterrelacion(vectEnt.get(0), vectEnti.get(0));
-						} 
-						else 
-						{
-							//Recorro un vector en otro buscando parejas por mismo nombre.
-							Iterator<Atributo> j=vectEnti.iterator();
-							boolean encontro=false;
-							while(j.hasNext()){
-								Atributo c= j.next();
-								String nombre= c.nombre;
-								Iterator<Atributo> k= vectEnt.iterator();
-								while(k.hasNext()){
-									Atributo b= k.next();
-									if (b.nombre.equals(nombre)) {
-										//Encontre la pareja.
-										//Saco a k del vector y los mando a Def.
-										vectEnt.remove(b);
-										encontro=true;
-										System.out.println(ent.nombre_entidad+" se relaciona con "+enti.nombre_entidad+" a través del atributo "+ b.nombre+"\n");
-										DefInterrelacion(b,c);
-										break;
+						while(i.hasNext()){
+							//Para cada atributo a mi mismo, veo si me absorbo o si creo otra entidad.
+							Atributo at = i.next();
+							if (at.minOccurs + at.maxOccurs == 2) {
+								//Se absorbe a si misma
+								ent.AgregarForaneo(at);
+								System.out.println("1:1, me absorvo\n");
+							} 
+							else 
+							{
+								//Se crea entidad.
+								System.out.println("No es 1:1, debo crear otra entidad.\n");
+								Entidad entidadNueva= new Entidad();
+								
+								//Introduzco la clave doble.
+								//Se debe insertar doble pues recordemos que se referencia a sí misma.
+								Vector<Atributo> clave = new Vector<Atributo>();
+								
+								Iterator<Atributo> iterador= ent.clave.iterator();
+								//OJO, estoy agregando una sola vez la clave, no la estoy poniendo doble
+								// aclarar duda para resolver esto.
+								
+								while(iterador.hasNext()){
+									/*
+									 * Debo clonar cada atributo y pasarlo al nuevo vector, para evitar paso por
+									 * referencia
+									 */
+									Atributo unaClave= iterador.next();
+									clave.add((Atributo)unaClave.clone());
+								}
+								
+								
+								entidadNueva.setClave(clave);
+								
+								//Introduzco nombre de la entidad, que por ahora es el nombre del atributo.
+								entidadNueva.nombre_entidad= at.nombre;
+								 
+								//Coloco tipo.
+								entidadNueva.tipo= at.nombre; // POR AHORA
+								
+								//introduzco en el hash.
+								entidades.put(entidadNueva.tipo, entidadNueva);
+								System.out.println("Cree una nueva entidad llamada "+ entidadNueva.nombre_entidad+"y la introduje en el hash\n");
+								
+
+							}
+						}
+					}
+					else
+					{
+						Vector<Atributo> vectEnt = enti.clona(tipoEnt); //Referencias de Enti del tipo Ent.
+						Vector<Atributo> vectEnti = ent.clona(tipoEnti); //Referencias de Ent del tipo Enti.
+						/*
+						 * Estoy segura que el vector de Ent no es nulo porque de el fue que salio el tipo
+						 * de Enti 
+						 */
+						
+						if (vectEnt==null) {
+							//VIENE LA PARTE DE KARINA.
+							System.out.println("No hay referencia circular entre "+ent.nombre_entidad+" y "+enti.nombre_entidad+" parte de KArina");
+							
+						} else {
+							if (vectEnt.size()+vectEnti.size()==2) {
+								//Ambos vectores son de tamaño 1 por ende debo asumir que se relacionan.
+								System.out.println(ent.nombre_entidad+" se relaciona bien con "+enti.nombre_entidad+"\n");
+								DefInterrelacion(vectEnt.get(0), vectEnti.get(0));
+							} 
+							else 
+							{
+								//Recorro un vector en otro buscando parejas por mismo nombre.
+								Iterator<Atributo> j=vectEnti.iterator();
+								boolean encontro=false;
+								while(j.hasNext()){
+									Atributo c= j.next();
+									String nombre= c.nombre;
+									Iterator<Atributo> k= vectEnt.iterator();
+									while(k.hasNext()){
+										Atributo b= k.next();
+										if (b.nombre.equals(nombre)) {
+											//Encontre la pareja.
+											//Saco a k del vector y los mando a Def.
+											vectEnt.remove(b);
+											encontro=true;
+											System.out.println(ent.nombre_entidad+" se relaciona con "+enti.nombre_entidad+" a través del atributo "+ b.nombre+"\n");
+											DefInterrelacion(b,c);
+											break;
+										}
+									}
+									if (!encontro) {
+										//no hay referencia circular.
+										System.out.println("No hay ref circular para el atributo "+ c.nombre+" de la entidad "+ ent.nombre_entidad+ "puede que sea una generalizacion\n");
+										//Karina.
 									}
 								}
-								if (!encontro) {
-									//no hay referencia circular.
-									System.out.println("No hay ref circular para el atributo "+ c.nombre+" de la entidad "+ ent.nombre_entidad+ "puede que sea una generalizacion\n");
+								if (vectEnt.size()!=0) {
+									Iterator<Atributo> t= vectEnt.iterator();
+									while(t.hasNext()){
+										System.out.println("No hay ref circular para el atributo "+ t.next().nombre+" de la entidad "+enti.nombre_entidad+" puede que sea una generalizacion");
+									}
+									//Quiere decir que aun quedaron atributos que no tenian pareja.
 									//Karina.
 								}
-							}
-							if (vectEnt.size()!=0) {
-								Iterator<Atributo> t= vectEnt.iterator();
-								while(t.hasNext()){
-									System.out.println("No hay ref circular para el atributo "+ t.next().nombre+" de la entidad "+enti.nombre_entidad+" puede que sea una generalizacion");
-								}
-								//Quiere decir que aun quedaron atributos que no tenian pareja.
-								//Karina.
 							}
 						}
 					}
 				}
+				
 			}
+			
 		}
 	}
 
