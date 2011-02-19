@@ -332,9 +332,17 @@ public class Parser {
 								nuevo_atributo.setMinOccurs(p.getMinOccurs());
 							}
 							//MaxOccurs
+							//Caso unbounded
 							if (p.getMaxOccurs() <= 0) {
-								System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
-								nuevo_atributo.setMaxOccurs(1);
+								if(p.getMaxOccurs() == -1)
+								{
+									nuevo_atributo.setMaxOccurs(2);
+								}
+								else
+								{	
+									System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
+									nuevo_atributo.setMaxOccurs(1);
+								}	
 							}
 							else
 							{	
@@ -343,7 +351,7 @@ public class Parser {
 						}
 					}	
 				}
-				//System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
+				System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
 				//System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 				
 				//Verificamos si es un atributo compuesto 
