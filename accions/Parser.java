@@ -475,8 +475,6 @@ public class Parser {
 	public static void leerEntidades(Iterator<String> claves, Iterator<XSElementDecl> valores) {
 		
 		String tipo;
-		List<XSIdentityConstraint> constraint;
-		int i = 0;
 		
 		while (claves.hasNext() && valores.hasNext()) {
 			Entidad nueva_entidad = new Entidad();
@@ -896,10 +894,10 @@ public class Parser {
 				}
 				
 				System.out.println("-----Atributos que forman la clave ---------");
-			/*	Iterator<Atributo> iter= entidad.clave.
+				Iterator<String> iter= entidad.clave.keySet().iterator();
 				while(iter.hasNext()){
-					System.out.println("Nombre: " + iter.next().nombre);
-				}*/
+					System.out.println("Nombre: " + iter.next());
+				}
 			}
 	}
 
@@ -991,23 +989,20 @@ public class Parser {
 								System.out.println("No es 1:1, debo crear otra entidad.\n");
 								Entidad entidadNueva= new Entidad();
 								
-								//Introduzco la clave doble.
+								//Introduzco la clave y coloco el atributo tambien como clave alterna.
 								//Se debe insertar doble pues recordemos que se referencia a sí misma.
-								Vector<Atributo> clave = new Vector<Atributo>();
+								HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
 								
-								Iterator<Atributo> iterador= ent.clave.newValueIterator();
-								//OJO, estoy agregando una sola vez la clave, no la estoy poniendo doble
-								// aclarar duda para resolver esto.
+								Iterator<Atributo> iterador= ent.clave.values().iterator();
 								
 								while(iterador.hasNext()){
 									/*
-									 * Debo clonar cada atributo y pasarlo al nuevo vector, para evitar paso por
+									 * Debo clonar cada atributo y pasarlo al nuevo hash, para evitar paso por
 									 * referencia
 									 */
 									Atributo unaClave= iterador.next();
-									clave.add((Atributo)unaClave.clone());
+									clave.put(new String(unaClave.nombre),(Atributo)unaClave.clone());
 								}
-								
 								
 								entidadNueva.setClave(clave);
 								
@@ -1160,12 +1155,15 @@ public class Parser {
 			//M:N
 			// Se crea una nueva entidad con clave siendo la compuesta de los dos atr.
 			Entidad nueva= CrearEntidadNueva(atr1);
-			Vector<Atributo> claveEntAtr2= entidades.get(atr2.tipo).clave;
-			Iterator<Atributo> h= claveEntAtr2.iterator();
+			System.out.println("cree la entidad... ahora metere la otra parte de la clave");
+			Iterator<Atributo> h= entidades.get(atr2.tipo).clave.values().iterator();
 			while(h.hasNext()){
 				//Clone cada atributo de la clave de la entidad de atr2 y la meti en el vector clave de la entidad nueva.
-				nueva.clave.add((Atributo)h.next().clone());
+				Atributo atr= h.next();
+				nueva.clave.put(new String(atr.nombre),(Atributo)atr.clone());
+				System.out.println("Meti la clave "+atr.nombre);
 			}
+			
 			entidades.put(nueva.tipo, nueva);
 			System.out.println("Cree la entidad "+ nueva.nombre_entidad+" y la meti en el hash");
 		}
@@ -1185,21 +1183,13 @@ public class Parser {
 		entNueva.nombre_entidad= atr1.nombre;
 		//Coloco el tipo de la entidad.
 		entNueva.tipo=atr1.nombre;
-		//Coloco la clave de la entidad, debe ser uno de los dos no mas, usare el de Atr1.
-		//Debo copiar y clonar el vector de clave para evitar paso por referencia.
-		Vector<Atributo> claveAtr1= entidadAtr1.clave;
-		Vector<Atributo> claveNew=new Vector<Atributo>();
-		
-
-		Iterator<Atributo> g= claveAtr1.iterator();
+		//Debo copiar y clonar el hash de clave para evitar paso por referencia.
+		Iterator<Atributo> g= entidadAtr1.clave.values().iterator();
 		while(g.hasNext()){
-			
-			claveNew.add((Atributo)g.next().clone());
+			Atributo atr= g.next();
+			entNueva.clave.put(new String(atr.nombre),(Atributo)atr.clone());
+			System.out.println("meti la clave "+atr.nombre);
 		}
-
-		
-		//Coloco la clave
-		entNueva.clave=claveNew;
 		return entNueva;
 	}
 	
