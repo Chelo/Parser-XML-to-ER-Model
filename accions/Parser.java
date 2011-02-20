@@ -822,41 +822,50 @@ public class Parser {
 				//Se obtiene los atributos que son referencias
 				
 				
-				Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
+				Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator(); 
+				Vector <Atributo> foraneos = new Vector<Atributo>();
+			
+				while(iter_for_ini.hasNext()){
+					
+					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
+					
+					int i = vector_iter_for.size()-1;
+					
+					while (i>=0){
+						foraneos = vector_iter_for.get(i);
+						j = foraneos.size();
+					
+						while (j >= 0) {
+							out.write("	"+foraneos.get(j).getNombre().toUpperCase()+
+							"	"+foraneos.get(j).getTipo().toUpperCase() +"	"+
+							Nulidad(foraneos.get(j))+" ,\n");
+							j--;
+						
+						}	i--;
+					}
+				}
+
+				iter_for_ini = entidad.foraneo.values().iterator(); 
 				
 			
-				while(iter_for.hasNext()){
-					Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
-
-					j= foraneos.size()-1;
+				while(iter_for_ini.hasNext()){
 					
+					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
 					
+					int i = vector_iter_for.size()-1;
 					
-					while (j >= 0) {
-						out.write("	"+foraneos.get(j).getNombre().toUpperCase()+
-						"	"+foraneos.get(j).getTipo().toUpperCase() +"	"+
-						Nulidad(foraneos.get(j))+" ,\n");
-						j--;
-					
-					}	
-					
-				}
-				
-				while(iter_for.hasNext()){
-					Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
-
-					j= foraneos.size()-1;
-					
-					while (j >= 0) {
-						out.write("	FOREIGN KEY "+"("+foraneos.get(j).getNombre().
-						toUpperCase()+")"+" REFERENCES "+ "("+entidades.
-						get(foraneos.get(j).getTipo()).nombre_entidad.
-						toUpperCase()+")"+" ,\n");
-						j--;
+					while (i>=0){
+						foraneos = vector_iter_for.get(i);
+						j = foraneos.size();
+						while (j >= 0) {
+							out.write("	FOREIGN KEY "+"("+foraneos.get(j).getNombre().
+							toUpperCase()+")"+" REFERENCES "+ "("+entidades.
+							get(foraneos.get(j).getTipo()).nombre_entidad.
+							toUpperCase()+")"+" ,\n");
+							j--;
+						} i --;
 					}
-					
-				}
-							
+				}		
 				
 					
 				
@@ -961,29 +970,38 @@ public class Parser {
 			}
 			
 			//Se obitiene un iterador que recorre los vectores que poseen entidades.
-			Iterator<Vector<Atributo>> itera = entidad.referencias.values().iterator(); 
+			
 			
 			System.out.println("-- Atributos Hechos por el usuario--");
-			while(itera.hasNext()){
-				Vector<Atributo> referencias = itera.next();//Vector a trabajar.
 
-				j= referencias.size()-1;
+			Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator(); 
+			Vector <Atributo> foraneos = new Vector<Atributo>();
+		
+			while(iter_for_ini.hasNext()){
+				
+				Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
+				
+				int i = vector_iter_for.size()-1;
+				
+				while (i>=0){
+					foraneos = vector_iter_for.get(i);
+					j = foraneos.size();
 				
 				while (j >= 0) {
-					System.out.println("	Nombre : " + referencias.get(j).getNombre());
-					System.out.println("		Tipo : " + referencias.get(j).getTipo());
-					System.out.println("		Nulo : " + referencias.get(j).isNulo());
-					System.out.println("		MinOccurs : " + referencias.get(j).getMinOccurs());
-					System.out.println("		MaxOccurs : " + referencias.get(j).getMaxOccurs());
+					System.out.println("	Nombre : " + foraneos.get(j).getNombre());
+					System.out.println("		Tipo : " + foraneos.get(j).getTipo());
+					System.out.println("		Nulo : " + foraneos.get(j).isNulo());
+					System.out.println("		MinOccurs : " + foraneos.get(j).getMinOccurs());
+					System.out.println("		MaxOccurs : " + foraneos.get(j).getMaxOccurs());
 
 					j--;
 				}
-				
+				i--;
 			}
 			
+			}
 			
-			
-			Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
+		/**	Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
 			
 			System.out.println("-- Atributos foraneos--");
 			while(iter_for.hasNext()){
@@ -1001,7 +1019,7 @@ public class Parser {
 					j--;
 				}
 				
-			}
+			}*/
 			
 		
 				
