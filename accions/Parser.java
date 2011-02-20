@@ -198,22 +198,43 @@ public class Parser {
 	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
-		//suponiendo que la clave no es compuestas
-		System.out.print("Que pasa\n");
-		Atributo clave_entidad = entidad.getClave().get(0);
-		System.out.print("Que pasa\n");
-		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
-		clave.put(clave_entidad.nombre,clave_entidad);
+		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
+		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
+		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
+		Atributo aux = new Atributo();
+		Atributo aux2 = new Atributo();
+		
+		String nombre = "";
+		Iterator<String> iter = clave_entidad.keySet().iterator();
 		
 		
-		clave_entidad.setTipo(entidad.getTipo());
+		//revisar lo de multivaluado		
+		
+		while (iter.hasNext()){
+			nombre = iter.next();
+			aux= clave_entidad.get(nombre);
+		//	nuevos_atributos.add(aux); ESTO ESTA MALLLLLLLLLLLLLLLLLLLLLLLLLLL REVISAR
+			
+			
+			aux2 = (Atributo) aux;
+			aux2.setTipo(entidad.tipo);
+			nuevos_atributos2.add(aux2);
+			//System.out.println("CLAVE ENTIDAD "+ clave_entidad.get(iter.next()).nombre);
+		}
+		
+
 		nueva.setNombre_entidad(atributo.nombre);
-		nueva.setAtributo(atributo);
-		nueva.setAtributo(clave.get(0));
-		nueva.setReferencia(clave_entidad);//setforaneo
+		nueva.setForaneo(nuevos_atributos2);
+		nuevos_atributos.add(atributo);
+		nueva.setAtributos(nuevos_atributos);
+		
+		
+		
+		//nueva.setAtributo(clave.get(0));
+		
 		nueva.setTipo(atributo.getNombre());
-		clave.put(atributo.nombre,atributo);
-		nueva.setClave(clave);
+		clave_entidad.put(atributo.nombre,atributo);
+		nueva.setClave(clave_entidad);
 		
 		entidades.put(atributo.getNombre(), nueva);
 	}
@@ -451,14 +472,27 @@ public class Parser {
 	}
 	
 	public static void TagRestriccion(List<XSIdentityConstraint> constraint, Entidad entidad){
+		HashMap<String,Atributo> clave =  entidad.getClave();
 		System.out.println("CONSTRAINT ");
 		
 		int i = constraint.size()-1;
 		while (i>=0){
 			if (constraint.get(i).getCategory()== 0){
-				System.out.println("restriccion de clave");
+				System.out.println("RESTICCION CLAVE");
+				
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+					clave.put(constraint.get(i).getFields().get(0).getXPath().value,null);
+				}
+				else System.out.println("ALERTA : Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
+				
 			}else if (constraint.get(i).getCategory()==2){
-				System.out.println("restriccion unique");
+				System.out.println("RESTICCION UNIQUE");
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+					entidad.getClave().put(constraint.get(i).getFields().get(0).getXPath().value,null);
+				}
+				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
+				
+				
 			}else{
 				System.out.println("restriccion no valida");
 			}
@@ -470,7 +504,8 @@ public class Parser {
 			System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
 		
 			i--;
-		}
+		}entidad.setClave(clave);
+		
 	}
 
 	/**
@@ -492,10 +527,7 @@ public class Parser {
 			XSElementDecl element = (XSElementDecl) valores.next();
 			List<XSIdentityConstraint> restricciones = element.getIdentityConstraints();
 			
-			if (restricciones.size()>0){
-				System.out.println("Tiene CONSTRAINT "+element.getIdentityConstraints().size());
-				TagRestriccion(restricciones, nueva_entidad);
-			}
+			
 			
 			
 			tipo = element.getType().getName();
@@ -503,6 +535,11 @@ public class Parser {
 			nueva_entidad.setNombre_entidad(nombre);
 			entidades.put(tipo, nueva_entidad);	
 			nombreEntidades.put(nombre, tipo);
+			
+			if (restricciones.size()>0){
+				System.out.println("Tiene CONSTRAINT "+element.getIdentityConstraints().size());
+				TagRestriccion(restricciones, nueva_entidad);
+			}
 		}
 			
 	}
@@ -655,6 +692,40 @@ public class Parser {
 		return str.substring(0, str.length()-1);
 	}
 	
+	public static void defineClave(Entidad entidad){
+		Vector<Atributo> atributos =  entidad.getAtributos();
+		HashMap<String,Atributo> clave = entidad.getClave();
+		
+		int j = atributos.size()-1;
+		while (j>=0){
+			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
+				clave.remove(atributos.get(j).nombre);
+				clave.put(atributos.get(j).nombre,atributos.get(j));
+				
+			}j--;	
+		}
+		
+		clave.remove("");
+		Iterator<String> iter = clave.keySet().iterator();
+		HashMap<String,Atributo> clave2 = (HashMap<String, Atributo>) clave.clone();
+		
+		try {
+			while (iter.hasNext()){
+				String nombre = iter.next();
+			
+				if (clave.get(nombre)==null){
+					System.out.println("ALERTA : " +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad);
+					clave2.remove(nombre);
+					
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		entidad.setClave(clave2);
+	}
+	
 	/**
 	 * Dada una entidad se varifica que tenga clave primaria y se returna
 	 * su valor
@@ -663,6 +734,11 @@ public class Parser {
 	 */
 	public static String retornaClave(Entidad entidad){
 		HashMap<String,Atributo> clave = entidad.getClave();
+		 Iterator<String> iter = clave.keySet().iterator();
+	
+		/*while(iter.hasNext()){
+			System.out.println("Nombre: " + iter.next());
+		}*/
 		
 		int i = clave.size();
 		String salida = "(";
@@ -671,12 +747,12 @@ public class Parser {
 				return "(Clave no definida";
 			}
 			else if (i==1){
-				return "("+clave.get(0).getNombre().toUpperCase();
+				return "("+clave.get(iter.next()).nombre.toUpperCase();
 			}else{
-				i--;
-				while (i>=0) {
-					salida = salida+clave.get(i).getNombre()+",";
-				i--;	
+				
+				while (iter.hasNext()) {
+					salida = salida+clave.get(iter.next()).nombre+",";
+			
 				}
 				return salida.substring(0, salida.length()-1);
 			}
@@ -754,8 +830,8 @@ public class Parser {
 						Nulidad(referencias.get(j))+" ,\n");
 						j--;
 					
-					
-					j= referencias.size()-1;					
+					}				
+					j= referencias.size()-1;
 					//Se agregan los contraints de clave foranea a la entidad.
 					while (j >= 0) {
 						out.write("	FOREIGN KEY "+"("+referencias.get(j).getNombre().
@@ -764,7 +840,7 @@ public class Parser {
 						toUpperCase()+")"+" ,\n");
 						j--;
 					}
-				}
+				
 				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
@@ -818,7 +894,7 @@ public class Parser {
 					l--;
 				}
 				
-				
+				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
 				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
 				toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
@@ -1106,7 +1182,7 @@ public class Parser {
 		int max1= atr1.maxOccurs;
 		int min2= atr2.minOccurs;
 		int max2= atr2.maxOccurs;
-		if (min1+max1==2) {
+		if (min1==1 && max1==1) {
 			//atr1 es 1:1
 			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
 			System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
@@ -1114,7 +1190,7 @@ public class Parser {
 					entidades.get(atr1.tipo).nombre_entidad+"\n");
 			entidades.get(atr2.tipo).AgregarForaneo(atr1);//Entidad que absorbe.
 		} 
-		else if (min2+max2==2)
+		else if (min2==1 && max2==1)
 		{
 			//atr2 es 1:1
 			//Entidad del tipo atr1 absorbe a Entidad del atributo tipo atr2
