@@ -856,7 +856,7 @@ public class Parser {
 					
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
-						j = foraneos.size();
+						j = foraneos.size()-1;
 						while (j >= 0) {
 							out.write("	FOREIGN KEY "+"("+foraneos.get(j).getNombre().
 							toUpperCase()+")"+" REFERENCES "+ "("+entidades.
