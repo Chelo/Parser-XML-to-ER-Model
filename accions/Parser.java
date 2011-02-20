@@ -1092,7 +1092,7 @@ public class Parser {
 							Atributo at = i.next();
 							if (at.minOccurs + at.maxOccurs == 2) {
 								//Se absorbe a si misma
-								ent.AgregarForaneo(at);
+								ent.AgregarForaneo(ent.nombre_entidad,ent.clave.values());
 								System.out.println("1:1, me absorvo\n");
 							} 
 							else 
@@ -1214,7 +1214,8 @@ public class Parser {
 			System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
 					"por ende "+ entidades.get(atr2.tipo).nombre_entidad +" absorbe a "+
 					entidades.get(atr1.tipo).nombre_entidad+"\n");
-			entidades.get(atr2.tipo).AgregarForaneo(atr1);//Entidad que absorbe.
+			Entidad ent1= entidades.get(atr1.tipo);
+			entidades.get(atr2.tipo).AgregarForaneo(ent1.nombre_entidad,ent1.clave.values());//Entidad que absorbe.
 		} 
 		else if (min2==1 && max2==1)
 		{
@@ -1223,7 +1224,8 @@ public class Parser {
 			System.out.println("el atributo "+ atr2.nombre+" tiene min y max 1:1, " +
 					"por ende "+ entidades.get(atr1.tipo).nombre_entidad +" absorbe a "+
 					entidades.get(atr2.tipo).nombre_entidad+"\n");
-			entidades.get(atr1.tipo).AgregarForaneo(atr2);//Entidad que absorbe.
+			Entidad ent2=entidades.get(atr2.tipo);
+			entidades.get(atr1.tipo).AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());//Entidad que absorbe.
 		}
 		else if(min1==0 && max1==1)
 		{
@@ -1234,7 +1236,8 @@ public class Parser {
 				//se crea una nueva entidad, donde uno de los dos sera clave y el otro ser alterno.
 				Entidad entNueva= CrearEntidadNueva(atr1);
 				//Coloco el otro atributo como un atributo foraneo.
-				entNueva.AgregarForaneo(atr2);
+				Entidad ent2= entidades.get(atr2.tipo);
+				entNueva.AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());
 				entidades.put(entNueva.tipo, entNueva);
 				System.out.println("Cree la entidad de nombre "+ entNueva.nombre_entidad+" y la meti en el hash\n");
 				
@@ -1245,7 +1248,8 @@ public class Parser {
 				// Se crea una nueva entidad donde atr1 sea clave y lo otro sea atributo normal.
 				Entidad nueva= CrearEntidadNueva(atr1);
 				//Coloco atr2 como foraneo.
-				nueva.AgregarForaneo(atr2);
+				Entidad ent2= entidades.get(atr2.tipo);
+				nueva.AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());
 				entidades.put(nueva.tipo, nueva);
 				System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la meti en el hash\n");
 			}
@@ -1258,7 +1262,8 @@ public class Parser {
 			Entidad nueva=CrearEntidadNueva(atr2);
 			
 			//coloco a atr1 como foraneo.
-			nueva.AgregarForaneo(atr1);
+			Entidad ent1= entidades.get(atr1.tipo);
+			nueva.AgregarForaneo(ent1.nombre_entidad,ent1.clave.values());
 			entidades.put(nueva.tipo, nueva);
 			System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la agregue al hash\n");
 		}

@@ -1,5 +1,6 @@
 package beans;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
@@ -24,10 +25,12 @@ public class Entidad {
 	
 	public String nombre_entidad;																	//Nombre de la entidad.
 	public Vector<Atributo> atributos=  new Vector<Atributo>(); 									//Atributos de la entidad.
-	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	//Atributos que representan interrelación con otras Entidades.
-	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
-	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();//Clave de la Entidad.
-	public HashMap<String,Vector<Atributo>> foraneo = new HashMap<String,Vector<Atributo>>();								    //Valores foráneos, ArrayList de tipo <NombreEntidad,clave>.
+	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	/*Hash cuya clave es el tipo de la entidad y el valor es el vector de atributos
+																										del tip de la entidad*/
+	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
+	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
+	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el nombre de la entidad foránea, valor, el vector de Vectores de Atributos
+																									// donde cada vector tiene los atributos que son claves de la entidad foránea
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
 	
@@ -39,11 +42,11 @@ public class Entidad {
 		this.unico = unico;
 	}
 	
-	public HashMap<String, Vector<Atributo>> getForaneo() {
+	public HashMap<String, Vector<Vector<Atributo>>> getForaneo() {
 		return foraneo;
 	}
 
-	public void setForaneo(HashMap<String, Vector<Atributo>> foraneo) {
+	public void setForaneo(HashMap<String, Vector<Vector<Atributo>>> foraneo) {
 		this.foraneo = foraneo;
 	}
 
@@ -106,10 +109,6 @@ public class Entidad {
 	public void setTipo(String tipo) {
 		this.tipo = tipo;
 	}
-
-
-	
-
 
 	public HashMap<String, Atributo> getClave() {
 		return clave;
@@ -196,5 +195,52 @@ public class Entidad {
 			}
 			return newRef;
 		}
+	}
+	
+	
+	/**
+	 * Se encarga de colocar nuevos valores foraneos a la entidad actual.
+	 * Los datos entrantes son de la entidad que absorbera la entidad actual.
+	 * 
+	 * @param nombre String que indica el nombre de la entidad
+	 * @param clave Vector con los atributos que forman la clave de la Entidad a
+	 * 			absorber.
+	 */
+	public void AgregarForaneo(String nombre, Collection<Atributo> clave){
+		/*
+		 * Recordemos que lo único que puede ser foráneo son las claves.
+		 */
+		
+		//Sea lo que sea... necesito iterar sobre este vector.
+		
+		Iterator<Atributo> itr = clave.iterator();
+		Vector<Atributo> vector= new Vector<Atributo>();
+		Vector<Vector<Atributo>> vectores=new Vector<Vector<Atributo>>();
+		
+		if (!foraneo.containsKey(nombre)) {
+			//Si la entidad foranea no esta creo todo nuevo y la inserto en el hash.
+		
+			while(itr.hasNext()){
+				//Clono a cada atributo de la clave y lo paso al vector
+				vector.add((Atributo)itr.next().clone());
+			}
+			vectores.add(vector);
+			foraneo.put(nombre_entidad,vectores);
+		}
+		else 
+		{
+			//Si la entidad ya esta, agrego un nuevo vector con la clave.
+			vectores= foraneo.get(nombre);
+			String concatena=Integer.toString(vectores.size());
+			
+			while(itr.hasNext()){
+				Atributo atributo=(Atributo)itr.next().clone();
+				//Cambio el nombre de cada atributo para que se coloque con calma en el SQL.
+				atributo.nombre=atributo.nombre+concatena;
+				vector.add(atributo);
+			}
+			vectores.add(vector);
+		}
+		
 	}
 }	
