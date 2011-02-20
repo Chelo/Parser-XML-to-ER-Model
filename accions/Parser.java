@@ -225,7 +225,7 @@ public class Parser {
 		
 
 		nueva.setNombre_entidad(atributo.nombre);
-		nueva.setForaneo(nuevos_atributos2);
+		//nueva.setForaneo(nuevos_atributos2);
 		nuevos_atributos.add(atributo);
 		nueva.setAtributos(nuevos_atributos);
 		
@@ -708,6 +708,7 @@ public class Parser {
 		
 		clave.remove("");
 		Iterator<String> iter = clave.keySet().iterator();
+	
 		HashMap<String,Atributo> clave2 = (HashMap<String, Atributo>) clave.clone();
 		
 		try {
@@ -821,26 +822,43 @@ public class Parser {
 				//Se obtiene los atributos que son referencias
 				
 				
+				Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
+				
 			
-					Vector<Atributo> referencias= entidad.foraneo;
-					j= referencias.size()-1;
-					//Se agregan los atributos que hacen referencias en la entidad
+				while(iter_for.hasNext()){
+					Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
+
+					j= foraneos.size()-1;
+					
+					
+					
 					while (j >= 0) {
-						out.write("	"+referencias.get(j).getNombre().toUpperCase()+
-						"	"+ referencias.get(j).getTipo().toUpperCase() +"	"+
-						Nulidad(referencias.get(j))+" ,\n");
+						out.write("	"+foraneos.get(j).getNombre().toUpperCase()+
+						"	"+foraneos.get(j).getTipo().toUpperCase() +"	"+
+						Nulidad(foraneos.get(j))+" ,\n");
 						j--;
 					
-					}				
-					j= referencias.size()-1;
-					//Se agregan los contraints de clave foranea a la entidad.
+					}	
+					
+				}
+				
+				while(iter_for.hasNext()){
+					Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
+
+					j= foraneos.size()-1;
+					
 					while (j >= 0) {
-						out.write("	FOREIGN KEY "+"("+referencias.get(j).getNombre().
+						out.write("	FOREIGN KEY "+"("+foraneos.get(j).getNombre().
 						toUpperCase()+")"+" REFERENCES "+ "("+entidades.
-						get(referencias.get(j).getTipo()).nombre_entidad.
+						get(foraneos.get(j).getTipo()).nombre_entidad.
 						toUpperCase()+")"+" ,\n");
 						j--;
 					}
+					
+				}
+							
+				
+					
 				
 				
 				k = booleanos.size()-1;
@@ -963,22 +981,29 @@ public class Parser {
 				
 			}
 			
-			Vector<Atributo> foraneos =entidad.foraneo;//Vector a trabajar.
 			
 			
-				System.out.println("-- Atributos foraneos!--");
-				
+			Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
+			
+			System.out.println("-- Atributos foraneos--");
+			while(iter_for.hasNext()){
+				Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
+
 				j= foraneos.size()-1;
 				
 				while (j >= 0) {
 					System.out.println("	Nombre : " + foraneos.get(j).getNombre());
 					System.out.println("		Tipo : " + foraneos.get(j).getTipo());
 					System.out.println("		Nulo : " + foraneos.get(j).isNulo());
-					System.out.println("		MinOccurs : " + foraneos.get(j).getMinOccurs());
+					System.out.println("		MinOccurs : " +foraneos.get(j).getMinOccurs());
 					System.out.println("		MaxOccurs : " + foraneos.get(j).getMaxOccurs());
-	
+
 					j--;
 				}
+				
+			}
+			
+		
 				
 				System.out.println("-----Atributos que forman la clave ---------");
 				Iterator<String> iter= entidad.clave.keySet().iterator();
