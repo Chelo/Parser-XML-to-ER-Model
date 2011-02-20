@@ -212,12 +212,14 @@ public class Entidad {
 		 */
 		
 		//Sea lo que sea... necesito iterar sobre este vector.
+		System.out.println("Entre en agregar foraneo con la entidad "+ nombre);
 		
 		Iterator<Atributo> itr = clave.iterator();
 		Vector<Atributo> vector= new Vector<Atributo>();
 		Vector<Vector<Atributo>> vectores=new Vector<Vector<Atributo>>();
 		
 		if (!foraneo.containsKey(nombre)) {
+			System.out.println(nombre_entidad+" no tiene como foraneo a "+nombre+" lo agregare\n");
 			//Si la entidad foranea no esta creo todo nuevo y la inserto en el hash.
 		
 			while(itr.hasNext()){
@@ -229,6 +231,7 @@ public class Entidad {
 		}
 		else 
 		{
+			System.out.println(nombre_entidad+" tiene ya como foraneo a "+nombre+" agregare sus valores de nuevo\n");
 			//Si la entidad ya esta, agrego un nuevo vector con la clave.
 			vectores= foraneo.get(nombre);
 			String concatena=Integer.toString(vectores.size());

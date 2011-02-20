@@ -833,7 +833,7 @@ public class Parser {
 					
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
-						j = foraneos.size();
+						j = foraneos.size()-1;
 					
 						while (j >= 0) {
 							out.write("	"+foraneos.get(j).getNombre().toUpperCase()+
@@ -972,7 +972,7 @@ public class Parser {
 			//Se obitiene un iterador que recorre los vectores que poseen entidades.
 			
 			
-			System.out.println("-- Atributos Hechos por el usuario--");
+			System.out.println("-- Atributos Foraneos --");
 
 			Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator(); 
 			Vector <Atributo> foraneos = new Vector<Atributo>();
@@ -985,7 +985,7 @@ public class Parser {
 				
 				while (i>=0){
 					foraneos = vector_iter_for.get(i);
-					j = foraneos.size();
+					j = foraneos.size()-1;
 				
 				while (j >= 0) {
 					System.out.println("	Nombre : " + foraneos.get(j).getNombre());
@@ -1001,8 +1001,12 @@ public class Parser {
 			
 			}
 			
-		/**	Iterator<Vector<Atributo>> iter_for = entidad.foraneo.values().iterator(); 
-			
+		/*Iterator<String> iter_for = entidad.foraneo.keySet().iterator(); 
+			while(iter_for.hasNext()){
+				
+				
+			}
+			}
 			System.out.println("-- Atributos foraneos--");
 			while(iter_for.hasNext()){
 				Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
@@ -1019,9 +1023,9 @@ public class Parser {
 					j--;
 				}
 				
-			}*/
+			}
 			
-		
+		*/
 				
 				System.out.println("-----Atributos que forman la clave ---------");
 				Iterator<String> iter= entidad.clave.keySet().iterator();
