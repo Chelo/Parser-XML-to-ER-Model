@@ -198,20 +198,44 @@ public class Parser {
 	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
-		//suponiendo que la clave no es compuestas
-		Atributo clave_entidad = entidad.getClave().get(0);
-		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
-		clave.put(clave_entidad.nombre,clave_entidad);
+		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
+		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
+		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
+		Atributo aux = new Atributo();
+		Atributo aux2 = new Atributo();
+		
+		String nombre = "";
+		Iterator<String> iter = clave_entidad.keySet().iterator();
 		
 		
-		clave_entidad.setTipo(entidad.getTipo());
+		//revisar lo de multivaluado
+		
+		
+		while (iter.hasNext()){
+			nombre = iter.next();
+			aux= clave_entidad.get(nombre);
+		//	nuevos_atributos.add(aux); ESTO ESTA MALLLLLLLLLLLLLLLLLLLLLLLLLLL REVISAR
+			
+			
+			aux2 = (Atributo) aux;
+			aux2.setTipo(entidad.tipo);
+			nuevos_atributos2.add(aux2);
+			//System.out.println("CLAVE ENTIDAD "+ clave_entidad.get(iter.next()).nombre);
+		}
+		
+
 		nueva.setNombre_entidad(atributo.nombre);
-		nueva.setAtributo(atributo);
-		nueva.setAtributo(clave.get(0));
-		nueva.setReferencia(clave_entidad);//setforaneo
+		nueva.setForaneo(nuevos_atributos2);
+		nuevos_atributos.add(atributo);
+		nueva.setAtributos(nuevos_atributos);
+		
+		
+		
+		//nueva.setAtributo(clave.get(0));
+		
 		nueva.setTipo(atributo.getNombre());
-		clave.put(atributo.nombre,atributo);
-		nueva.setClave(clave);
+		clave_entidad.put(atributo.nombre,atributo);
+		nueva.setClave(clave_entidad);
 		
 		entidades.put(atributo.getNombre(), nueva);
 	}
@@ -661,6 +685,11 @@ public class Parser {
 	 */
 	public static String retornaClave(Entidad entidad){
 		HashMap<String,Atributo> clave = entidad.getClave();
+		 Iterator<String> iter = clave.keySet().iterator();
+	
+		/*while(iter.hasNext()){
+			System.out.println("Nombre: " + iter.next());
+		}*/
 		
 		int i = clave.size();
 		String salida = "(";
@@ -669,12 +698,12 @@ public class Parser {
 				return "(Clave no definida";
 			}
 			else if (i==1){
-				return "("+clave.get(0).getNombre().toUpperCase();
+				return "("+clave.get(iter.next()).nombre.toUpperCase();
 			}else{
-				i--;
-				while (i>=0) {
-					salida = salida+clave.get(i).getNombre()+",";
-				i--;	
+				
+				while (iter.hasNext()) {
+					salida = salida+clave.get(iter.next()).nombre+",";
+			
 				}
 				return salida.substring(0, salida.length()-1);
 			}
@@ -752,8 +781,8 @@ public class Parser {
 						Nulidad(referencias.get(j))+" ,\n");
 						j--;
 					
-					
-					j= referencias.size()-1;					
+					}				
+					j= referencias.size()-1;
 					//Se agregan los contraints de clave foranea a la entidad.
 					while (j >= 0) {
 						out.write("	FOREIGN KEY "+"("+referencias.get(j).getNombre().
@@ -762,7 +791,7 @@ public class Parser {
 						toUpperCase()+")"+" ,\n");
 						j--;
 					}
-				}
+				
 				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
