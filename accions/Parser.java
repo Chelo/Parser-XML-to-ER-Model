@@ -199,7 +199,9 @@ public class Parser {
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
 		Entidad nueva = new Entidad();
 		//suponiendo que la clave no es compuestas
+		System.out.print("Que pasa\n");
 		Atributo clave_entidad = entidad.getClave().get(0);
+		System.out.print("Que pasa\n");
 		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
 		clave.put(clave_entidad.nombre,clave_entidad);
 		
@@ -352,7 +354,7 @@ public class Parser {
 					}	
 				}
 				System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
-				//System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
+				System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 				
 				//Verificamos si es un atributo compuesto 
 				if(tipoAttr == null )
