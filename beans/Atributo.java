@@ -24,7 +24,7 @@ public class Atributo implements Cloneable {
 	public String nombre = null;                         //Nombre del Atributo. 
 	public String tipo = null;   						 //Tipo del Atributo.
 	public String valorPorDefecto = ""; 				 //Valor por Defecto que puede tener el Atributo.
-	public String longitud = ""; 						 //Longitud máxima que puede tener el Atributo.
+	public String longitud = null; 						 //Longitud máxima que puede tener el Atributo.
 	public boolean nulo =  true; 						 // Permite saber si el atributo puede ser nulo o no.
 	public String minRango= "-1" ; 						 // Mínimo valor que puede tener el Atributo. 
 	public String maxRango=  "-1"; 						 // Máximo valor que puede tener el Atributo. 
