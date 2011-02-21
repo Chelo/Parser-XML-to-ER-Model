@@ -227,7 +227,7 @@ public class Entidad {
 				vector.add((Atributo)itr.next().clone());
 			}
 			vectores.add(vector);
-			foraneo.put(nombre_entidad,vectores);
+			foraneo.put(nombre,vectores);
 		}
 		else 
 		{

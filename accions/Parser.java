@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -202,37 +203,24 @@ public class Parser {
 		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
 		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
 		Atributo aux = new Atributo();
-		Atributo aux2 = new Atributo();
-		
+		HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();
+		Vector<Vector<Atributo>> agregar_foraneo =  new Vector<Vector<Atributo>>();
 		String nombre = "";
+		
 		Iterator<String> iter = clave_entidad.keySet().iterator();
-		
-		
-		//revisar lo de multivaluado
-		
-		
 		while (iter.hasNext()){
 			nombre = iter.next();
 			aux= clave_entidad.get(nombre);
-		//	nuevos_atributos.add(aux); ESTO ESTA MALLLLLLLLLLLLLLLLLLLLLLLLLLL REVISAR
-			
-			
-			aux2 = (Atributo) aux;
-			aux2.setTipo(entidad.tipo);
-			nuevos_atributos2.add(aux2);
-			//System.out.println("CLAVE ENTIDAD "+ clave_entidad.get(iter.next()).nombre);
+			nuevos_atributos2.add(aux);
 		}
 		
-
+		Collections.reverse(nuevos_atributos2);
+		agregar_foraneo.add(nuevos_atributos2 );
+		foraneo.put(entidad.tipo,agregar_foraneo);
 		nueva.setNombre_entidad(atributo.nombre);
-		//nueva.setForaneo(nuevos_atributos2);
 		nuevos_atributos.add(atributo);
 		nueva.setAtributos(nuevos_atributos);
-		
-		
-		
-		//nueva.setAtributo(clave.get(0));
-		
+		nueva.setForaneo(foraneo);
 		nueva.setTipo(atributo.getNombre());
 		clave_entidad.put(atributo.nombre,atributo);
 		nueva.setClave(clave_entidad);
@@ -756,9 +744,28 @@ public class Parser {
 					salida = salida+clave.get(iter.next()).nombre+",";
 			
 				}
-				return salida.substring(0, salida.length()-1);
+				return salida.substring(0, salida.length()-1).toUpperCase();
 			}
 		
+	}
+	
+	public static String retornaForaneos(Vector<Atributo> vector){
+		int i = vector.size();
+		String salida = "(";
+		
+			if (i==0){
+				return "(Atributo no definido";
+			}
+			else if (i==1){
+				return "("+vector.get(0).nombre.toUpperCase();
+			}else{
+				i--;
+				while (i>=0) {
+					salida = salida+vector.get(i).nombre+",";
+					i--;
+				}
+				return salida.substring(0, salida.length()-1).toUpperCase();
+			}
 	}
 	
 	/**
@@ -837,7 +844,7 @@ public class Parser {
 					
 						while (j >= 0) {
 							out.write("	"+foraneos.get(j).getNombre().toUpperCase()+
-							"	"+foraneos.get(j).getTipo().toUpperCase() +"	"+
+							"	"+TipoDato(foraneos.get(j)).toUpperCase() +"	"+
 							Nulidad(foraneos.get(j))+" ,\n");
 							j--;
 						
@@ -845,27 +852,28 @@ public class Parser {
 					}
 				}
 
-				iter_for_ini = entidad.foraneo.values().iterator(); 
-				
+				iter_for_ini = entidad.foraneo.values().iterator();
+				Iterator<String> iter_for_ini_f = entidad.foraneo.keySet().iterator();
+				foraneos = new Vector<Atributo>();
 			
 				while(iter_for_ini.hasNext()){
 					
 					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
 					
 					int i = vector_iter_for.size()-1;
+					String tipo= iter_for_ini_f.next();
 					
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
-						j = foraneos.size()-1;
-						while (j >= 0) {
-							out.write("	FOREIGN KEY "+"("+foraneos.get(j).getNombre().
-							toUpperCase()+")"+" REFERENCES "+ "("+entidades.
-							get(foraneos.get(j).getTipo()).nombre_entidad.
-							toUpperCase()+")"+" ,\n");
-							j--;
-						} i --;
-					}
-				}		
+						
+						
+							out.write("	CONTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
+									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
+		
+							i --;
+						} 
+					
+				}	
 				
 					
 				
@@ -926,7 +934,7 @@ public class Parser {
 				//Se agrega la clave primaria a la entidad
 				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
 				toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
-				toUpperCase()+");\n\n");
+				toUpperCase()+")\n);\n");
 			}  
 			
 		    //Se cierra el output de escritura en el archivo sql
@@ -1114,7 +1122,7 @@ public class Parser {
 							Atributo at = i.next();
 							if (at.minOccurs + at.maxOccurs == 2) {
 								//Se absorbe a si misma
-								ent.AgregarForaneo(ent.nombre_entidad,ent.clave.values());
+								ent.AgregarForaneo(ent.tipo,ent.clave.values());
 								System.out.println("1:1, me absorvo\n");
 							} 
 							else 
@@ -1237,7 +1245,7 @@ public class Parser {
 					"por ende "+ entidades.get(atr2.tipo).nombre_entidad +" absorbe a "+
 					entidades.get(atr1.tipo).nombre_entidad+"\n");
 			Entidad ent1= entidades.get(atr1.tipo);
-			entidades.get(atr2.tipo).AgregarForaneo(ent1.nombre_entidad,ent1.clave.values());//Entidad que absorbe.
+			entidades.get(atr2.tipo).AgregarForaneo(ent1.tipo,ent1.clave.values());//Entidad que absorbe.
 		} 
 		else if (min2==1 && max2==1)
 		{
@@ -1247,7 +1255,7 @@ public class Parser {
 					"por ende "+ entidades.get(atr1.tipo).nombre_entidad +" absorbe a "+
 					entidades.get(atr2.tipo).nombre_entidad+"\n");
 			Entidad ent2=entidades.get(atr2.tipo);
-			entidades.get(atr1.tipo).AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());//Entidad que absorbe.
+			entidades.get(atr1.tipo).AgregarForaneo(ent2.tipo,ent2.clave.values());//Entidad que absorbe.
 		}
 		else if(min1==0 && max1==1)
 		{
@@ -1259,7 +1267,7 @@ public class Parser {
 				Entidad entNueva= CrearEntidadNueva(atr1);
 				//Coloco el otro atributo como un atributo foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
-				entNueva.AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());
+				entNueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
 				entidades.put(entNueva.tipo, entNueva);
 				System.out.println("Cree la entidad de nombre "+ entNueva.nombre_entidad+" y la meti en el hash\n");
 				
@@ -1271,7 +1279,7 @@ public class Parser {
 				Entidad nueva= CrearEntidadNueva(atr1);
 				//Coloco atr2 como foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
-				nueva.AgregarForaneo(ent2.nombre_entidad,ent2.clave.values());
+				nueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
 				entidades.put(nueva.tipo, nueva);
 				System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la meti en el hash\n");
 			}
@@ -1285,7 +1293,7 @@ public class Parser {
 			
 			//coloco a atr1 como foraneo.
 			Entidad ent1= entidades.get(atr1.tipo);
-			nueva.AgregarForaneo(ent1.nombre_entidad,ent1.clave.values());
+			nueva.AgregarForaneo(ent1.tipo,ent1.clave.values());
 			entidades.put(nueva.tipo, nueva);
 			System.out.println("Cree la entidad de nombre "+ nueva.nombre_entidad+" y la agregue al hash\n");
 		}
