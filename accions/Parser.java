@@ -166,11 +166,11 @@ public class Parser {
 		
 		XSAttributeDecl decl = null;
 		Vector<Atributo> atributos = new Vector<Atributo>();
-		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
+		
 		
 		String id = "ID";
 		Entidad entidad = entidades.get(tipoEntidad);
-		
+		HashMap<String,Atributo> clave = entidad.getClave();
 		for (XSAttributeUse attributeUse : complex.getAttributeUses()) {
 		
 			Atributo nuevo_atributo = new Atributo();
@@ -460,42 +460,39 @@ public class Parser {
 		return atributos;
 	}
 	
+	/**
+	 * Permite identificar las restricciones de tipo <tag> que posee la entidad si las tiene definidas
+	 * @param constraint lista con todos los contraints definidos en la entidad
+	 * @param entidad en que se definen los contraints
+	 */
 	public static void TagRestriccion(List<XSIdentityConstraint> constraint, Entidad entidad){
 		HashMap<String,Atributo> clave =  entidad.getClave();
-		System.out.println("CONSTRAINT ");
-		
+		HashMap<String,Atributo> unico =  entidad.getUnico();
 		int i = constraint.size()-1;
+		
 		while (i>=0){
-			if (constraint.get(i).getCategory()== 0){
-				System.out.println("RESTICCION CLAVE");
-				
+			//Se verifica si existe restricciones del tipo <key>
+			if (constraint.get(i).getCategory()== 0){ 
+				//se verifica que el atributo este definido
 				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
 					clave.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
 				else System.out.println("ALERTA : Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
-				
+			//Se verifican si existen restricciones del tipo <unique>
 			}else if (constraint.get(i).getCategory()==2){
-				System.out.println("RESTICCION UNIQUE");
+				//se verifica que el atributo este definido
 				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
-					entidad.getClave().put(constraint.get(i).getFields().get(0).getXPath().value,null);
+					unico.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
-				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
-				
-				
+				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);		
 			}else{
-				System.out.println("restriccion no valida");
+				System.out.println("ALERTA : Restriccion no valida en el parser\n");
 			}
-			System.out.println("Name :"+constraint.get(i).getName());
-			System.out.println("Categoria :"+constraint.get(i).getCategory());
-			System.out.println("NameSpace :"+constraint.get(i).getTargetNamespace());
-			System.out.println("Parent :"+constraint.get(i).getParent());
-			System.out.println("Field :"+constraint.get(i).getFields().get(0).getXPath().value);
-			System.out.println("Selector :"+constraint.get(i).getSelector().getXPath());
-		
-			i--;
-		}entidad.setClave(clave);
-		
+		i--;
 	}
+		entidad.setClave(clave);
+		entidad.setUnico(unico);
+}
 
 	/**
 	 *  La funci&#243n leerElementos es la encargada de leer y almacenar en un hash de Entidades, 
@@ -516,17 +513,14 @@ public class Parser {
 			XSElementDecl element = (XSElementDecl) valores.next();
 			List<XSIdentityConstraint> restricciones = element.getIdentityConstraints();
 			
-			
-			
-			
 			tipo = element.getType().getName();
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
 			entidades.put(tipo, nueva_entidad);	
 			nombreEntidades.put(nombre, tipo);
 			
+			//se verifican las restricciones del tipo <tag>
 			if (restricciones.size()>0){
-				System.out.println("Tiene CONSTRAINT "+element.getIdentityConstraints().size());
 				TagRestriccion(restricciones, nueva_entidad);
 			}
 		}
@@ -681,9 +675,20 @@ public class Parser {
 		return str.substring(0, str.length()-1);
 	}
 	
+	/**
+	 * Se define la clave de la entidad. Chequea que se este bien definida y verifica que no sea nula
+	 * @param entidad a la que se desea definir la entidad
+	 */
 	public static void defineClave(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> clave = entidad.getClave();
+		HashMap<String,Atributo> unico = entidad.getUnico();
+		unico.remove("");
+		clave.remove("");
+		
+		if (unico.size()>0 && clave.size()==0){
+			clave = (HashMap<String, Atributo>) unico.clone();
+		}
 		
 		int j = atributos.size()-1;
 		while (j>=0){
@@ -694,9 +699,8 @@ public class Parser {
 			}j--;	
 		}
 		
-		clave.remove("");
+		
 		Iterator<String> iter = clave.keySet().iterator();
-	
 		HashMap<String,Atributo> clave2 = (HashMap<String, Atributo>) clave.clone();
 		
 		try {
@@ -717,7 +721,52 @@ public class Parser {
 	}
 	
 	/**
-	 * Dada una entidad se varifica que tenga clave primaria y se returna
+	 * Se definen los atributos unicos pertenecientes a la entidad.
+	 * @param entidad en la cual se estan observando los atributos
+	 */
+	public static void defineUnico(Entidad entidad){
+		Vector<Atributo> atributos =  entidad.getAtributos();
+		HashMap<String,Atributo> unico = entidad.getUnico();
+		HashMap<String,Atributo> clave = entidad.getClave();
+		unico.remove("");
+	
+		if (unico.size()>0 && clave.size()==0){
+			clave = (HashMap<String, Atributo>) unico.clone();
+			entidad.setClave(clave);
+			entidad.setUnico(new HashMap<String, Atributo>());
+			
+		}else{
+			int j = atributos.size()-1;
+			while (j>=0){
+				if (unico.containsKey(atributos.get(j).nombre) && unico.get(atributos.get(j).nombre)==null ){
+					unico.remove(atributos.get(j).nombre);
+					unico.put(atributos.get(j).nombre,atributos.get(j));
+					
+				}j--;	
+			}
+			Iterator<String> iter = unico.keySet().iterator();
+		
+			HashMap<String,Atributo> clave2 = (HashMap<String, Atributo>) unico.clone();
+			
+			try {
+				while (iter.hasNext()){
+					String nombre = iter.next();
+				
+					if (unico.get(nombre)==null){
+						System.out.println("ALERTA : " +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad);
+						clave2.remove(nombre);			
+					}
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			entidad.setUnico(clave2);
+		}
+	}
+	
+	/**
+	 * Dada una entidad se verifica que tenga clave primaria y se retorna
 	 * su valor
 	 * @param entidad en la cual se desea búscar la clave.
 	 * @return String que contiene la clave de la entidad.
@@ -749,6 +798,11 @@ public class Parser {
 		
 	}
 	
+	/**
+	 * Se verican si existen referencias en la entidad
+	 * @param vector que contiene los atributos que son referencias a otras entidades
+	 * @return String resultante con los atributos que son referencia a otra entidad
+	 */
 	public static String retornaForaneos(Vector<Atributo> vector){
 		int i = vector.size();
 		String salida = "(";
@@ -866,7 +920,6 @@ public class Parser {
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
 						
-						
 							out.write("	CONTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
 									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
 		
@@ -874,10 +927,6 @@ public class Parser {
 						} 
 					
 				}	
-				
-					
-				
-				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
@@ -928,6 +977,14 @@ public class Parser {
 					}
 					
 					l--;
+				}
+				
+				defineUnico(entidad);
+				HashMap<String,Atributo> unico = entidad.getUnico();
+				Iterator<Atributo> iter_unico = unico.values().iterator();
+				
+				while (iter_unico.hasNext()){
+					out.write("	CONTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
 				}
 				
 				defineClave(entidad);
@@ -1008,33 +1065,7 @@ public class Parser {
 			}
 			
 			}
-			
-		/*Iterator<String> iter_for = entidad.foraneo.keySet().iterator(); 
-			while(iter_for.hasNext()){
-				
-				
-			}
-			}
-			System.out.println("-- Atributos foraneos--");
-			while(iter_for.hasNext()){
-				Vector<Atributo> foraneos = iter_for.next();//Vector a trabajar.
-
-				j= foraneos.size()-1;
-				
-				while (j >= 0) {
-					System.out.println("	Nombre : " + foraneos.get(j).getNombre());
-					System.out.println("		Tipo : " + foraneos.get(j).getTipo());
-					System.out.println("		Nulo : " + foraneos.get(j).isNulo());
-					System.out.println("		MinOccurs : " +foraneos.get(j).getMinOccurs());
-					System.out.println("		MaxOccurs : " + foraneos.get(j).getMaxOccurs());
-
-					j--;
-				}
-				
-			}
-			
-		*/
-				
+	
 				System.out.println("-----Atributos que forman la clave ---------");
 				Iterator<String> iter= entidad.clave.keySet().iterator();
 				while(iter.hasNext()){

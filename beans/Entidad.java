@@ -25,27 +25,38 @@ public class Entidad {
 	
 	public String nombre_entidad;																	//Nombre de la entidad.
 	public Vector<Atributo> atributos=  new Vector<Atributo>(); 									//Atributos de la entidad.
-	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	/*Hash cuya clave es el tipo de la entidad y el valor es el vector de atributos
-																										del tip de la entidad*/
+	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();
 	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el nombre de la entidad foránea, valor, el vector de Vectores de Atributos
-																									// donde cada vector tiene los atributos que son claves de la entidad foránea
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	
-	
+	/**
+	 * Retorna los atributos unicos de la entidad
+	 * @return Hashmap con los atributos unicos de la entidad
+	 */
 	public HashMap<String, Atributo> getUnico() {
 		return unico;
 	}
 
+	/**
+	 * Coloca los atributos unicos pertenecientes a la entidad
+	 * @param unico
+	 */
 	public void setUnico(HashMap<String, Atributo> unico) {
 		this.unico = unico;
 	}
-	
+	/**
+	 *  Retorna todos los atributos que hacen referencias a otras entidades.
+	 * @return HashMap con los atributos que hacen referencias a otras entidades
+	 */
 	public HashMap<String, Vector<Vector<Atributo>>> getForaneo() {
 		return foraneo;
 	}
-
+	/**
+	 * Permite almacenar los atributos que hacen referencia hacia otras entidades
+	 * @param foraneo
+	 */
 	public void setForaneo(HashMap<String, Vector<Vector<Atributo>>> foraneo) {
 		this.foraneo = foraneo;
 	}
@@ -110,10 +121,18 @@ public class Entidad {
 		this.tipo = tipo;
 	}
 
+	/**
+	 * Permite obtener los atributos que son forman la clave entidad
+	 * @return HashMa con los atributos que forman las clave primaria de la entidad
+	 */
 	public HashMap<String, Atributo> getClave() {
 		return clave;
 	}
 
+	/**
+	 * Permite almacenar los atributos que forman la clave de la entidad
+	 * @param clave
+	 */
 	public void setClave(HashMap<String, Atributo> clave) {
 		this.clave = clave;
 	}
