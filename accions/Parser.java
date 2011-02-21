@@ -50,7 +50,9 @@ public class Parser {
 	//La clave del HashMap es el nombre del complexType dentro del cual se definen los atributos de la correspondiente entidad
 	public static HashMap<String, Entidad> entidades = new HashMap<String, Entidad>();
 	public static HashMap<String, String> nombreEntidades = new HashMap<String, String>();
-	
+	public static HashMap<String, XSComplexType> complexSinEntidad = new HashMap<String, XSComplexType>() ;
+	public static HashMap<String, XSComplexType> subclases = new HashMap<String, XSComplexType>() ;
+	public static Vector<String> superclases = new Vector<String>() ;
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo 
 	 * XSOM parser y parsear el archivo (XMLSchema) indicado el 
@@ -206,6 +208,7 @@ public class Parser {
 		HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();
 		Vector<Vector<Atributo>> agregar_foraneo =  new Vector<Vector<Atributo>>();
 		String nombre = "";
+
 		
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
@@ -245,39 +248,85 @@ public class Parser {
 	 * y que ser&#225n parseados por esta funci&#243n. 
 	 */
 	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos, boolean parteDecompuesto) {
-		XSTerm pterm;
-		XSRestrictionSimpleType restriction;
-		String id = "ID";
-
-		// Se crea el vector de los tipos básicos y se le meten esos valores
-		Vector<String> tiposBasicos = new Vector<String>();
-		tiposBasicos.add("string");
-		tiposBasicos.add("decimal");
-		tiposBasicos.add("integer");
-		tiposBasicos.add("boolean");
-		tiposBasicos.add("date");
-		tiposBasicos.add("time");
-		//OJO ESTO PUEDE SER PELIGROSO
-		//tiposBasicos.add("anySimpleType");
-		//tiposBasicos.add("null");
-		tiposBasicos.add("ID");
 		
+		XSTerm pterm;
 		String nombreAttr;
 		String tipoAttr=null;
-		String valorPorDefecto;
-		boolean esCompuesto = false;
-		Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
-		HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
-
 		
-		int i = 0;
 		for (XSParticle p : particles) 
 		{
-			Atributo nuevo_atributo = new Atributo();
 			pterm = p.getTerm();
-			i++;
-
-			if (pterm.isElementDecl()) { // xs:element inside complex type
+			
+			//Caso de generalización / especialización
+			if (pterm.isModelGroup()) 
+			{
+				XSModelGroup xsModelGroup2 = pterm.asModelGroup();
+				XSParticle [] particles2 = xsModelGroup2.getChildren();
+				
+				int minOccurs = p.getMinOccurs();
+		        int maxOccurs = p.getMaxOccurs();
+		        String compositor = xsModelGroup2.getCompositor().toString();
+		        
+		        System.out.println("min "+ minOccurs+ "max "+maxOccurs + "compositor "+ compositor+ "\n");
+				// se verifica que sea sequence o choice
+				if((!compositor.equals(XSModelGroup.Compositor.CHOICE)) && (!compositor.equals(XSModelGroup.Compositor.SEQUENCE))) 
+				{
+					System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
+							"> que se refieren a una generalización / especialización deben estar definidos entre el " +
+							"compositor <sequence> (solapado), <choice> (disjunto) \n  " +
+							"Cambie el compositor para evitar inconsistencias al momento de cargar los datos.");	
+				}
+				//Aqui podría ya extraer toda la información de si es disjunto, solapado, total o parcial
+				//Ahora leo cada una de las referencias a subclases
+				for (XSParticle p1 : particles2)
+				{
+					XSTerm pterm1 = p1.getTerm();
+					if (pterm1.isElementDecl()) 
+					{ 
+						// Se obtiene el nombre del atributo
+						nombreAttr = pterm1.asElementDecl().getName();
+						System.out.print("Nombre: "+ nombreAttr+"\n");
+						
+						// Se obtiene el tipo del atributo
+						tipoAttr = pterm1.asElementDecl().getType().getName();
+						System.out.print("Tipo: "+ tipoAttr+"\n");
+						
+						if(complexSinEntidad.containsKey(tipoAttr))
+						{
+							System.out.print("Si soy complexSinEntidad "+ tipoAttr +"\n");
+							XSComplexType complex = (XSComplexType) complexSinEntidad.get(tipoAttr);
+							subclases.put(tipoAttr, complex);
+							
+						}	
+							
+					}	
+				}	
+				superclases.add(tipo);	
+			}
+			
+			// Caso atributo normal
+			if (pterm.isElementDecl()) 
+			{ 
+				String id = "ID";
+				// Se crea el vector de los tipos básicos y se le meten esos valores
+				Vector<String> tiposBasicos = new Vector<String>();
+				tiposBasicos.add("string");
+				tiposBasicos.add("decimal");
+				tiposBasicos.add("integer");
+				tiposBasicos.add("boolean");
+				tiposBasicos.add("date");
+				tiposBasicos.add("time");
+				//OJO ESTO PUEDE SER PELIGROSO
+				//tiposBasicos.add("anySimpleType");
+				//tiposBasicos.add("null");
+				tiposBasicos.add("ID");
+				
+				XSRestrictionSimpleType restriction;
+				String valorPorDefecto;
+				boolean esCompuesto = false;
+				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
+				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
+				Atributo nuevo_atributo = new Atributo();
 				
 				// Se obtiene el nombre del atributo
 				nombreAttr = pterm.asElementDecl().getName();
@@ -346,7 +395,7 @@ public class Parser {
 							//MaxOccurs
 							//Caso unbounded
 							if (p.getMaxOccurs() <= 0) {
-								if(p.getMaxOccurs() == -1)
+								if(p.getMaxOccurs() == XSParticle.UNBOUNDED)
 								{
 									nuevo_atributo.setMaxOccurs(2);
 								}
@@ -361,9 +410,17 @@ public class Parser {
 								nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
 							}
 						}
+						if(nuevo_atributo.getMinOccurs()>nuevo_atributo.getMaxOccurs())
+						{
+							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+
+									" es mayor que el maxOccurs.\n El minOccurs siempre debe ser menor que el maxOccurs \n " +
+									"Se colocará minOccurs = 0 y maxOccurs = 1 por defecto \n");
+							nuevo_atributo.setMinOccurs(0);
+							nuevo_atributo.setMaxOccurs(1);
+						}	
 					}	
 				}
-				System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
+				//System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
 				//System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 				
 				//Verificamos si es un atributo compuesto 
@@ -531,9 +588,9 @@ public class Parser {
 	 *  La funci&#243n leerAtributosEntidades es la encargada de leer y almacenar por cada ComplexType que defina a una 
 	 *  Entidad dentro del XMLSchema, todos sus atributos con sus restricciones. Esta funci&#243n se apoya de las funciones
 	 *  auxiliares leerAtributos2 y leerElementos
-	 * @param claves Iterador de String, en el que se almacenan los nombres de los ComplexTypes que pudieran definir Entidades.
+	 * @param claves Iterador de String, en el que se almacenan los nombres de los ComplexTypes que definen Entidades.
 	 * @param valores Iterador de XSComplexType que contiene la informaci&#243n de cada uno de los ComplexType definidos
-	 * en el nivel m&#225s externo de anidamiento, que pudieran estar definiendo a Entidades.
+	 * en el nivel m&#225s externo de anidamiento, que definen a Entidades.
 	 */
 	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores){	
 		
@@ -544,48 +601,52 @@ public class Parser {
 		XSModelGroup xsModelGroup;
 		XSParticle[] particles;
 		
-		while (claves.hasNext() && valores.hasNext()) {
-			
+		//Se leen los complexType que si corresponden a Entidades
+		while (claves.hasNext() && valores.hasNext())
+		{	
 			String tipo = (String) claves.next();
-			if(!entidades.containsKey(tipo)){
-				System.out.print("ALERTA: El elemento del tipo "+ tipo +" no esta definido.\n " +
-						"No se creará el tipo "+ tipo +", ni la Entidad hasta que no realice los cambios \n");
-				valores.next();
-			}
-			else
-			{
-				complex = (XSComplexType) valores.next();
-				
-				// Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE y se agregan estos a su respectiva entidad
-				leerAtributos2(complex,tipo);
-				
-				// Estamos en busqueda de examinar los atributos de tipo ELEMENT
-				contenido = complex.getContentType();
-				particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
-	
-				// Se verifica que el complexType sea diferente de nulo
-				if (particle != null) {
-					term = particle.getTerm();
-					if (term.isModelGroup()) {
-						xsModelGroup = term.asModelGroup();
-						particles = xsModelGroup.getChildren();
-	
-						// se verifica que sea sequence, all o choice
-						if(!xsModelGroup.getCompositor().toString().equals("sequence"))
-						{
-							//Ojo esto podría cambiar cuando se implementen las n-arias
-							System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
-									"> deben estar definidos entre el compositor <sequence> \n  Agregue el compositor <sequence> " +
-									"para evitar inconsistencias al momento de cargar los datos.");	
-						}		
+			complex = (XSComplexType) valores.next();
+			// Se verifica si los elementos tienen atributos con el tipo ATTRIBUTE y se agregan estos a su respectiva entidad
+			leerAtributos2(complex,tipo);
+			
+			// Estamos en busqueda de examinar los atributos de tipo ELEMENT
+			contenido = complex.getContentType();
+			particle = contenido.asParticle(); // Se optienen los elementos dentro del complexType
 
-						// Se leen los atributos de las entidades
-						Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
-						atributos = leerElementos(particles,tipo,atributos,false);
-						entidades.get(tipo).setAtributos(atributos);
-					}
+			// Se verifica que el complexType sea diferente de nulo
+			if (particle != null) {
+				term = particle.getTerm();
+				if (term.isModelGroup()) {
+					xsModelGroup = term.asModelGroup();
+					particles = xsModelGroup.getChildren();
+
+					// se verifica que sea sequence, all o choice
+					if(!xsModelGroup.getCompositor().toString().equals("sequence"))
+					{
+						//Ojo esto podría cambiar cuando se implementen las n-arias
+						System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
+								"> deben estar definidos entre el compositor <sequence> \n  Agregue el compositor <sequence> " +
+								"para evitar inconsistencias al momento de cargar los datos.");	
+					}		
+
+					// Se leen los atributos de las entidades
+					Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
+					atributos = leerElementos(particles,tipo,atributos,false);
+					entidades.get(tipo).setAtributos(atributos);
 				}
 			}
+		}
+		//Se muestra error para aquellos ComplexType que nunca se les definio 
+		//entidad, pero que tampoco fueron referenciados como subclases por ninguna entidad (superclase)
+		Iterator<String> SinEntidad = complexSinEntidad.keySet().iterator();
+		while(SinEntidad.hasNext())
+		{	
+			String next = (String) SinEntidad.next();
+			if(!subclases.containsKey(next))
+			{	
+				System.out.print("ALERTA: El elemento del tipo "+ next +" no esta definido.\n " +
+						"No se creará el tipo "+ next +", ni la Entidad hasta que no realice los cambios \n");
+			}	
 		}
 	}
 	
@@ -1411,12 +1472,26 @@ public class Parser {
 				
 				leerEntidades(claves, valores);
 												 
-				// ComplexTypes (al menos los del nivel más externo
+				// ComplexTypes (Del nivel más externo)
 				Map<String, XSComplexType> mapa = (Map<String, XSComplexType>) schema.getComplexTypes();
-				System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
+				//System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
 				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator(); 
-				// Se obtienentodos los complexTypes Iterator<XSComplexType>
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
+				
+				HashMap<String, XSComplexType> nuevo_mapa = new HashMap<String, XSComplexType>();
+				//Nos quedamos solo con los complexType que definen a entidades
+				while (claves1.hasNext() && valores1.hasNext()) 
+				{
+					String tipo = (String) claves1.next();
+					XSComplexType complex = (XSComplexType) valores1.next();
+					if(!entidades.containsKey(tipo))
+						complexSinEntidad.put(tipo, complex);
+					else
+						nuevo_mapa.put(tipo, complex);
+				}
+				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator(); 
+				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
+	
 				LeerAtributosEntidades(claves1, valores1);
 				
 				VerInterrelaciones();
