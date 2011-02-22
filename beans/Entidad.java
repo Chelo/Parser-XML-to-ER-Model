@@ -221,8 +221,8 @@ public class Entidad {
 	 * Se encarga de colocar nuevos valores foraneos a la entidad actual.
 	 * Los datos entrantes son de la entidad que absorbera la entidad actual.
 	 * 
-	 * @param nombre String que indica el nombre de la entidad
-	 * @param clave Vector con los atributos que forman la clave de la Entidad a
+	 * @param nombre String que indica el tipo de la entidad.
+	 * @param clave Collection con los atributos que forman la clave de la Entidad a
 	 * 			absorber.
 	 */
 	public void AgregarForaneo(String nombre, Collection<Atributo> clave){
@@ -230,27 +230,31 @@ public class Entidad {
 		 * Recordemos que lo único que puede ser foráneo son las claves.
 		 */
 		
-		//Sea lo que sea... necesito iterar sobre este vector.
-		System.out.println("Entre en agregar foraneo con la entidad "+ nombre);
-		
+		//Recorro la colletion de claves.
 		Iterator<Atributo> itr = clave.iterator();
-		Vector<Atributo> vector= new Vector<Atributo>();
-		Vector<Vector<Atributo>> vectores=new Vector<Vector<Atributo>>();
+		
+		Vector<Atributo> vector= new Vector<Atributo>();// Vector donde se meteran los clones.
+		
+		Vector<Vector<Atributo>> vectores=new Vector<Vector<Atributo>>(); //vector donde se meteran los vectores creados.
 		
 		if (!foraneo.containsKey(nombre)) {
-			System.out.println(nombre_entidad+" no tiene como foraneo a "+nombre+" lo agregare\n");
 			//Si la entidad foranea no esta creo todo nuevo y la inserto en el hash.
 		
 			while(itr.hasNext()){
 				//Clono a cada atributo de la clave y lo paso al vector
-				vector.add((Atributo)itr.next().clone());
+				Atributo atri=(Atributo)itr.next().clone();
+				if (nombre.equals(tipo)) {
+					//Soy yo mismo, debo cambiar el nombre del atributo.
+					atri.nombre=atri.nombre+"_F";
+				}
+				
+				vector.add(atri);
 			}
 			vectores.add(vector);
 			foraneo.put(nombre,vectores);
 		}
 		else 
 		{
-			System.out.println(nombre_entidad+" tiene ya como foraneo a "+nombre+" agregare sus valores de nuevo\n");
 			//Si la entidad ya esta, agrego un nuevo vector con la clave.
 			vectores= foraneo.get(nombre);
 			String concatena=Integer.toString(vectores.size());
@@ -263,6 +267,5 @@ public class Entidad {
 			}
 			vectores.add(vector);
 		}
-		
 	}
 }	
