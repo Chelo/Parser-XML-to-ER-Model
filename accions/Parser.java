@@ -786,6 +786,15 @@ public class Parser {
 						atributosSub.addAll(atributosSup);
 						entidades.get(subcl).setAtributos(atributosSub);
 						entidades.get(subcl).setClave(claveSup);
+						//Se le agregan a las subclases el resto de las cosas que tenía la superclase
+						HashMap<String,Vector<Atributo>> referencias = entidades.get(sup).getReferencias();
+						entidades.get(subcl).setReferencias(referencias);
+						HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
+						entidades.get(subcl).setUnico(unico);
+						HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
+						entidades.get(subcl).setForaneo(foraneo);
+						String tipo = subcl;
+						entidades.get(subcl).setTipo(tipo);
 					}	
 					//Eliminas la superclase
 					entidades.remove(sup);
