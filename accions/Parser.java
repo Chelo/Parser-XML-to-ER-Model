@@ -597,10 +597,12 @@ public class Parser {
 					}
 				}
 				else if (tipoAttr!=null){
-				 
-					 if(entidades.containsKey(tipoAttr)) {
+					//Agregué esto pues una entidad puede relacionarse 
+					//con una subclase (complex sin entidad definida)
+					if(entidades.containsKey(tipoAttr) || complexSinEntidad.containsKey(tipoAttr)) {
 						
-						 entidad.setReferencia(nuevo_atributo);
+						entidad.setReferencia(nuevo_atributo);
+						
 					 }
 					 else{
 						 if(tipoAttr.equals("anyType"))
@@ -787,13 +789,25 @@ public class Parser {
 						entidades.get(subcl).setAtributos(atributosSub);
 						entidades.get(subcl).setClave(claveSup);
 						//Se le agregan a las subclases el resto de las cosas que tenía la superclase
-						HashMap<String,Vector<Atributo>> referencias = entidades.get(sup).getReferencias();
-						entidades.get(subcl).setReferencias(referencias);
+						//Referecias
+						Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
+						while (referenciasSupVal.hasNext()) 
+						{
+							Enumeration<Atributo> ref = referenciasSupVal.next().elements();
+							while(ref.hasMoreElements())
+							{	
+								entidades.get(subcl).setReferencia(ref.nextElement());
+							}	
+							
+						}
+						//Unico
 						HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
 						entidades.get(subcl).setUnico(unico);
+						//Foraneos
 						HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
 						entidades.get(subcl).setForaneo(foraneo);
 						String tipo = subcl;
+						//Tipo
 						entidades.get(subcl).setTipo(tipo);
 					}	
 					//Eliminas la superclase
@@ -1277,6 +1291,20 @@ public class Parser {
 			
 			//Se obitiene un iterador que recorre los vectores que poseen entidades.
 			
+			//Se imprimen las referencias
+			System.out.println("-- Referencias --");
+			HashMap<String,Vector<Atributo>> referencias = entidad.getReferencias(); 
+			Iterator<String> ref = referencias.keySet().iterator();
+			Iterator<Vector<Atributo>> aref = referencias.values().iterator();
+			
+			while (ref.hasNext() && aref.hasNext()) {
+				String tipoRef = ref.next();
+				Vector<Atributo> elAtrr = aref.next();
+				Enumeration<Atributo> x = (Enumeration<Atributo>) elAtrr.elements();
+				while(x.hasMoreElements())
+					System.out.println("Referencia: " + x.nextElement().getNombre() + " de tipo "+ tipoRef+"\n");
+			}
+			
 			
 			System.out.println("-- Atributos Foraneos --");
 
@@ -1364,7 +1392,7 @@ public class Parser {
 					{
 						System.out.println("ERROR: Los atributos de tipo "+ tipoEnti+" de la entidad"+
 								entidades.get(tipoEnt).nombre_entidad+" no poseen referencia circular"+
-								" con la entidad" + entidades.get(tipoEnti).nombre_entidad);
+								" con la entidad " + entidades.get(tipoEnti).nombre_entidad);
 					}
 				}
 				else
