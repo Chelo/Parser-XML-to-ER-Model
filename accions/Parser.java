@@ -202,7 +202,12 @@ public class Parser {
 	 * @param entidad en la cual se encuentra el atributo multivaluado
 	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
+		
 		Entidad nueva = new Entidad();
+		defineClave(entidad);
+		
+		//Revisar
+		@SuppressWarnings("unchecked")
 		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
 		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
 		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
@@ -643,14 +648,14 @@ public class Parser {
 			//Se verifica si existe restricciones del tipo <key>
 			if (constraint.get(i).getCategory()== 0){ 
 				//se verifica que el atributo este definido
-				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					clave.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
 				else System.out.println("ALERTA : Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
 			//Se verifican si existen restricciones del tipo <unique>
 			}else if (constraint.get(i).getCategory()==2){
 				//se verifica que el atributo este definido
-				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					unico.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
 				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);		
@@ -935,6 +940,7 @@ public class Parser {
 	 * Se define la clave de la entidad. Chequea que se este bien definida y verifica que no sea nula
 	 * @param entidad a la que se desea definir la entidad
 	 */
+	@SuppressWarnings("unchecked")
 	public static void defineClave(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> clave = entidad.getClave();
@@ -948,7 +954,9 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+			
 			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
+				
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 				
@@ -980,6 +988,7 @@ public class Parser {
 	 * Se definen los atributos unicos pertenecientes a la entidad.
 	 * @param entidad en la cual se estan observando los atributos
 	 */
+	@SuppressWarnings("unchecked")
 	public static void defineUnico(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> unico = entidad.getUnico();
