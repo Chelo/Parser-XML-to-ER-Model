@@ -202,7 +202,12 @@ public class Parser {
 	 * @param entidad en la cual se encuentra el atributo multivaluado
 	 */
 	public static void Multivaluado(Atributo atributo, Entidad entidad){
+		
 		Entidad nueva = new Entidad();
+		defineClave(entidad);
+		
+		//Revisar
+		@SuppressWarnings("unchecked")
 		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
 		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
 		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
@@ -592,15 +597,18 @@ public class Parser {
 					
 					//Se verifica si el atributo es clave y se coloca la clave en la entidad
 					if ((tipoAttr.equals(id))){
+						clave = entidad.getClave();
 						clave.put(nuevo_atributo.nombre,nuevo_atributo);
 						entidad.setClave(clave);
 					}
 				}
 				else if (tipoAttr!=null){
-				 
-					 if(entidades.containsKey(tipoAttr)) {
+					//Agregué esto pues una entidad puede relacionarse 
+					//con una subclase (complex sin entidad definida)
+					if(entidades.containsKey(tipoAttr) || complexSinEntidad.containsKey(tipoAttr)) {
 						
-						 entidad.setReferencia(nuevo_atributo);
+						entidad.setReferencia(nuevo_atributo);
+						
 					 }
 					 else{
 						 if(tipoAttr.equals("anyType"))
@@ -640,14 +648,14 @@ public class Parser {
 			//Se verifica si existe restricciones del tipo <key>
 			if (constraint.get(i).getCategory()== 0){ 
 				//se verifica que el atributo este definido
-				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					clave.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
 				else System.out.println("ALERTA : Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
 			//Se verifican si existen restricciones del tipo <unique>
 			}else if (constraint.get(i).getCategory()==2){
 				//se verifica que el atributo este definido
-				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.nombre_entidad)){
+				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					unico.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
 				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);		
@@ -786,6 +794,27 @@ public class Parser {
 						atributosSub.addAll(atributosSup);
 						entidades.get(subcl).setAtributos(atributosSub);
 						entidades.get(subcl).setClave(claveSup);
+						//Se le agregan a las subclases el resto de las cosas que tenía la superclase
+						//Referecias
+						Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
+						while (referenciasSupVal.hasNext()) 
+						{
+							Enumeration<Atributo> ref = referenciasSupVal.next().elements();
+							while(ref.hasMoreElements())
+							{	
+								entidades.get(subcl).setReferencia(ref.nextElement());
+							}	
+							
+						}
+						//Unico
+						HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
+						entidades.get(subcl).setUnico(unico);
+						//Foraneos
+						HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
+						entidades.get(subcl).setForaneo(foraneo);
+						String tipo = subcl;
+						//Tipo
+						entidades.get(subcl).setTipo(tipo);
 					}	
 					//Eliminas la superclase
 					entidades.remove(sup);
@@ -911,6 +940,7 @@ public class Parser {
 	 * Se define la clave de la entidad. Chequea que se este bien definida y verifica que no sea nula
 	 * @param entidad a la que se desea definir la entidad
 	 */
+	@SuppressWarnings("unchecked")
 	public static void defineClave(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> clave = entidad.getClave();
@@ -924,7 +954,9 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+			
 			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
+				
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 				
@@ -956,6 +988,7 @@ public class Parser {
 	 * Se definen los atributos unicos pertenecientes a la entidad.
 	 * @param entidad en la cual se estan observando los atributos
 	 */
+	@SuppressWarnings("unchecked")
 	public static void defineUnico(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> unico = entidad.getUnico();
@@ -1152,7 +1185,7 @@ public class Parser {
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
 						
-							out.write("	CONTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
+							out.write("	CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
 									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
 		
 							i --;
@@ -1162,7 +1195,7 @@ public class Parser {
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
-					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
+					out.write("	CONSTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
 					getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
 					getNombre().toUpperCase() + " IN ('0','1')),\n");
 					k--;
@@ -1172,7 +1205,7 @@ public class Parser {
 				//Se agregan los contraint de dominio a la entidad.
 				while (l >= 0) {
 				
-					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).
+					out.write("	CONSTRAINT CHECK_DOMINIO_"+dominios.get(l).
 					getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
 					getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
 					get(l).getDominio())+")),\n");
@@ -1186,7 +1219,7 @@ public class Parser {
 					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
 							!(rangos.get(l).getMinRango().equals("-1"))){
 						
-					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+					out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
 					getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
@@ -1194,14 +1227,14 @@ public class Parser {
 					}else if ((rangos.get(l).getMaxRango()=="-1") &&
 							!(rangos.get(l).getMinRango()=="-1")){
 		
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 						getNombre().toUpperCase() + " >= "+rangos.get(l).
 						getMinRango()+ "),\n");
 						
 					}else{
 						
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 						getNombre().toUpperCase() + " <= "+rangos.get(l).
 						getMaxRango()+"),\n");
@@ -1216,12 +1249,12 @@ public class Parser {
 				Iterator<Atributo> iter_unico = unico.values().iterator();
 				
 				while (iter_unico.hasNext()){
-					out.write("	CONTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+					out.write("	CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
 				}
 				
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
-				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
+				out.write("	CONSTRAINT PK_"+entidad.getNombre_entidad().
 				toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
 				toUpperCase()+")\n);\n");
 			}  
@@ -1267,6 +1300,20 @@ public class Parser {
 			}
 			
 			//Se obitiene un iterador que recorre los vectores que poseen entidades.
+			
+			//Se imprimen las referencias
+			System.out.println("-- Referencias --");
+			HashMap<String,Vector<Atributo>> referencias = entidad.getReferencias(); 
+			Iterator<String> ref = referencias.keySet().iterator();
+			Iterator<Vector<Atributo>> aref = referencias.values().iterator();
+			
+			while (ref.hasNext() && aref.hasNext()) {
+				String tipoRef = ref.next();
+				Vector<Atributo> elAtrr = aref.next();
+				Enumeration<Atributo> x = (Enumeration<Atributo>) elAtrr.elements();
+				while(x.hasMoreElements())
+					System.out.println("Referencia: " + x.nextElement().getNombre() + " de tipo "+ tipoRef+"\n");
+			}
 			
 			
 			System.out.println("-- Atributos Foraneos --");
@@ -1355,7 +1402,7 @@ public class Parser {
 					{
 						System.out.println("ERROR: Los atributos de tipo "+ tipoEnti+" de la entidad"+
 								entidades.get(tipoEnt).nombre_entidad+" no poseen referencia circular"+
-								" con la entidad" + entidades.get(tipoEnti).nombre_entidad);
+								" con la entidad " + entidades.get(tipoEnti).nombre_entidad);
 					}
 				}
 				else
