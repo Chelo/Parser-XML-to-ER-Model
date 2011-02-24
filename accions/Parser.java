@@ -592,6 +592,7 @@ public class Parser {
 					
 					//Se verifica si el atributo es clave y se coloca la clave en la entidad
 					if ((tipoAttr.equals(id))){
+						clave = entidad.getClave();
 						clave.put(nuevo_atributo.nombre,nuevo_atributo);
 						entidad.setClave(clave);
 					}
@@ -1175,7 +1176,7 @@ public class Parser {
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
 						
-							out.write("	CONTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
+							out.write("	CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos) 
 									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
 		
 							i --;
@@ -1185,7 +1186,7 @@ public class Parser {
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				while (k >= 0) {
-					out.write("	CONTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
+					out.write("	CONSTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
 					getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
 					getNombre().toUpperCase() + " IN ('0','1')),\n");
 					k--;
@@ -1195,7 +1196,7 @@ public class Parser {
 				//Se agregan los contraint de dominio a la entidad.
 				while (l >= 0) {
 				
-					out.write("	CONTRAINT CHECK_DOMINIO_"+dominios.get(l).
+					out.write("	CONSTRAINT CHECK_DOMINIO_"+dominios.get(l).
 					getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
 					getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
 					get(l).getDominio())+")),\n");
@@ -1209,7 +1210,7 @@ public class Parser {
 					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
 							!(rangos.get(l).getMinRango().equals("-1"))){
 						
-					out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+					out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 					getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 					getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
 					getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
@@ -1217,14 +1218,14 @@ public class Parser {
 					}else if ((rangos.get(l).getMaxRango()=="-1") &&
 							!(rangos.get(l).getMinRango()=="-1")){
 		
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 						getNombre().toUpperCase() + " >= "+rangos.get(l).
 						getMinRango()+ "),\n");
 						
 					}else{
 						
-						out.write("	CONTRAINT CHECK_RANGO_"+rangos.get(l).
+						out.write("	CONSTRAINT CHECK_RANGO_"+rangos.get(l).
 						getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
 						getNombre().toUpperCase() + " <= "+rangos.get(l).
 						getMaxRango()+"),\n");
@@ -1239,12 +1240,12 @@ public class Parser {
 				Iterator<Atributo> iter_unico = unico.values().iterator();
 				
 				while (iter_unico.hasNext()){
-					out.write("	CONTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+					out.write("	CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
 				}
 				
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
-				out.write("	CONTRAINT PK_"+entidad.getNombre_entidad().
+				out.write("	CONSTRAINT PK_"+entidad.getNombre_entidad().
 				toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
 				toUpperCase()+")\n);\n");
 			}  
