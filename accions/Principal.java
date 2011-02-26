@@ -10,7 +10,7 @@ public class Principal {
 	public static void main(String[] args) throws SAXException, IOException {
 				
 
-		Parser.ParsearXMLSchema("ejemplo.xml");
+		Parser.ParsearXMLSchema("ejemplo2.xml");
 
 
 
