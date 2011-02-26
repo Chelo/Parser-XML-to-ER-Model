@@ -249,12 +249,13 @@ public class Parser {
 	 * quieren extraer (leer) sus atributos.
 	 * @param atributos arreglo unidimensional de Atributos, donde est&#225n almacenados los atributos de 
 	 * la entidad definida por el ComplexType bajo el nombre "tipo"   
-	 * @param compuesto es un boleano que indica si estamos leyendo un "element" correspondiente a un atributo compuesto. 
+	 * @param parteDecompuesto es un boleano que indica si estamos leyendo un "element" correspondiente a un atributo compuesto. 
+	 * @param compuestoNulo es un boleano que indica si estamos leyendo un "element" correspondiente a un atributo compuesto cuyo padre es nulo. 
 	 * @return arreglo unidimensional de Atributos, donde se almacenar&#225n el resto de los atributos 
 	 * que est&#233n definidos bajo el tag "element", pertenecientes a la entidad definida por el ComplexType de nombre "tipo" 
 	 * y que ser&#225n parseados por esta funci&#243n. 
 	 */
-	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos, boolean parteDecompuesto) {
+	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos, boolean parteDecompuesto, boolean compuestoNulo) {
 		
 		XSTerm pterm;
 		String nombreAttr;
@@ -313,7 +314,7 @@ public class Parser {
 									//Debo crear a una entidad solo para la superclase, y agregarle todos los 
 									//atributos de las subclases más un atributo tipo
 									//Leo los atributos (element) de las subclases y se los coloco a la superclase
-									leerElementos(particlesSubclase, tipo, atributos, false);		
+									leerElementos(particlesSubclase, tipo, atributos, false,false);		
 								}
 								//Caso solapado
 								else
@@ -324,7 +325,7 @@ public class Parser {
 									nueva_subclase.setTipo(tipoAttr);
 									entidades.put(tipoAttr, nueva_subclase);
 									Vector<Atributo> atributosSubclase = nueva_subclase.getAtributos();
-									leerElementos(particlesSubclase, tipoAttr, atributosSubclase, false);
+									leerElementos(particlesSubclase, tipoAttr, atributosSubclase, false,false);
 									nueva_subclase.setAtributos(atributosSubclase);
 								}	
 							}	
@@ -470,59 +471,87 @@ public class Parser {
 				//Verificar que pasa si el usuario no colocó nada
 				if (parteDecompuesto)
 				{
-					nuevo_atributo.setNulo(false);
-					nuevo_atributo.setMinOccurs(1);
-					//El maxOccurs por defecto ya es 1, por eso no se asigna.
-					//Si el usuario puso maxOccurs.. se ignora... no se permiten multivaluados 
-					//Esto puede cambiar en el futuro!
+					//MinOccurs
+					if(compuestoNulo)
+					{
+						nuevo_atributo.setMinOccurs(0);
+						if(p.getMinOccurs()!=0)
+							System.out.print("ALERTA: El atributo "+ nombreAttr + " de la entidad "
+								+entidad.getNombre_entidad()+" forma parte de un " +
+								"atributo compuesto Nulo. Se le asignará un minOccurs igual a cero \n");
+						
+					}	
+					else
+					{	
+						if ((!(p.getMinOccurs()==0)) && (!(p.getMinOccurs()==1)))
+						{
+							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "
+									+entidad.getNombre_entidad()+" que forma parte de un " +
+									"atributo compuesto debe ser igual a cero o uno. Se colocará 1 por defecto \n");
+							nuevo_atributo.setNulo(false);
+							nuevo_atributo.setMinOccurs(1);
+						}
+						else
+						{
+							if(p.getMinOccurs()==1)
+								nuevo_atributo.setNulo(false);
+							nuevo_atributo.setMinOccurs(p.getMinOccurs());
+						}
+					}	
+					//MaxOccurs
+					if(p.getMaxOccurs()!=1)
+					{
+						System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "
+								+entidad.getNombre_entidad()+" que forma parte de un " +
+								"atributo compuesto debe ser igual a uno. Se colocará 1 por defecto \n");
+						//El maxOccurs por defecto ya es 1 (al hacer new Atributo), por eso no se asigna.
+					}	
 				}
 				else
 				{	
-					if (tipoAttr!=null)//Para no tener problemas con el equals
+					if ((tipoAttr!=null) && (tipoAttr.equals(id)))//Para no tener problemas con el equals
 					{
-						if(tipoAttr.equals(id))
+						if((p.getMinOccurs()!=1) || (p.getMaxOccurs()!=1))
 						{
-							if((p.getMinOccurs()!=1) || (p.getMaxOccurs()!=1))
-							{
-								System.out.println("ALERTA: Tanto el minOccurs como maxOccurs de la clave " +nombreAttr+ 
-									    " de la entidad " +entidad.getNombre_entidad()+
-										" deben ser 1 \n Se le colocará minOccurs = 1 y maxOccurs = 1 \n");
-							}	
-							nuevo_atributo.setNulo(false);
-							nuevo_atributo.setMinOccurs(1);
-							nuevo_atributo.setMaxOccurs(1);
+							System.out.println("ALERTA: Tanto el minOccurs como maxOccurs de la clave " +nombreAttr+ 
+								    " de la entidad " +entidad.getNombre_entidad()+
+									" deben ser 1 \n Se le colocará minOccurs = 1 y maxOccurs = 1 \n");
 						}	
+						nuevo_atributo.setNulo(false);
+						nuevo_atributo.setMinOccurs(1);
+						nuevo_atributo.setMaxOccurs(1);
+					}	
+					else
+					{	
+						//MinOccurs
+						if (p.getMinOccurs() < 0){
+							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor o igual a cero. Se colocará 1 por defecto \n");
+							nuevo_atributo.setMinOccurs(1);
+							nuevo_atributo.setNulo(false);
+						}
 						else
 						{	
-							//MinOccurs
-							if (p.getMinOccurs() < 0){
-								System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor o igual a cero. Se colocará 0 por defecto \n");
-								nuevo_atributo.setMinOccurs(0);
+							if (p.getMinOccurs() == 1) {
+								nuevo_atributo.setNulo(false);
+							}
+							nuevo_atributo.setMinOccurs(p.getMinOccurs());
+						}
+						//MaxOccurs
+						//Caso unbounded
+						if (p.getMaxOccurs() <= 0) {
+							if(p.getMaxOccurs() == XSParticle.UNBOUNDED)
+							{
+								nuevo_atributo.setMaxOccurs(2);
 							}
 							else
 							{	
-								if (p.getMinOccurs() == 1) {
-									nuevo_atributo.setNulo(false);
-								}
-								nuevo_atributo.setMinOccurs(p.getMinOccurs());
-							}
-							//MaxOccurs
-							//Caso unbounded
-							if (p.getMaxOccurs() <= 0) {
-								if(p.getMaxOccurs() == XSParticle.UNBOUNDED)
-								{
-									nuevo_atributo.setMaxOccurs(2);
-								}
-								else
-								{	
-									System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
-									nuevo_atributo.setMaxOccurs(1);
-								}	
-							}
-							else
-							{	
-								nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
-							}
+								System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
+								nuevo_atributo.setMaxOccurs(1);
+							}	
+						}
+						else
+						{	
+							nuevo_atributo.setMaxOccurs(p.getMaxOccurs());
 						}
 						if(nuevo_atributo.getMinOccurs()>nuevo_atributo.getMaxOccurs())
 						{
@@ -534,8 +563,8 @@ public class Parser {
 						}	
 					}	
 				}
-				//System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
-				//System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
+				System.out.print("Lo q el usuario coloco:  "+ nombreAttr + " " +p.getMinOccurs()+ " "+  p.getMaxOccurs() +" \n");
+				System.out.print("Asi quedo:  "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 				
 				//Verificamos si es un atributo compuesto 
 				if(tipoAttr == null )
@@ -562,21 +591,57 @@ public class Parser {
 									XSParticle[] particles1 = xsModelGroup.getChildren();
 				
 									// se verifica que sea all
-									if (!xsModelGroup.getCompositor().toString().equals("all")){
+									if (!xsModelGroup.getCompositor().toString().equals("all"))
+									{
 										System.out.println("ALERTA: Los atributos compuestos deben estar definidos " +
 												"entre el compositor <all> \n Se creará el atributo compuesto " +nombreAttr+ " de la entidad " +entidad.getNombre_entidad()+
 												", sin embargo agregue el compositor <all> para evitar inconsistencias al " +
-												"momento de cargar los datos. \n A cada uno de los atributos que constituyen a " +nombreAttr+ " " +
-												"se le colocará minOccurs = 1 y maxOccurs = 1 \n");
-										}
-									else
-									{
-										System.out.println("ALERTA: A cada uno de los atributos que constituyen al atributo compuesto " +nombreAttr+ 
-											    " de la entidad " +entidad.getNombre_entidad()+
-												" se le colocará minOccurs = 1 y maxOccurs = 1 \n");
+												"momento de cargar los datos. \n ");
 									}
 									// Se leen los atributos de las entidades
-									atributos = leerElementos(particles1, tipo, atributos,true); //Llamada RECURSIVA
+									//Caso del compuesto multivaluado, debo crear una nueva entidad, con todos los 
+									//atributos que son parte del compuesto + una referencia a la clave de la entidad (tipo)
+									if(nuevo_atributo.getMaxOccurs()>1) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
+									{
+										//Aqui tienes que hacer tu parte Lili
+										System.out.println("Compuesto Multivaluado\n");
+										/* Mi idea es que: En este punto crees la nueva entidad 
+										 * (que se llame como la hoja padre del attrCompuesto, osea nombreAttr)
+										 * (no se que tipo le vayas a poner.. no se como lo manejas con los multivaluados)
+										 * y que le agregues de una vez como clave y foránea, la clave de la entidad que
+										 * la contiene, es decir, la definida por el complex <tipo>
+										*/
+										
+										/* Aqui haces la llamada recursiva a leerElementos, para leer las hojas del attrCompuesto
+										 * Como puedes ver en la llamada le estas pasando el tipoDelaNuevaEntidad así que estos atributos
+										 * que se lean ya se meterán automáticamente en la nueva entidad creada
+										 * if(nuevo_atributo.getMinOccurs()==0)
+										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,true)
+										 * else
+										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,false)
+										 * 
+										 * */
+										
+										/* Lo unico que faltaría sería decir que la clave son 
+										 * todos los atributos de la nueva entidad creada. Aqui si que no se me ocurre nada 
+										 * rápido por ahora. 
+										 * */
+										
+										/* Ya que tu has trabajado con los multivaluados seguro se te ocurre algo mejor ;)
+										 * */
+									}	
+									else
+									{
+										//Caso del compuesto nulo, entonces debo obligar a todos los hijos a ser nulos
+										if(nuevo_atributo.getMinOccurs()==0)
+										{
+											atributos = leerElementos(particles1, tipo, atributos,true,true); //Llamada RECURSIVA
+										}
+										else
+										{
+											atributos = leerElementos(particles1, tipo, atributos,true,false); //Llamada RECURSIVA
+										}	
+									}	
 								}
 							}
 						}
@@ -748,7 +813,7 @@ public class Parser {
 
 					// Se leen los atributos de las entidades
 					Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
-					atributos = leerElementos(particles,tipo,atributos,false);
+					atributos = leerElementos(particles,tipo,atributos,false,false);
 					entidades.get(tipo).setAtributos(atributos);
 				}
 			}
