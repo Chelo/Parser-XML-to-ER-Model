@@ -1,9 +1,11 @@
 package accions;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -272,16 +274,12 @@ public class Parser {
 				XSParticle [] particles2 = xsModelGroup2.getChildren();
 				Vector <String> subclasesValidas = new Vector <String>(); 
 				
-				//Aqui podría ya extraer toda la información de si es disjunto, solapado, total o parcial
-				int minOccurs = p.getMinOccurs();
-		        int maxOccurs = p.getMaxOccurs();
 		        String compositor = xsModelGroup2.getCompositor().toString();
-		        //System.out.println("min "+ minOccurs+ "max "+maxOccurs + "compositor "+ compositor+ "\n");
-				
+
 		        // se verifica que sea sequence o choice
 				if(compositor.equals(XSModelGroup.Compositor.ALL.toString()))
 				{
-					System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
+					System.out.println("ERROR: Los elements (atributos) definidos dentro del complexType <" +tipo+
 							"> que se refieren a una generalización / especialización deben estar definidos entre el " +
 							"compositor <sequence> (solapado), <choice> (disjunto) \n  " +
 							"Cambie el compositor o de lo contrario no se creará la generalización /especialización \n");
@@ -308,26 +306,15 @@ public class Parser {
 								subclases.put(tipoAttr, complex);
 								XSParticle [] particlesSubclase = complex.getContentType().asParticle().getTerm().asModelGroup().getChildren();
 								
-								//Caso Disjunto
-								if(compositor.equals(XSModelGroup.Compositor.CHOICE.toString()))
-								{
-									//Debo crear a una entidad solo para la superclase, y agregarle todos los 
-									//atributos de las subclases más un atributo tipo
-									//Leo los atributos (element) de las subclases y se los coloco a la superclase
-									leerElementos(particlesSubclase, tipo, atributos, false,false);		
-								}
-								//Caso solapado
-								else
-								{
-									//Se crea una entidad por cada subclase
-									Entidad nueva_subclase = new Entidad();
-									nueva_subclase.setNombre_entidad(nombreAttr);
-									nueva_subclase.setTipo(tipoAttr);
-									entidades.put(tipoAttr, nueva_subclase);
-									Vector<Atributo> atributosSubclase = nueva_subclase.getAtributos();
-									leerElementos(particlesSubclase, tipoAttr, atributosSubclase, false,false);
-									nueva_subclase.setAtributos(atributosSubclase);
-								}	
+								//Se crea una entidad por cada subclase
+								Entidad nueva_subclase = new Entidad();
+								nueva_subclase.setNombre_entidad(nombreAttr);
+								nueva_subclase.setTipo(tipoAttr);
+								entidades.put(tipoAttr, nueva_subclase);
+								Vector<Atributo> atributosSubclase = nueva_subclase.getAtributos();
+								leerElementos(particlesSubclase, tipoAttr, atributosSubclase, false,false);
+								nueva_subclase.setAtributos(atributosSubclase);
+									
 							}	
 							else
 							{
@@ -341,75 +328,11 @@ public class Parser {
 					}
 					if(!subclasesValidas.isEmpty())
 					{	
-						//Caso Disjunto
-						//Una vez leidas todas las subclases se debe crear un atributo tipo
-						if(compositor.equals(XSModelGroup.Compositor.CHOICE.toString()))
-						{	
-							Atributo attr_tipo = new Atributo();
-							attr_tipo.setNombre("attr_tipo");
-							attr_tipo.setTipo("String");
-							//Es total
-							if(minOccurs == 1)
-							{
-								attr_tipo.setMinOccurs(1);
-								attr_tipo.setNulo(false);
-							}
-							else
-							{
-								//Es parcial o cualquier otro caso
-								if(minOccurs != 0)
-								{	
-									System.out.print("ALERTA: El minOccurs del compositor <choice> de la generalización / especializción definida dentro de la entidad "+entidades.get(tipo).getNombre_entidad() 
-											+" debe valer 0 (parcial) 1 (total).\n Se colocará 0 por defecto. Si esto no es lo que quería realice los cambios. \n"); 
-								}
-								attr_tipo.setMinOccurs(0);		
-							}
-							if(maxOccurs != 1)
-							{
-								System.out.print("ALERTA: El maxOccurs del compositor <choice> de la generalización / especializción definida dentro de la entidad "+entidades.get(tipo).getNombre_entidad() 
-										+" debe valer 1 \n Realice los cambios para evitar inconsistencias al momento de cargar los datos. \n"); 
-							}	
-							//Dominio del atributo tipo
-							Vector<String> dominio= new Vector<String>();
-							Iterator<String> iter = subclasesValidas.iterator();
-							while(iter.hasNext())
-							{
-								dominio.add(iter.next());
-							}	
-							attr_tipo.setDominio(dominio);
-							atributos.add(attr_tipo);
-						}	
-					
-						//Caso solapado
 						//Una vez leídas todas las subclases se debe crear una relación entre estas
 						//y su superclase, para que luego una vez que estemos seguros que se han leído todos los
 						//atributos de la superclase, se termine de realizar la traducción, 
-						//dependiendo de si es total o parcial
-						else
-						{
-							//Es total
-							if(minOccurs == 1)
-							{
-								subclasesValidas.add("total");
-							}
-							else
-							{
-								//Es parcial o cualquier otro caso
-								if(minOccurs != 0)
-								{	
-									System.out.print("ALERTA: El minOccurs del compositor <sequence> de la generalización / especializción definida dentro de la entidad "+entidades.get(tipo).getNombre_entidad() 
-											+" debe valer 0 (parcial) 1 (total).\n Se colocará 0 por defecto. Si esto no es lo que quería realice los cambios. \n"); 
-								}
-								subclasesValidas.add("parcial");
-							}
-							if(maxOccurs != 1)
-							{
-								System.out.print("ALERTA: El maxOccurs del compositor <choice> de la generalización / especializción definida dentro de la entidad "+entidades.get(tipo).getNombre_entidad() 
-										+" debe valer 1 \n Realice los cambios para evitar inconsistencias al momento de cargar los datos. \n"); 
-							}
-							//Definimos la relación entre la superclase y las subclases
-							superclases.put(tipo, subclasesValidas);
-						}	
+						//dependiendo de la opción que escoja el usuario
+						superclases.put(tipo, subclasesValidas);
 					}
 					else
 					{
@@ -773,8 +696,9 @@ public class Parser {
 	 * @param claves Iterador de String, en el que se almacenan los nombres de los ComplexTypes que definen Entidades.
 	 * @param valores Iterador de XSComplexType que contiene la informaci&#243n de cada uno de los ComplexType definidos
 	 * en el nivel m&#225s externo de anidamiento, que definen a Entidades.
+	 * @throws IOException 
 	 */
-	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores){	
+	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores) throws IOException{	
 		
 		XSComplexType complex;
 		XSContentType contenido;
@@ -840,75 +764,109 @@ public class Parser {
 			{
 				String sup = superC.next(); 
 				Vector<String> sub = subC.next();
-				String participacion = sub.lastElement();
 				
 				HashMap<String,Atributo> claveSup = entidades.get(sup).getClave();
 				Enumeration<String> subclass= sub.elements();
 				
-				//Caso total
-				if (participacion.equals("total"))
-				{
-					sub.remove(participacion);
-					//Agregas a cada subclase todos los atributos de la superclase
-					//Y la clave será la clave de la superclase
-					Vector<Atributo> atributosSup= entidades.get(sup).getAtributos();
-					while(subclass.hasMoreElements())
+				BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+				boolean opcionValida = false;
+				while(!opcionValida)
+				{	
+					System.out.println("*---Se ha detectado generalización/especialización en la superclase "+ sup +" ---* \n");
+					System.out.println("*---Si desea que se creen entidades para las subclases y también para la superclase presione 1 : \n");
+					System.out.println("*---Si desea que sólo se creen entidades para las subclases presione 2 : \n");
+					String opcionTraduccion = in.readLine();
+					
+					if (opcionTraduccion.equals("2"))
 					{
-						String subcl = subclass.nextElement();
-						Vector<Atributo> atributosSub = entidades.get(subcl).getAtributos();
-						atributosSub.addAll(atributosSup);
-						entidades.get(subcl).setAtributos(atributosSub);
-						entidades.get(subcl).setClave(claveSup);
-						//Se le agregan a las subclases el resto de las cosas que tenía la superclase
-						//Referecias
-						Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
-						while (referenciasSupVal.hasNext()) 
+						//Agregas a cada subclase todos los atributos de la superclase
+						//Y la clave será la clave de la superclase
+						Vector<Atributo> atributosSup= entidades.get(sup).getAtributos();
+						while(subclass.hasMoreElements())
 						{
-							Enumeration<Atributo> ref = referenciasSupVal.next().elements();
-							while(ref.hasMoreElements())
-							{	
-								entidades.get(subcl).setReferencia(ref.nextElement());
+							String subcl = subclass.nextElement();
+							Vector<Atributo> atributosSub = entidades.get(subcl).getAtributos();
+							atributosSub.addAll(atributosSup);
+							entidades.get(subcl).setAtributos(atributosSub);
+							entidades.get(subcl).setClave(claveSup);
+							//Se le agregan a las subclases el resto de las cosas que tenía la superclase
+							//las referecias y tenemos que cambiar las referencias circulares que habían hacia 
+							//la superclase que ahora desaparecerá
+							Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
+							while (referenciasSupVal.hasNext()) 
+							{
+								Enumeration<Atributo> ref = referenciasSupVal.next().elements();
+								while(ref.hasMoreElements())
+								{	
+									//Paso referencias de la superclase a la subclase
+									Atributo attr = ref.nextElement();
+									entidades.get(subcl).setReferencia(attr);
+									//Cambio el tipo de la referencia circular	
+									/*String tipo = attr.getTipo();
+									Vector<Atributo> referenciasCirculares = entidades.get(tipo).getReferencias().get(sup);
+									Iterator<Atributo> refCir = referenciasCirculares.iterator();
+									while(refCir.hasNext())
+									{
+										Atributo nuevo_attr = refCir.next();
+										nuevo_attr.setTipo(subcl);
+										entidades.get(tipo).setReferencia(nuevo_attr);
+									}*/	
+								}	
+								
+							}
+							//Unico
+							HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
+							entidades.get(subcl).setUnico(unico);
+							//Foraneos
+							HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
+							entidades.get(subcl).setForaneo(foraneo);
+							String tipo = subcl;
+							//Tipo
+							entidades.get(subcl).setTipo(tipo);
+						}	
+						//Eliminas la superclase
+						entidades.remove(sup);
+						//Debes eliminar todas las referencias hechas a ella
+						/*Iterator<Entidad> entidads = entidades.values().iterator();
+						while(entidads.hasNext())
+						{
+							Entidad ent = entidads.next();
+							if(ent.getReferencias().containsKey(sup))
+							{
+								ent.getReferencias().remove(sup);
 							}	
-							
-						}
-						//Unico
-						HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
-						entidades.get(subcl).setUnico(unico);
-						//Foraneos
-						HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
-						entidades.get(subcl).setForaneo(foraneo);
-						String tipo = subcl;
-						//Tipo
-						entidades.get(subcl).setTipo(tipo);
-					}	
-					//Eliminas la superclase
-					entidades.remove(sup);
-				}
-				//Caso parcial
-				else
-				{
-					sub.remove(participacion);
-					//Agregas como clave primaria de cada subclase, la clave primaria de la superclase 
-					//como foránea
-					while(subclass.hasMoreElements())
+						}*/
+						opcionValida = true;
+					}
+					if (opcionTraduccion.equals("1"))
 					{
-						String subcl = subclass.nextElement();
-						//Se le coloca como clave, la clave de la superclase
-						entidades.get(subcl).setClave(claveSup);
-						//Esa clave se la agregas como atributo y como foránea
-						Iterator<Atributo> clavesSup = claveSup.values().iterator();
-						Vector <Atributo> foraneas = new Vector<Atributo>();
-						while(clavesSup.hasNext())
+						//Agregas como clave primaria de cada subclase, la clave primaria de la superclase 
+						//como foránea
+						while(subclass.hasMoreElements())
 						{
-							Atributo attr = clavesSup.next();
-							//entidades.get(subcl).setAtributo(attr);
-							foraneas.add(attr);
-						}
-						Vector <Vector<Atributo>> attrForaneas = new Vector<Vector<Atributo>>();
-						attrForaneas.add(foraneas);
-						HashMap<String, Vector <Vector<Atributo>>> foraneasCompleta = new HashMap<String, Vector<Vector<Atributo>>>();
-						foraneasCompleta.put(sup, attrForaneas);
-						entidades.get(subcl).setForaneo(foraneasCompleta);
+							String subcl = subclass.nextElement();
+							//Se le coloca como clave, la clave de la superclase
+							entidades.get(subcl).setClave(claveSup);
+							//Esa clave se la agregas como atributo y como foránea
+							Iterator<Atributo> clavesSup = claveSup.values().iterator();
+							Vector <Atributo> foraneas = new Vector<Atributo>();
+							while(clavesSup.hasNext())
+							{
+								Atributo attr = clavesSup.next();
+								//entidades.get(subcl).setAtributo(attr);
+								foraneas.add(attr);
+							}
+							Vector <Vector<Atributo>> attrForaneas = new Vector<Vector<Atributo>>();
+							attrForaneas.add(foraneas);
+							HashMap<String, Vector <Vector<Atributo>>> foraneasCompleta = new HashMap<String, Vector<Vector<Atributo>>>();
+							foraneasCompleta.put(sup, attrForaneas);
+							entidades.get(subcl).setForaneo(foraneasCompleta);
+						}	
+						opcionValida = true;
+					}
+					else
+					{
+						System.out.println("ERROR: Opción inválida.\n");
 					}	
 				}	
 			}	
