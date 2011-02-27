@@ -1421,7 +1421,7 @@ public class Parser {
 						while(i.hasNext()){
 							//Para cada atributo a mi mismo, veo si me absorbo o si creo otra entidad.
 							Atributo at = i.next();
-							if (at.minOccurs + at.maxOccurs == 2) {
+							if (at.minOccurs==1 && at.maxOccurs == 1) {
 								//Se absorbe a si misma
 								ent.AgregarForaneo(ent.tipo,ent.clave.values());
 							} 
@@ -1531,6 +1531,7 @@ public class Parser {
 		int min2= atr2.minOccurs;
 		int max2= atr2.maxOccurs;
 		
+		
 		if (min1==1 && max1==1) {
 			//atr1 es 1:1
 			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
@@ -1567,13 +1568,13 @@ public class Parser {
 				
 			} else {
 				// atr1 es 0:1 y atr2 es 0:N o 1:N
-//				System.out.println("El atributo "+ atr1.nombre+" tiene 0:1, pero el atributo "+ atr2.nombre+
-//						"tiene 0:N o 1:N\n");
+				System.out.println("El atributo "+ atr1.nombre+" de la entidad "+entidades.get(atr2.tipo).nombre_entidad+" tiene 0:1, pero el atributo "+ atr2.nombre+
+					"tiene 0:N o 1:N Se crea una nueva entidad donde"+ entidades.get(atr2.tipo).nombre_entidad+ "sea clave y lo otro sea atributo normal\n");
 				// Se crea una nueva entidad donde atr1 sea clave y lo otro sea atributo normal.
-				Entidad nueva= CrearEntidadNueva(atr1);
+				Entidad nueva= CrearEntidadNueva(atr2);
 				
-				//Coloco atr2 como foraneo.
-				Entidad ent2= entidades.get(atr2.tipo);
+				//Coloco atr1 como foraneo.
+				Entidad ent2= entidades.get(atr1.tipo);
 				nueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
 				
 				entidades.put(nueva.tipo, nueva);
@@ -1581,13 +1582,13 @@ public class Parser {
 		}
 		else if(min2==0 && max2==1){
 			//atr2 es 0:1, y atr1 ajuro debe ser 0:N o 1:N
-//			System.out.println("El atributo "+atr2.nombre+" es 0:1 pero el atributo "+ atr1.nombre+ " es 0:N o 1:N"+
-//					"por ende se debe crear una nueva entidad cuya clave sea la de la entidad "+ entidades.get(atr2.tipo).nombre_entidad);
+			System.out.println("El atributo "+atr2.nombre+" es 0:1 pero el atributo "+ atr1.nombre+ " es 0:N o 1:N"+
+					"por ende se debe crear una nueva entidad cuya clave sea la de la entidad "+ entidades.get(atr2.tipo).nombre_entidad);
 			//Se crea una nueva entidad donde atr2 sea clave y lo otro sea atributo normal.
-			Entidad nueva=CrearEntidadNueva(atr2);
+			Entidad nueva=CrearEntidadNueva(atr1);
 			
 			//coloco a atr1 como foraneo.
-			Entidad ent1= entidades.get(atr1.tipo);
+			Entidad ent1= entidades.get(atr2.tipo);
 			nueva.AgregarForaneo(ent1.tipo,ent1.clave.values());
 			
 			entidades.put(nueva.tipo, nueva);
