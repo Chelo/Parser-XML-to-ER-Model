@@ -31,6 +31,9 @@ public class ParserXML extends DefaultHandler {
 	private static       int       att; 
 	private final        XMLReader xr;
     
+    private static FileWriter fstream;
+    private static BufferedWriter insert;
+	
     /** Crear una instancia de ParserXML
      *@throws SAXException 
      */
@@ -162,11 +165,15 @@ System.out.println("campos: " + result );
     private int buscarAtributo(String name){
     	int index = -1;
     	int i     =  0;
-    	while (i<data.getAtributos().size()) {
-    		if ( data.getAtributos().get(i).getNombre().compareTo(name)==0){
-    			return i;
-    		}
-    		i++;
+    	if(data != null){
+	    	while (i<data.getAtributos().size()) {
+	    		if ( data.getAtributos().get(i).getNombre().compareTo(name)==0){
+	    			return i;
+	    		}
+	    		i++;
+	    	}
+    	}else {
+    		return index;
     	}
     	return index;
     }  
@@ -176,8 +183,8 @@ System.out.println("campos: " + result );
     	//int k = 0;
 		try{
 		    //Se crea el archivo sql de salida.
-		    FileWriter fstream = new FileWriter(targetFile);
-		    BufferedWriter insert = new BufferedWriter(fstream);
+		    //FileWriter fstream = new FileWriter(targetFile);
+		    //BufferedWriter insert = new BufferedWriter(fstream);
 		    
 		    //obtener lista de campos
 		    String lcampos = listaCampos();
@@ -185,7 +192,7 @@ System.out.println("campos: " + result );
 		    
 			// Se realiza un 'INTO' por cada entidad encontrada			    
 		    insert.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
-		    		+ " ("+ lcampos + ") VALUES ("+ lvalores + ");");
+		    		+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
 	    
 		    
 			//Se iteran sobre las entidades que se van a crear.
@@ -193,7 +200,7 @@ System.out.println("campos: " + result );
 						
 			//insert.write(");\n");
 		    //Se cierra el output de escritura en el archivo sql
-			insert.close();
+
 		// Se toma la exception si existe
 		}catch (Exception e){
 		      System.err.println("Error: " + e.getMessage());
@@ -268,8 +275,11 @@ System.out.print(getIndentSpaces(indent+1) + data.getAtributos().get(att).getVal
      * @param args the command line arguments
      */
     public static void ParsearXML(String xmlFile) throws SAXException, IOException {
+	    fstream = new FileWriter(targetFile);
+	    insert = new BufferedWriter(fstream);
     	ParserXML pxml = new ParserXML();
     	pxml.leer(xmlFile);
+		insert.close();
     }
     
 }//fin clase ParserXML
