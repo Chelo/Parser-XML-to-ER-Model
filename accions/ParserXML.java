@@ -6,7 +6,6 @@ import beans.OrigenXML;
 import java.util.Stack;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
 import java.util.LinkedList;
 
 
@@ -37,7 +36,6 @@ public class ParserXML extends DefaultHandler {
 	private final static String    insertErrorFile= "bad.insert.sql";	//archivo de salida
 	private static       String    contenido   = "";	//Contenido entre los Tags
 	private static       int       att;					//diferente de -1 si es Atributo
-	private static       int       tCola;				//Numero de elementos en el Vector
 	private static       int   	   nivelActual=0; 		//
 	private static       int   	   nivelError =999999; 	//
 	private static       boolean   errorFound=false;	//
@@ -52,9 +50,7 @@ public class ParserXML extends DefaultHandler {
     private static BufferedWriter   insertError;
 
     private static Stack<OrigenXML>       pilaEntidad    = new Stack<OrigenXML>();
-    //private static LinkedList             lista          = new LinkedList();
-    private static LinkedList<OrigenXML>  listaEntidad   = new LinkedList();
-    public static Vector<OrigenXML>       controlEntidad = new Vector<OrigenXML>();
+    private static LinkedList<OrigenXML>  listaEntidad   = new LinkedList<OrigenXML>();
 	
 	
     /** Crear una instancia de ParserXML
@@ -239,9 +235,7 @@ public class ParserXML extends DefaultHandler {
     public static void VaciarCola(int a){
 	    String lcampos ;
 	    String lvalores;
-    	//while (obtengo el siguiente data) empezando desde el primero 
-    	 //obtengo data y lo imprimo
-    		//borro el 
+ 
 System.out.println("****TAMANO: " + listaEntidad.size());
     	while (listaEntidad.size()!=0) {
     		data = listaEntidad.getFirst();
