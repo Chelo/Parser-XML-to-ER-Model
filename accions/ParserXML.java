@@ -7,38 +7,42 @@ import java.util.Stack;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
+import java.util.LinkedList;
+
+
 import java.io.IOException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
 
-import org.xml.sax.*;
-//import org.xml.sax.SAXExceptions;
+import org.xml.sax.Attributes;
+import org.xml.sax.XMLReader;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 
-/** Esta clase permite obtener y manipular la informacion contenida en los tags correspondientes 
- * a los archivos XML(puro) para generar comandos de insercion de datos SQL("INSERT INTO") para 
- * aquellas tablas que se crearon anteriormente.<br><br>
+/** Esta clase permite obtener y manipular la informacion contenida en los tags
+ * correspondientes a los archivos XML(puro) para generar comandos de insercion
+ * de datos SQL("INSERT INTO") para aquellas tablas que se crearon anteriormente.<br><br>
  * Lee los nodos XML y sus valores.<br><br>
  * Retorna un archivo "insert.sql"
  * @author Daniel Pedroza
  */
 public class ParserXML extends DefaultHandler {
 	
-	private final static String    targetFile     = "insert.sql";
-	private final static String    xmlErrorFile   = "bad.xml.sql";
-	private final static String    insertErrorFile= "bad.insert.sql";
-	private static       String    listaAttXml = "";
-	private static       String    listaAttXsd = "";
-	private static       String    contenido   = "";
-	private static       int       indent      = 0;
-	private static       int       iteEntidad  = 0;
-	private static       int       iteAtributo = 0;
-	private static       int       att;
-	private static       OrigenXML data;
-	private final        XMLReader xr;
+	private final static String    targetFile     = "insert.sql";		//archivo de salida
+	private final static String    xmlErrorFile   = "bad.xml.xml";		//archivo de salida
+	private final static String    insertErrorFile= "bad.insert.sql";	//archivo de salida
+	private static       String    contenido   = "";	//Contenido entre los Tags
+	private static       int       att;					//diferente de -1 si es Atributo
+	private static       int       tCola;				//Numero de elementos en el Vector
+	private static       int   	   nivelActual=0; 		//
+	private static       int   	   nivelError =999999; 	//
+	private static       boolean   errorFound=false;	//
+	private static       OrigenXML data;				//
+	private final        XMLReader xr;					//
     
     private static FileWriter       fstream;
     private static FileWriter       fstream2;
@@ -47,9 +51,10 @@ public class ParserXML extends DefaultHandler {
     private static BufferedWriter   xmlError;
     private static BufferedWriter   insertError;
 
-    private static Stack<OrigenXML> pilaEntidad = new Stack<OrigenXML>();
-    private static Stack<String>    pilaAtt     = new Stack<String>();
-	public Vector<OrigenXML>        control     = new Vector<OrigenXML>();
+    private static Stack<OrigenXML>       pilaEntidad    = new Stack<OrigenXML>();
+    //private static LinkedList             lista          = new LinkedList();
+    private static LinkedList<OrigenXML>  listaEntidad   = new LinkedList();
+    public static Vector<OrigenXML>       controlEntidad = new Vector<OrigenXML>();
 	
 	
     /** Crear una instancia de ParserXML
@@ -128,36 +133,23 @@ public class ParserXML extends DefaultHandler {
     private static String listaCampos(){
     	String result = "";
     	int i = 0 ;
-//System.out.println("Entro a listaCampos");
-    	if (!true){
+    	if (data !=null){
 	    	while (i<data.getAtributos().size()) {
-	    		if (i==0){
-	    			result = result+data.getAtributos().get(0).nombre;
-	    		}else {
-	    			result = result + ", ";
-	        		result = result+data.getAtributos().get(i).nombre;
+	    		if( data.getAtributos().get(i).check){
+	    			
+		    		if (result.compareTo("")==0){
+		    			result = data.getAtributos().get(0).nombre;
+		    		}else {
+		    			result = result + ", ";
+		        		result = result+data.getAtributos().get(i).nombre;
+		    		}
 	    		}
-	    		i++;
+		    		i++;
 	    	}
-    	}else {}
-//System.out.println("campos: " + result );
-    	return "";
-    	
+    	}
+    	return result;
     }    
-    private static String listaCampos1(){
-    	String result = "";
-    	int i = 0;
-	while (i+1<iteAtributo) {
-		if (i==0){	result = result+pilaAtt.get(i);}
-		else{
-			result = result + ", ";
-    		result = result + pilaAtt.get(i);
-		}
-		i++;
-	}
-System.out.println("campos: " + result );
-	return result;
-}    
+    
     /** Retorna un String con los valores finales que insertaran en la BD  
      * @return String 
 	 */
@@ -165,38 +157,23 @@ System.out.println("campos: " + result );
     	String result = "";
     	String tipo   = "";
     	int i         = 0;
-if (!true){    	
-    	while (i<data.getAtributos().size()) {
-    		tipo   = data.getAtributos().get(i).getTipo().toString();
-    		if (i==0){ //primer caso, caso base
-    			if (tipo.compareTo("integer")==0){
-    				result = data.getAtributos().get(0).getValor();
-    			}else{
-    				result = "\""+data.getAtributos().get(0).getValor() + "\"";
-    			}
-    		}else{
-    			if (tipo.compareTo("integer")==0){
-    				result = result+", \""+data.getAtributos().get(0).getValor() + "\"" ;
-    			}else{
-    				result = result+ ", "+data.getAtributos().get(i).getValor();
-    			}
-    		}
-//    			if (tipo.compareTo("string")==0){//se compara con el tipo para colocar comillas
-//    				result = "\""+data.getAtributos().get(0).getValor() + "\"";
-//    			}else{
-//    				result = data.getAtributos().get(0).getValor();
-//    			}
-//    		}else { // caso N
-//    			if (tipo.compareTo("string")==0){//se compara con el tipo para colocar comillas
-//					result = result+", \""+data.getAtributos().get(0).getValor() + "\"" ;
-//    			}else{
-//    	        	result = result+ ", "+data.getAtributos().get(i).getValor();
-//    			}
-//    		}
-    		i++;
-//System.out.println(result + data.getAtributos().size() );
+    	if (data !=null){    	
+	    	while (i<data.getAtributos().size()) {
+	    		if( data.getAtributos().get(i).check){
+		    		tipo   = data.getAtributos().get(i).getTipo().toString();
+		    		if (result.compareTo("")==0){					 //primer caso, caso base
+		    			if ((tipo.compareTo("integer")==0) || (tipo.compareTo("ID")==0) ){
+		    				result = data.getAtributos().get(0).getValor();
+		    			}else{result = "\""+data.getAtributos().get(0).getValor() + "\"";}
+		    		}else{
+		    			if ((tipo.compareTo("integer")==0) || (tipo.compareTo("ID")==0) ){
+		    				result=result+", \""+data.getAtributos().get(0).getValor()+"\"";
+		    			}else{result = result+ ", "+data.getAtributos().get(i).getValor();}
+		    		}
+	    		}
+		    		i++;
+		    	}
     	}
-}
     	return result;
     }
     
@@ -227,14 +204,23 @@ if (!true){
     	
     	return false;
     } 
+
+    /** Procedimiento que se encarga de escribir en los archivos de salida, 
+     * si es correcto en insert.sql, si hay errores en insertError.sql,
+     * si hay errores en el archivo en bad.xml.xml  
+     *
+     */
     public static void InsertScript(int a){
 	    //obtener lista de campos
 	    String lcampos  = listaCampos();
 	    String lvalores = listaValores();		
     	try{
     		if (a == 1){
-			    insert.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
-			    		+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+    			insert.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
+    					+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+			    //insert.write("INSERT INTO "+ pilaEntidad.peek().getnombreTag().toUpperCase()
+    			//+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+    			
     		}else{
 			    xmlError.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
 			    		+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
@@ -244,49 +230,59 @@ if (!true){
 				insertError.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
 					+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
 				xmlError.write(e.getMessage());
-			}catch (Exception f){System.err.println("Error: " + f.getMessage());}
+			}catch (Exception f){System.err.println("Error"+ a + ": " + f.getMessage());}
 		    System.err.println("Error: " + e.getMessage());
 		}
 	}
+    
+    
+    public static void VaciarCola(int a){
+	    String lcampos ;
+	    String lvalores;
+    	//while (obtengo el siguiente data) empezando desde el primero 
+    	 //obtengo data y lo imprimo
+    		//borro el 
+System.out.println("****TAMANO: " + listaEntidad.size());
+    	while (listaEntidad.size()!=0) {
+    		data = listaEntidad.getFirst();
+
+    		lcampos  = listaCampos();	        	//obtener lista de campos
+    	    lvalores = listaValores();
+        	try{
+        		if (a == 1){
+        			insert.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
+        					+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+    			    //insert.write("INSERT INTO "+ pilaEntidad.peek().getnombreTag().toUpperCase()+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+        			
+        		}else{
+    			    xmlError.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
+    			    		+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+        		}
+    		}catch (Exception e){		// Se toma la exception si existe
+    			try{
+    				insertError.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
+    					+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
+    				xmlError.write(e.getMessage());
+    			}catch (Exception f){System.err.println("Error"+ a + ": " + f.getMessage());}
+    		    System.err.println("Error: " + e.getMessage());
+    		}
+    		data = listaEntidad.removeFirst();
+    		//System.out.println("* " + data.getnombreTag());
+    	}
+	}//fin VaciarCola()
+    
     public static void iniciarXmlError(){
 		try{ xmlError.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		}catch (Exception e){System.err.println("Error: " + e.getMessage());}
 	}
-    public static void ImprimirPilaEntidad(){
-		while (!pilaEntidad.empty()){
-			  System.out.println("entrePila\n" + pilaEntidad.pop().getnombreTag());
+    public static void imprimirPilaEntidad(){
+    	int i =0;
+    	while ( i < pilaEntidad.size()){
+    		System.out.println("entrePila ---" + pilaEntidad.get(i).getnombreTag());
+			i++;
 		}
-		System.out.println("Fin PilaEntidad");
     }
-    public static void insertar(int a){
-	    String lcampos  = "";
-	    String lvalores = "";		
-    	try{
-    		if (a == 1){
-    			insert.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Navathe\", 1);\n");
-    			insert.write("INSERT INTO LIBRO (ssn) VALUES (1);\n");
-    		}else if (a == 2){
-    			insert.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Navathe\", 1);\n");
-    			insert.write("INSERT INTO LIBRO (ssn) VALUES (1);\n");
-    			insert.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Elmasri\", 2);\n");
-    			insert.write("INSERT INTO LIBRO (ssn) VALUES (2);\n");
 
-    		}else if (a == 3){
-    			insert.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Navathe\", 1);\n");
-    			insert.write("INSERT INTO LIBRO (ssn) VALUES (1);\n");
-    			insert.write("INSERT INTO LIBRO (ssn) VALUES (2);\n");
-    			insertError.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Navathe\", 2);\n");
-    			insertError.write("INSERT INTO AUTOR (name, ssn) VALUES (\"Elmasri\", 2);\n");
-    		}
-		}catch (Exception e){		// Se toma la exception si existe
-			try{
-				insertError.write("INSERT INTO "+ data.getnombreTag().toUpperCase()
-					+ " ("+ lcampos + ") VALUES ("+ lvalores + ");\n");
-				xmlError.write(e.getMessage());
-			}catch (Exception f){System.err.println("Error: " + f.getMessage());}
-		    System.err.println("Error: " + e.getMessage());
-		}
-	}
     @Override
     public void startDocument() {
     	try {
@@ -301,52 +297,75 @@ if (!true){
     
     @Override
     public void startElement(String uri, String name, String qName, Attributes atts) {
-   		if ( buscarEntidadB(name) ){			 		//Si el tag es una entidad 
-System.out.println(getIndentSpaces(indent) +"<" + name + ">");
-   			Entidad ent = buscarEntidadE(name);			//obtener entidad
-   			data = new OrigenXML(ent);					//crear objeto con la entidad
-   			pilaEntidad.push(data);						//empilar Entidad
-   			att  = -1;									//flag para no q no sea atributo
-   		}else {		 									//Si el tag es un atributo
-   			//anadir el atributo al vector de atributoss
-   			//chequear si estan en mi vector atributos
-   			//(deberia estar si el xml es valido)
-   			att = buscarAtributo(name);
-   			pilaAtt.push(name);							//empilar Atributo
-   			String d =pilaAtt.peek();
-   			iteAtributo++;							//aumentar el tamano de atributos existentes
-   			
-   			if (listaAttXml.isEmpty()) {listaAttXml =  name;}
-   			else {listaAttXml = listaAttXml + ", " + name;	}
-System.out.print(getIndentSpaces(2) + "<" + name + ">");
+System.out.print("*"+nivelActual);
+    	if (errorFound){
+    		try{xmlError.write(getIndentSpaces(nivelActual) +"<"+name+">");}catch (Exception e){}
+    		nivelActual++;
+    	}else{
+	    	if ( buscarEntidadB(name) ){			 		//Si el tag es una entidad
+	    		System.out.println(getIndentSpaces(nivelActual) +"<"+name+">");
+	    		nivelActual++;	      					  	//sumar nivel actual
+	   			Entidad ent = buscarEntidadE(name);			//obtener entidad
+	   			data = new OrigenXML(ent);					//crear objeto con la entidad
+	   			pilaEntidad.push(data);						//empilar Entidad
+	   			listaEntidad.addLast(data);					//encolar Entidad en una lista
+//controlEntidad.add(data);					//encolar Entidad en un vector
+	   			att  = -1;									//flag para no q no sea atributo
+	   		}else {		 									
+	   			System.out.print(getIndentSpaces(nivelActual) + "<" + name + ">");
+	   			att = buscarAtributo(name);
+	   			if (buscarAtributo(name)!=-1) {				//Si el tag es un atributo
+	   				data.getAtributos().get(att).check = true;
+	   			}else if ((buscarAtributo(name)==-1) && (pilaEntidad.size()==0)) {
+	   				System.out.println("caso "+name);	  		//caso <dblp>   no hacer nada
+	   			}else {						//Si tag no esta definido, no entidad, no atributo
+	   				try{xmlError.write(getIndentSpaces(nivelActual) +"<"+name+">");}catch (Exception e){}
+	   				System.out.println("caso no definido");
+	   				nivelError=nivelActual;
+	   				errorFound =true;
+	   			}
+	   		}//fin else(tag atributo
    		}
-    }
+    }//fin startElement
     @Override
     public void endElement(String uri, String name, String qName) {
-    	System.out.println(getIndentSpaces(0) + "</" + name + ">");
-    	if ( buscarEntidadB(name) ){
-    		if ( claveRepetida(name) ){ //El insert correspondiente es malo
-    			InsertScript(2);		//Escribir en bad.insert.sql
-    		}else { 					//El insert correspondiente es bueno
-    			InsertScript(1);		//Escribir en insert.sql
-    		}
-    		System.out.println(pilaEntidad.pop().getnombreTag());
-    		//borrar data
-    		data =null;
-    	}else{
-    		//borrar atributo
-    		att=-1;
+System.out.print("*"+nivelActual);
+    	System.out.println(getIndentSpaces(0) + "</" +name + ">");
+    	if (errorFound){
+System.out.println("ERRORRRRRRRRRRRRRRRRR");
+    		try{xmlError.write(getIndentSpaces(nivelActual) + "</" + name + ">\n");}catch (Exception e){}
+    		if (nivelActual==nivelError){errorFound=false;}
+    	nivelActual--;
+    	}else{    	
+	    	if ( buscarEntidadB(name) ){
+	    		nivelActual--;
+	    		//El insert correspondiente es malo => bad.insert.sql
+	    		if (claveRepetida(name)){VaciarCola(2);/*InsertScript(2);*/}
+	    		else {			//El insert correspondiente es bueno =>insert.sql
+	    			if (nivelActual==0) {
+	    				//InsertScript(1);
+	    				VaciarCola(1);
+	    				}
+	    		}
+	    		if (pilaEntidad.size()==0) { data = null;}
+	    		else { data = pilaEntidad.peek();}
+	    	}else{ att=-1;}    							//Borrar atributo
     	}
-    }
+    }//fin endElment
     public void characters(char buf[], int offset, int len) throws SAXException {
-    	contenido = new String(buf, offset, len);    				//guardar valor
-    	if (att>-1){
-    		data.getAtributos().get(att).setValor(contenido);    	//almacenar valor data(objeto OrigenXML)
-    		System.out.print(getIndentSpaces(1) + data.getAtributos().get(att).getValor() + getIndentSpaces(1));
+    	contenido = new String(buf, offset, len);    	//guardar valor
+    	if (errorFound){
+    		try{xmlError.write(getIndentSpaces(nivelActual) + contenido );}catch (Exception e){}
+    	}else{  
+	    	if (att>-1){ 				//almacenar contenido en data(objeto OrigenXML)
+	    		data.getAtributos().get(att).setValor(contenido); 
+	    		System.out.print(getIndentSpaces(1) 
+	    				+ data.getAtributos().get(att).getValor() + getIndentSpaces(1));
+	    	}
     	}
     }//end characters
     
-    /** Procedimiento para Iniciar el Parser del XML
+    /** Procedimiento para iniciar el Parser del XML
      * @param String xmlFile
      * @throws SAXExceptio, IOException
      */
@@ -362,24 +381,8 @@ System.out.print(getIndentSpaces(2) + "<" + name + ">");
     	ParserXML pxml = new ParserXML();	//llamada al Parser
     	pxml.leer(xmlFile);	    			//
 
-//    	if (xmlFile.compareTo("libro1.xml")==0){
-//    		System.out.println("libro1.xml");
-//    		insertar(1);
-//    	}else if(xmlFile.compareTo("libro2.xml")==0){
-//    		System.out.println("libro2.xml");
-//    		insertar(2);
-//    	}else if(xmlFile.compareTo("libro3.xml")==0){
-//    		System.out.println("libro3.xml");
-//    		insertar(3);
-//    	}else if(xmlFile.compareTo("libro4.xml")==0){
-//    		System.out.println("libro4.xml");
-//    		insertar(4);
-//    	}else {
-//
-//    	}
     	insert.close();xmlError.close();insertError.close();  //cerrar todos los archivos
-		//ImprimirPilaEntidad();
-//System.out.println(listaAttXml);
+    	//imprimirPilaEntidad();
     }
     
 }//fin clase ParserXML
