@@ -524,10 +524,11 @@ public class Parser {
 									// Se leen los atributos de las entidades
 									//Caso del compuesto multivaluado, debo crear una nueva entidad, con todos los 
 									//atributos que son parte del compuesto + una referencia a la clave de la entidad (tipo)
+									System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado "+nuevo_atributo.getMaxOccurs()+nuevo_atributo.getNombre());
 									if(nuevo_atributo.getMaxOccurs()>1) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
 										//Aqui tienes que hacer tu parte Lili
-										System.out.println("Compuesto Multivaluado\n");
+										System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado\n");
 										/* Mi idea es que: En este punto crees la nueva entidad 
 										 * (que se llame como la hoja padre del attrCompuesto, osea nombreAttr)
 										 * (no se que tipo le vayas a poner.. no se como lo manejas con los multivaluados)
