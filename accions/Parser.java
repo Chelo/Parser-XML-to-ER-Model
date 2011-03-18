@@ -198,6 +198,35 @@ public class Parser {
 
 	}
 	
+	public static void SetForaneoMultivaluado(Entidad entidad, Entidad nueva){
+		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
+		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
+		Atributo aux = new Atributo();
+		HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();
+		Vector<Vector<Atributo>> agregar_foraneo =  new Vector<Vector<Atributo>>();
+		String nombre = "";
+
+		
+		Iterator<String> iter = clave_entidad.keySet().iterator();
+		while (iter.hasNext()){
+			nombre = iter.next();
+			aux= clave_entidad.get(nombre);
+			nuevos_atributos2.add(aux);
+		}
+		
+		Collections.reverse(nuevos_atributos2);
+		agregar_foraneo.add(nuevos_atributos2 );
+		foraneo.put(entidad.tipo,agregar_foraneo);
+		
+	
+		nueva.setForaneo(foraneo);
+	
+		
+		nueva.setClave(clave_entidad);	
+		
+	}
+	
+	
 	/**
 	 * Crea una nueva entidad para el atributo que es multivaluado
 	 * @param atributo al cual se le desea crear una nueva entidad
@@ -238,6 +267,30 @@ public class Parser {
 		nueva.setClave(clave_entidad);
 		
 		entidades.put(atributo.getNombre(), nueva);
+	}
+	
+	public static void CompuestoMultivaluado(Atributo nuevo_atributo, Entidad entidad_multivaluada, Vector<Atributo> vector_multivaluado, XSParticle[] particles ){
+		Vector<Atributo> atributos = new Vector<Atributo>();
+		
+		if(nuevo_atributo.getMinOccurs()==0)
+		{
+			atributos = leerElementos(particles, entidad_multivaluada.tipo, vector_multivaluado,true,true); //Llamada RECURSIVA
+		}
+		else
+		{
+			atributos = leerElementos(particles,entidad_multivaluada.tipo, vector_multivaluado,true,false); //Llamada RECURSIVA
+		}
+	
+		entidad_multivaluada.setAtributos(atributos);
+		
+		HashMap<String,Atributo> clave = entidad_multivaluada.getClave();
+		
+		int j = atributos.size()-1;
+		while (j>=0){
+				clave.put(atributos.get(j).nombre,atributos.get(j));
+			j--;	
+		}	
+		entidad_multivaluada.setClave(clave);
 	}
 
 	/**
@@ -527,8 +580,26 @@ public class Parser {
 									System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado "+nuevo_atributo.getMaxOccurs()+nuevo_atributo.getNombre());
 									if(nuevo_atributo.getMaxOccurs()>1) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
+										Entidad entidad_multivaluada = new Entidad();
+										entidad_multivaluada.nombre_entidad = nuevo_atributo.getNombre();
+										entidad_multivaluada.tipo = nuevo_atributo.getNombre();
+										Vector<Atributo> vector_multivaluado = new Vector<Atributo>();
+										HashMap<String,Atributo> multivaluada_clave = new HashMap<String,Atributo>();
+										entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);	
+										
+										entidad_multivaluada.setClave((HashMap<String, Atributo>) entidad.clave.clone());
+										SetForaneoMultivaluado(entidad, entidad_multivaluada);
+										//SetForaneoMultivaluado(entidad, entidad_multivaluada);
+										CompuestoMultivaluado(nuevo_atributo,entidad_multivaluada,vector_multivaluado,particles1);
+										
+										
+										
 										//Aqui tienes que hacer tu parte Lili
 										System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado\n");
+										System.out.println("nombre "+ nuevo_atributo.getNombre());
+										System.out.println("clave "+ entidad.clave);
+										
+										
 										/* Mi idea es que: En este punto crees la nueva entidad 
 										 * (que se llame como la hoja padre del attrCompuesto, osea nombreAttr)
 										 * (no se que tipo le vayas a poner.. no se como lo manejas con los multivaluados)
@@ -765,7 +836,6 @@ public class Parser {
 			{
 				String sup = superC.next(); 
 				Vector<String> sub = subC.next();
-				
 				HashMap<String,Atributo> claveSup = entidades.get(sup).getClave();
 				Enumeration<String> subclass= sub.elements();
 				
@@ -794,6 +864,7 @@ public class Parser {
 							//las referecias y tenemos que cambiar las referencias circulares que habían hacia 
 							//la superclase que ahora desaparecerá
 							Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
+							Vector<String> referencias_agregadas = new Vector<String>();
 							while (referenciasSupVal.hasNext()) 
 							{
 								Enumeration<Atributo> ref = referenciasSupVal.next().elements();
@@ -802,33 +873,45 @@ public class Parser {
 									//Paso referencias de la superclase a la subclase
 									Atributo attr = ref.nextElement();
 									entidades.get(subcl).setReferencia(attr);
-									//Cambio el tipo de la referencia circular	
-									/*String tipo = attr.getTipo();
-									Vector<Atributo> referenciasCirculares = entidades.get(tipo).getReferencias().get(sup);
-									Iterator<Atributo> refCir = referenciasCirculares.iterator();
-									while(refCir.hasNext())
-									{
-										Atributo nuevo_attr = refCir.next();
-										nuevo_attr.setTipo(subcl);
-										entidades.get(tipo).setReferencia(nuevo_attr);
-									}*/	
+									//Debo guardar la información de el tipo de la entidad
+									//a la cual se hacia referencia, para
+									//luego cambiar en ellas el tipo en las referencias circulares, 
+									//que ahora debe ser hacia la subclase
+									String tipo = attr.getTipo();
+									if (!referencias_agregadas.contains(tipo))
+										referencias_agregadas.add(tipo);
 								}	
 								
 							}
+							//Cambio el tipo de la referencia circular	
+							Iterator<String> referencias_a_cambiar = referencias_agregadas.iterator();
+							while(referencias_a_cambiar.hasNext())
+							{
+								String tipo = referencias_a_cambiar.next();
+								Vector<Atributo> referenciasCirculares = entidades.get(tipo).getReferencias().get(sup);
+								Iterator<Atributo> refCir = referenciasCirculares.iterator();
+								while(refCir.hasNext())
+								{
+									Atributo nuevo_attr = refCir.next();
+									nuevo_attr.setTipo(subcl);
+									entidades.get(tipo).setReferencia(nuevo_attr);
+								}
+							}	
 							//Unico
 							HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
 							entidades.get(subcl).setUnico(unico);
 							//Foraneos
+							//System.out.println("Superclase = sup" +sup + "Subclase"+ subcl+"\n" );
 							HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
 							entidades.get(subcl).setForaneo(foraneo);
-							String tipo = subcl;
 							//Tipo
+							String tipo = subcl;
 							entidades.get(subcl).setTipo(tipo);
 						}	
 						//Eliminas la superclase
 						entidades.remove(sup);
 						//Debes eliminar todas las referencias hechas a ella
-						/*Iterator<Entidad> entidads = entidades.values().iterator();
+						Iterator<Entidad> entidads = entidades.values().iterator();
 						while(entidads.hasNext())
 						{
 							Entidad ent = entidads.next();
@@ -836,10 +919,10 @@ public class Parser {
 							{
 								ent.getReferencias().remove(sup);
 							}	
-						}*/
+						}
 						opcionValida = true;
 					}
-					if (opcionTraduccion.equals("1"))
+					else if (opcionTraduccion.equals("1"))
 					{
 						//Agregas como clave primaria de cada subclase, la clave primaria de la superclase 
 						//como foránea
@@ -1006,6 +1089,19 @@ public class Parser {
 			e.printStackTrace();
 		}
 		entidad.setClave(clave2);
+	}
+	
+	public static void ClaveMultivaluado(Entidad entidad){
+		Vector<Atributo> atributos =  entidad.getAtributos();
+		HashMap<String,Atributo> unico = entidad.getUnico();
+		HashMap<String,Atributo> clave = entidad.getClave();
+		unico.remove("");
+		int j = atributos.size()-1;
+		while (j>=0){
+				clave.put(atributos.get(j).nombre,atributos.get(j));
+				
+			}j--;	
+		entidad.setClave(clave);
 	}
 	
 	/**
