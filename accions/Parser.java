@@ -198,7 +198,14 @@ public class Parser {
 
 	}
 	
+	/**
+	 * Metodo encargado de colocar la referencia hacia la clave primaria de una entidad
+	 * que posee un atributo multivaluado y compuesto
+	 * @param entidad Entidad donde se encuentra el atributo multivaluado y compuesto
+	 * @param nueva Entidad nueva que representa el atributo multivaluado y compuesto.
+	 */
 	public static void SetForaneoMultivaluado(Entidad entidad, Entidad nueva){
+		@SuppressWarnings("unchecked")
 		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
 		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
 		Atributo aux = new Atributo();
@@ -206,7 +213,7 @@ public class Parser {
 		Vector<Vector<Atributo>> agregar_foraneo =  new Vector<Vector<Atributo>>();
 		String nombre = "";
 
-		
+		//Se leen los atributos que forman parte de la clave de la entidad inicial
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
 			nombre = iter.next();
@@ -218,11 +225,8 @@ public class Parser {
 		agregar_foraneo.add(nuevos_atributos2 );
 		foraneo.put(entidad.tipo,agregar_foraneo);
 		
-	
+		//Se agregan los atributos que son referencia
 		nueva.setForaneo(foraneo);
-	
-		
-		nueva.setClave(clave_entidad);	
 		
 	}
 	
@@ -269,6 +273,15 @@ public class Parser {
 		entidades.put(atributo.getNombre(), nueva);
 	}
 	
+	/**
+	 * Metodo encarga de crear una nueva entiadad en caso de encontrar un atributo que sea
+	 * multivaluado y compuesto.
+	 * 
+	 * @param nuevo_atributo Atributo compuesto multiuvaluado
+	 * @param entidad_multivaluada Entidad nueva que se esta creando a partir del atributo compuesto multivaluada
+	 * @param vector_multivaluado	Vector de atributos de la nueva entidad
+	 * @param particles
+	 */
 	public static void CompuestoMultivaluado(Atributo nuevo_atributo, Entidad entidad_multivaluada, Vector<Atributo> vector_multivaluado, XSParticle[] particles ){
 		Vector<Atributo> atributos = new Vector<Atributo>();
 		
@@ -310,6 +323,7 @@ public class Parser {
 	 * que est&#233n definidos bajo el tag "element", pertenecientes a la entidad definida por el ComplexType de nombre "tipo" 
 	 * y que ser&#225n parseados por esta funci&#243n. 
 	 */
+	@SuppressWarnings("unchecked")
 	public static Vector<Atributo> leerElementos(XSParticle[] particles, String tipo, Vector<Atributo> atributos, boolean parteDecompuesto, boolean compuestoNulo) {
 		
 		XSTerm pterm;
@@ -577,54 +591,25 @@ public class Parser {
 									// Se leen los atributos de las entidades
 									//Caso del compuesto multivaluado, debo crear una nueva entidad, con todos los 
 									//atributos que son parte del compuesto + una referencia a la clave de la entidad (tipo)
-									System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado "+nuevo_atributo.getMaxOccurs()+nuevo_atributo.getNombre());
+							
 									if(nuevo_atributo.getMaxOccurs()>1) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
+										//Se crea la nueva entidad conrespondiente al atributo compuesto multivaluado.
 										Entidad entidad_multivaluada = new Entidad();
 										entidad_multivaluada.nombre_entidad = nuevo_atributo.getNombre();
 										entidad_multivaluada.tipo = nuevo_atributo.getNombre();
 										Vector<Atributo> vector_multivaluado = new Vector<Atributo>();
+										@SuppressWarnings("unused")
 										HashMap<String,Atributo> multivaluada_clave = new HashMap<String,Atributo>();
+										
 										entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);	
-										
 										entidad_multivaluada.setClave((HashMap<String, Atributo>) entidad.clave.clone());
+										//Se crean las referencias foraneas de la entidad
 										SetForaneoMultivaluado(entidad, entidad_multivaluada);
-										//SetForaneoMultivaluado(entidad, entidad_multivaluada);
-										CompuestoMultivaluado(nuevo_atributo,entidad_multivaluada,vector_multivaluado,particles1);
+										//Se agregan los atributos a la nueva entidad
+										CompuestoMultivaluado(nuevo_atributo,entidad_multivaluada,vector_multivaluado,particles1);	
 										
-										
-										
-										//Aqui tienes que hacer tu parte Lili
-										System.out.println("PILAAAAAAAAAAAAAA Compuesto Multivaluado\n");
-										System.out.println("nombre "+ nuevo_atributo.getNombre());
-										System.out.println("clave "+ entidad.clave);
-										
-										
-										/* Mi idea es que: En este punto crees la nueva entidad 
-										 * (que se llame como la hoja padre del attrCompuesto, osea nombreAttr)
-										 * (no se que tipo le vayas a poner.. no se como lo manejas con los multivaluados)
-										 * y que le agregues de una vez como clave y foránea, la clave de la entidad que
-										 * la contiene, es decir, la definida por el complex <tipo>
-										*/
-										
-										/* Aqui haces la llamada recursiva a leerElementos, para leer las hojas del attrCompuesto
-										 * Como puedes ver en la llamada le estas pasando el tipoDelaNuevaEntidad así que estos atributos
-										 * que se lean ya se meterán automáticamente en la nueva entidad creada
-										 * if(nuevo_atributo.getMinOccurs()==0)
-										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,true)
-										 * else
-										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,false)
-										 * 
-										 * */
-										
-										/* Lo unico que faltaría sería decir que la clave son 
-										 * todos los atributos de la nueva entidad creada. Aqui si que no se me ocurre nada 
-										 * rápido por ahora. 
-										 * */
-										
-										/* Ya que tu has trabajado con los multivaluados seguro se te ocurre algo mejor ;)
-										 * */
-									}	
+									}
 									else
 									{
 										//Caso del compuesto nulo, entonces debo obligar a todos los hijos a ser nulos
@@ -1055,8 +1040,12 @@ public class Parser {
 		unico.remove("");
 		clave.remove("");
 		
+		//Se verifica si se definió la clave de la entidad, en caso de que solo hayan
+		//atributos unicos estos son tomados como clave de la entidad
 		if (unico.size()>0 && clave.size()==0){
 			clave = (HashMap<String, Atributo>) unico.clone();
+			unico.clear();
+			
 		}
 		
 		int j = atributos.size()-1;
@@ -1091,11 +1080,18 @@ public class Parser {
 		entidad.setClave(clave2);
 	}
 	
+	/**
+	 * Se define la clave de una entidad que ha sido creada por se
+	 * un atributo multivaluado y compuesto. En este caso la clave esta formada
+	 * por todos los atributos que forman el atributo compuesto más la clave
+	 * @param entidad Entidad creada a partir del atributo compuesto multivaluado.
+	 */
 	public static void ClaveMultivaluado(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> unico = entidad.getUnico();
 		HashMap<String,Atributo> clave = entidad.getClave();
 		unico.remove("");
+		
 		int j = atributos.size()-1;
 		while (j>=0){
 				clave.put(atributos.get(j).nombre,atributos.get(j));
