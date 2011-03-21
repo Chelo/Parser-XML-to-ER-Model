@@ -10,7 +10,10 @@ public class Principal {
 	public static void main(String[] args) throws SAXException, IOException {
 				
 
-		Parser.ParsearXMLSchema("ejemploGeneral.xml");
+
+
+		Parser.ParsearXMLSchema("ejemplo2.xml");
+
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
 		//utilizar el hash de entidades (las pueden borrar)
@@ -39,6 +42,6 @@ public class Principal {
 		}
 
 
-		//ParserXML.ParsearXML("libro1.xml");
+	//	ParserXML.ParsearXML("libro1.xml");
 	}
 }
