@@ -39,6 +39,6 @@ public class Principal {
 		}
 
 
-		ParserXML.ParsearXML("libro1.xml");
+		//ParserXML.ParsearXML("libro1.xml");
 	}
 }
