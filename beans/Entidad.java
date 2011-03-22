@@ -25,7 +25,7 @@ public class Entidad {
 	
 	public String nombre_entidad;																	//Nombre de la entidad.
 	public Vector<Atributo> atributos=  new Vector<Atributo>(); 									//Atributos de la entidad.
-	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();
+	public HashMap<String,Vector<Atributo>> referencias = new HashMap<String,Vector<Atributo>>();	//Hash cuya clave es el tipo de la entidad y el valor es el vector de atributos del tipo de la entidad
 	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el nombre de la entidad foránea, valor, el vector de Vectores de Atributos

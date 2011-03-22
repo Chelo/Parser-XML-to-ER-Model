@@ -57,6 +57,7 @@ public class Parser {
 	public static HashMap<String, XSComplexType> complexSinEntidad = new HashMap<String, XSComplexType>() ;
 	public static HashMap<String, XSComplexType> subclases = new HashMap<String, XSComplexType>() ;
 	public static HashMap<String, Vector<String>> superclases = new HashMap<String, Vector<String>>() ;
+	public static HashMap<String, XSComplexType> enearias = new HashMap<String, XSComplexType>(); //Hash cuya clave es el nombre de la entidad enearia y el valor es el complextype que tiene.
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo
 	 * XSOM parser y parsear el archivo (XMLSchema) indicado el
@@ -760,6 +761,15 @@ public class Parser {
 			List<XSIdentityConstraint> restricciones = element.getIdentityConstraints();
 
 			tipo = element.getType().getName();
+			//-------------- modificación Chelo 21-03 --------------------------
+			//CHELOOO AQUI... if tipo es nulo... vas a llamar a una funcion a la que le pasaras
+			// el element y preguntaras if element is complex (ve el codigo de kari), si es asi
+			// guardo la entidad en una estructura para saber que es especial. LE coloco el nombre como tipo
+			// para que se cree la entidad.
+			if (tipo==null) {
+				enearias.put(nombre, element.getType().asComplexType());
+				tipo= nombre;
+			}
 			nueva_entidad.setTipo(tipo);
 			nueva_entidad.setNombre_entidad(nombre);
 			entidades.put(tipo, nueva_entidad);
@@ -853,6 +863,7 @@ public class Parser {
 
 				BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 				boolean opcionValida = false;
+				
 				while(!opcionValida)
 				{
 					System.out.println("*---Se ha detectado generalización/especialización en la superclase "+ sup +" ---* \n");
@@ -865,13 +876,28 @@ public class Parser {
 						//Agregas a cada subclase todos los atributos de la superclase
 						//Y la clave será la clave de la superclase
 						Vector<Atributo> atributosSup= entidades.get(sup).getAtributos();
+						int concatena =0;
+						
 						while(subclass.hasMoreElements())
 						{
-							String subcl = subclass.nextElement();
-							Vector<Atributo> atributosSub = entidades.get(subcl).getAtributos();
-							atributosSub.addAll(atributosSup);
+							
+							String subcl = subclass.nextElement();//Obtengo la subclase
+							Vector<Atributo> atributosSub = entidades.get(subcl).getAtributos();//obtengo los abtributos de la subclase
+							atributosSub.addAll(atributosSup); // Le agrego los atributos de la superclase.
 							entidades.get(subcl).setAtributos(atributosSub);
-							entidades.get(subcl).setClave(claveSup);
+							Iterator< Atributo> clav = claveSup.values().iterator();
+							HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
+							while(clav.hasNext()){
+								Atributo at= (Atributo)clav.next().clone();
+								String nameold= new String(at.nombre);
+								at.nombre= at.nombre+concatena;
+								concatena++;
+								System.out.println(at.nombre + " "+ nameold);
+								claveSub.put(at.nombre, at);
+								CambiarNombreAtributo(subcl, new String(at.nombre), nameold);
+							}
+							
+							entidades.get(subcl).setClave(claveSub);
 							//Se le agregan a las subclases el resto de las cosas que tenía la superclase
 							//las referecias y tenemos que cambiar las referencias circulares que habían hacia
 							//la superclase que ahora desaparecerá
@@ -883,7 +909,7 @@ public class Parser {
 								while(ref.hasMoreElements())
 								{
 									//Paso referencias de la superclase a la subclase
-									Atributo attr = ref.nextElement();
+									Atributo attr = (Atributo)ref.nextElement().clone();
 									entidades.get(subcl).setReferencia(attr);
 									//Debo guardar la información de el tipo de la entidad
 									//a la cual se hacia referencia, para
@@ -904,7 +930,7 @@ public class Parser {
 								Iterator<Atributo> refCir = referenciasCirculares.iterator();
 								while(refCir.hasNext())
 								{
-									Atributo nuevo_attr = refCir.next();
+									Atributo nuevo_attr = (Atributo)refCir.next().clone();
 									nuevo_attr.setTipo(subcl);
 									entidades.get(tipo).setReferencia(nuevo_attr);
 								}
@@ -914,8 +940,8 @@ public class Parser {
 							entidades.get(subcl).setUnico(unico);
 							//Foraneos
 							//System.out.println("Superclase = sup" +sup + "Subclase"+ subcl+"\n" );
-							HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
-							entidades.get(subcl).setForaneo(foraneo);
+							//HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
+							//entidades.get(subcl).setForaneo(foraneo);
 							//Tipo
 							String tipo = subcl;
 							entidades.get(subcl).setTipo(tipo);
@@ -969,6 +995,24 @@ public class Parser {
 		}
 	}
 
+	/**
+	 * Funcion que permite cambiar el nombre de un atributo para evitar conflictos en la 
+	 * escritura del SQL
+	 * 
+	 * @param subcl String con el tipo de la clase a la cual se le cambiará el nombre del atributo
+	 * @param namenew String con el nuevo nombre.
+	 * @param nameold String con el nombre viejo para realizar la búsqueda por el vector de atributos.
+	 */
+	public static void CambiarNombreAtributo(String subcl, String namenew, String nameold){
+		Iterator< Atributo> it= entidades.get(subcl).atributos.iterator();
+		while(it.hasNext()){
+			Atributo atr = it.next();
+			if (atr.nombre.equals(nameold)) {
+				atr.nombre= new String (namenew);
+				break;
+			}
+		}
+	}
 	/**
 	 * Retorna un String indicado si el atributo puede o no se nulo.
 	 *
@@ -1849,6 +1893,15 @@ System.out.println("Nombre: " + iter.next());
 					else
 						nuevo_mapa.put(tipo, complex);
 				}
+				
+				if (!enearias.isEmpty()) {
+					Iterator<String> ene= enearias.keySet().iterator();
+					while(ene.hasNext()){
+						String enearia= ene.next();
+						nuevo_mapa.put(enearia, enearias.get(enearia));
+					}
+				}
+				
 				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator();
 				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);

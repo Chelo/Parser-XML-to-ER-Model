@@ -12,7 +12,7 @@ public class Principal {
 
 
 
-		Parser.ParsearXMLSchema("ejemplo2.xml");
+		Parser.ParsearXMLSchema("ejemploViejo.xml");
 
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
