@@ -1709,6 +1709,151 @@ System.out.println("Nombre: " + iter.next());
 	}
 
 	/**
+	 * Función que se encarga de analizar si existen relaciones enearias dentro 
+	 * del diagrama ER. Para ello utiliza la estructura global "enearias" y el 
+	 * hash global de "entidades".
+	 */
+	public static void VerEnearias() {
+
+		//Me aseguro de que existan posibles enearias.
+		if (!enearias.isEmpty()) {
+			//Recorro las enearias.
+			Iterator<String> it = enearias.keySet().iterator();
+			while(it.hasNext()){
+				Entidad enearia = entidades.get(it.next()); // Entidad postulada a ser enearia.
+				if (enearia.referencias.size()<= 2) {
+					//Si esto ocurre es porque la enearia estuvo definida solo con dos o menos entidades, lo cual 
+					// hace que no sea enearia. Se muestra error.
+					System.out.println("ERROR: El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
+							" interrelación enearia, sin embargo tiene menos de dos entidades relacionadas. ");
+					//Se retira esa entidad del hash de entidades para que no sea analizada.
+					entidades.remove(enearia.tipo);
+				}
+				else {
+					//Recorro cada una de las entidades a las que hago referencia para ver si hay referencia circular
+					// NO DEBE HABER REFERENCIA CIRCULAR, sino no se cumple el concepto de la enearia.
+					
+					//Recorro las referencias para buscarlas en entidades.
+					Iterator<String> iter= enearia.referencias.keySet().iterator();
+					boolean esEnearia = true;
+					while(iter.hasNext()){
+						String tipoEntidad= iter.next();//Tipo de la entidad relacionada en la enearia.
+						Entidad ent = entidades.get(tipoEntidad); // Entidad relacionada en la enearia.
+						if (ent == null) {
+							//Se referencio a una entidad que no existe.
+							System.out.println("ERROR: la entidad "+ tipoEntidad +" no esta definida\n");
+							//Remuevo la entidad enearia para que no se le genere tabla pues esta mala.
+							entidades.remove(enearia.tipo);
+							esEnearia=false;
+							break;
+						}
+						else{
+							//Se referencia a una entidad existente.
+							//Reviso que en las referencias de "ent" no exista "enearia", si existe sería circular.
+							
+							if (ent.referencias.containsKey(enearia.tipo))
+							{
+								//Existe referencia circular. ERROR!
+								System.out.println("La interrelacion " + enearia.nombre_entidad + "pareciera ser enearia,"+
+										"sin embargo existen referencias circulares entre ella y la entidad "+ ent.nombre_entidad);
+								
+								//Remuevo la entidad enearia del hash de entidades para que no se genere tabla.
+								entidades.remove(enearia.tipo);
+								esEnearia= false;
+								break;
+							}
+						}
+						
+					}
+					if (esEnearia) {
+						
+						//POR AHORA COLOCARE TODOS LOS ATRIBUTOS COMO CLAVES.
+						Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
+						//tengo los vectores.
+						while(itera.hasNext()){
+							
+							Iterator<Atributo> i= itera.next().iterator();
+							//Tengo los atributos.
+							while(i.hasNext()){
+								Atributo at = i.next();
+								
+								//Saco la entidad del atributo para poder extraer su clave.
+								Entidad ent= entidades.get(at.tipo); //Entidad del atributo.
+								
+								//Extraigo la clave y la meto como clave de "enearia"
+								Iterator<Atributo> g = ent.clave.values().iterator();
+								
+								while(g.hasNext()){
+									Atributo atributo= g.next();
+									enearia.clave.put(atributo.nombre, (Atributo)atributo.clone());
+								}
+								//Agrego el atributo como foráneo.
+								enearia.AgregarForaneo(at.tipo, ent.clave.values());
+							}
+						}
+						/*
+						//Como es enearia debo recorrer todas las referencias y ver la cardinalidad para determinar,
+						//quien sera clave y quien sera unica.
+						
+						//Creo un hash que vaya guardando a todos los atributos como clave por si no hay ningun
+						// atributo con max 1.
+						
+						HashMap<String, Atributo> claveContodas=new HashMap<String, Atributo>(); 
+						
+						boolean hayClave= false; //Ayuda saber si ya la clave esta definida para no definirla varias veces.
+						boolean hayMax1= false;  //Ayuda a saber si nadie tiene max=1 para ir llenando el hash auxiliar de claves.
+						
+						Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
+						//Tengo los vectores de atributos.
+						while(itera.hasNext()){
+							
+							Iterator<Atributo> i= itera.next().iterator();
+							//Tengo los atributos.
+							while(i.hasNext()){
+								Atributo at= i.next();
+								
+								if (at.maxOccurs==1) {
+									hayMax1=true;
+									//Es clave o es unico.
+									if (!hayClave) {
+										hayClave= true;
+										enearia.clave.put(at.nombre, at);
+									}
+									else{
+										//Ya hay clave pero este es unico.
+										enearia.unico.put(at.nombre, at);
+									}
+								}
+								else{
+									if (!hayMax1) {
+										//Voy llenando el hash por si ninguna es de max1
+										claveContodas.put(at.nombre, at);	
+									}
+								}
+								//Agrego el atributo como foráneo.
+								enearia.AgregarForaneo(at.tipo, entidades.get(at.tipo).clave.values());
+							}
+						}
+						
+						if(!hayClave){
+							//Si al salir aun no hay clave TODAS deben ser clave.
+							//Se coloca el hah auxiliar como hash de claves.
+							enearia.clave=claveContodas;
+						}
+						
+						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
+						enearia.referencias.clear();
+						*/
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	/**
 	 * Analiza cual entidad absorbe a cual, de acuerdo a las reglas de la cardinalidad y
 	 * participacion. (1:1,1:N,M:N)
 	 *
@@ -1905,7 +2050,8 @@ System.out.println("Nombre: " + iter.next());
 				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator();
 				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-
+				
+				VerEnearias();
 				VerInterrelaciones();
 				ImprimirEntidades();
 
