@@ -126,7 +126,7 @@ public class ParserXML extends DefaultHandler {
     /** Retorna un String con los campos finales que insertaran en la BD  
      * @return String 
 	 */
-    private static String listaCampos(){
+   /* private static String listaCampos(){
     	String result = "";
     	int i = 0 ;
     	if (data !=null){
@@ -144,12 +144,12 @@ public class ParserXML extends DefaultHandler {
 	    	}
     	}
     	return result;
-    }    
+    }   */ 
     
     /** Retorna un String con los valores finales que insertaran en la BD  
      * @return String 
 	 */
-    private static String listaValores(){
+    /*private static String listaValores(){
     	String result = "";
     	String tipo   = "";
     	int i         = 0;
@@ -171,7 +171,7 @@ public class ParserXML extends DefaultHandler {
 		    	}
     	}
     	return result;
-    }
+    }*/
     
     /**Retorna un Indice que representa la posicion del atributo con nombre 'name'
      * dentro del vector Atributo
@@ -206,7 +206,7 @@ public class ParserXML extends DefaultHandler {
      * si hay errores en el archivo en bad.xml.xml  
      *
      */
-    public static void InsertScript(int a){
+    /*public static void InsertScript(int a){
 	    //obtener lista de campos
 	    String lcampos  = listaCampos();
 	    String lvalores = listaValores();		
@@ -229,10 +229,10 @@ public class ParserXML extends DefaultHandler {
 			}catch (Exception f){System.err.println("Error"+ a + ": " + f.getMessage());}
 		    System.err.println("Error: " + e.getMessage());
 		}
-	}
+	}*/
     
     
-    public static void VaciarCola(int a){
+   /* public static void VaciarCola(int a){
 	    String lcampos ;
 	    String lvalores;
  
@@ -263,7 +263,7 @@ System.out.println("****TAMANO: " + listaEntidad.size());
     		data = listaEntidad.removeFirst();
     		//System.out.println("* " + data.getnombreTag());
     	}
-	}//fin VaciarCola()
+	}//fin VaciarCola()*/
     
     public static void iniciarXmlError(){
 		try{ xmlError.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -290,7 +290,7 @@ System.out.println("****TAMANO: " + listaEntidad.size());
     public void endDocument() {System.out.println("\n</XML>\n");}
     
     @Override
-    public void startElement(String uri, String name, String qName, Attributes atts) {
+    /*public void startElement(String uri, String name, String qName, Attributes atts) {
 System.out.print("*"+nivelActual);
     	if (errorFound){
     		try{xmlError.write(getIndentSpaces(nivelActual) +"<"+name+">");}catch (Exception e){}
@@ -334,8 +334,8 @@ System.out.println("ERRORRRRRRRRRRRRRRRRR");
 	    	if ( buscarEntidadB(name) ){
 	    		nivelActual--;
 	    		//El insert correspondiente es malo => bad.insert.sql
-	    		if (claveRepetida(name)){VaciarCola(2);/*InsertScript(2);*/}
-	    		else {			//El insert correspondiente es bueno =>insert.sql
+	    		if (claveRepetida(name)){VaciarCola(2);/*InsertScript(2);*///}
+	    		/*else {			//El insert correspondiente es bueno =>insert.sql
 	    			if (nivelActual==0) {
 	    				//InsertScript(1);
 	    				VaciarCola(1);
@@ -345,7 +345,7 @@ System.out.println("ERRORRRRRRRRRRRRRRRRR");
 	    		else { data = pilaEntidad.peek();}
 	    	}else{ att=-1;}    							//Borrar atributo
     	}
-    }//fin endElment
+    }//fin endElment*/
     public void characters(char buf[], int offset, int len) throws SAXException {
     	contenido = new String(buf, offset, len);    	//guardar valor
     	if (errorFound){

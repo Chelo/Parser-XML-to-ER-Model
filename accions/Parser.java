@@ -495,6 +495,7 @@ public class Parser {
 						System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "
 								+entidad.getNombre_entidad()+" que forma parte de un " +
 						"atributo compuesto debe ser igual a uno. Se colocará 1 por defecto \n");
+						System.out.print("No se permiten hojas multivaluadas en los atributos compuestos \n");
 						//El maxOccurs por defecto ya es 1 (al hacer new Atributo), por eso no se asigna.
 					}
 				}
