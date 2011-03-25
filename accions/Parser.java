@@ -217,8 +217,10 @@ public class Parser {
 		//Se leen los atributos que forman parte de la clave de la entidad inicial
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
+			
 			nombre = iter.next();
-			aux= clave_entidad.get(nombre);
+			aux= (Atributo) clave_entidad.get(nombre).clone();
+			aux.setNulo(false);
 			nuevos_atributos2.add(aux);
 		}
 		
@@ -256,7 +258,8 @@ public class Parser {
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
 			nombre = iter.next();
-			aux= clave_entidad.get(nombre);
+			aux= (Atributo) clave_entidad.get(nombre).clone();
+			aux.setNulo(false);
 			nuevos_atributos2.add(aux);
 		}
 
@@ -264,6 +267,8 @@ public class Parser {
 		agregar_foraneo.add(nuevos_atributos2 );
 		foraneo.put(entidad.tipo,agregar_foraneo);
 		nueva.setNombre_entidad(atributo.nombre);
+		
+		atributo.setNulo(false);
 		nuevos_atributos.add(atributo);
 		nueva.setAtributos(nuevos_atributos);
 		nueva.setForaneo(foraneo);
@@ -301,6 +306,7 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+			atributos.get(j).setNulo(false);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 			j--;	
 		}	
