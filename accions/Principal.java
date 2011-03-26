@@ -30,12 +30,12 @@ public class Principal {
 			//System.out.print("Tipo "+tipos.next() +"\n");
 		//}
 
-		Iterator<String> nombres = Parser.nombreEntidades.keySet().iterator();
+		/**Iterator<String> nombres = Parser.nombreEntidades.keySet().iterator();
 		Iterator<String> tipos   = Parser.nombreEntidades.values().iterator();
 		while(nombres.hasNext() & tipos.hasNext()){	
 			System.out.print("Nombre "+nombres.next()+"\n");
 			System.out.print("Tipo "+tipos.next() +"\n");
-		}
+		}*/
 
 
 	//	ParserXML.ParsearXML("libro1.xml");

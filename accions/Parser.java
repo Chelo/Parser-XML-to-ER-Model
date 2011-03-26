@@ -254,7 +254,10 @@ public class Parser {
 		Vector<Vector<Atributo>> agregar_foraneo = new Vector<Vector<Atributo>>();
 		String nombre = "";
 
-
+		
+		if (clave_entidad.keySet().size()==0){
+			System.out.println("ALERTA: Los atributos compuestos deben definirse despues de la clave en el Schema XML\n");
+		}
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
 			nombre = iter.next();
@@ -600,35 +603,11 @@ public class Parser {
 									//Caso del compuesto multivaluado, debo crear una nueva entidad, con todos los
 									//atributos que son parte del compuesto + una referencia a la clave de la entidad (tipo)
 							
-									if(nuevo_atributo.getMaxOccurs()>1) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
+									if(nuevo_atributo.getMinOccurs()>1 || nuevo_atributo.getMaxOccurs()>1 ) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
 										//Aqui tienes que hacer tu parte Lili
 										System.out.println("Compuesto Multivaluado\n");
-										/* Mi idea es que: En este punto crees la nueva entidad
-										 * (que se llame como la hoja padre del attrCompuesto, osea nombreAttr)
-										 * (no se que tipo le vayas a poner.. no se como lo manejas con los multivaluados)
-										 * y que le agregues de una vez como clave y foránea, la clave de la entidad que
-										 * la contiene, es decir, la definida por el complex <tipo>
-										 */
-
-										/* Aqui haces la llamada recursiva a leerElementos, para leer las hojas del attrCompuesto
-										 * Como puedes ver en la llamada le estas pasando el tipoDelaNuevaEntidad así que estos atributos
-										 * que se lean ya se meterán automáticamente en la nueva entidad creada
-										 * if(nuevo_atributo.getMinOccurs()==0)
-										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,true)
-										 * else
-										 * leerElementos(particles1, tipoDelaNuevaEntidad, newVector<Atributos>,true,false)
-										 *
-										 * */
-
-										/* Lo unico que faltaría sería decir que la clave son
-										 * todos los atributos de la nueva entidad creada. Aqui si que no se me ocurre nada
-										 * rápido por ahora.
-										 * */
-
-										/* Ya que tu has trabajado con los multivaluados seguro se te ocurre algo mejor ;)
-										 * 
-										 */
+								
 										//Se crea la nueva entidad conrespondiente al atributo compuesto multivaluado.
 										Entidad entidad_multivaluada = new Entidad();
 										entidad_multivaluada.nombre_entidad = nuevo_atributo.getNombre();
@@ -667,8 +646,8 @@ public class Parser {
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
 				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
 				if (tiposBasicos.contains(tipoAttr)){
-
-					if (nuevo_atributo.getMaxOccurs()>1){
+					System.out.println("TAMANO DEL MINOCCRUSS      "+nuevo_atributo.getMinOccurs());
+					if ( nuevo_atributo.getMinOccurs()>1 | nuevo_atributo.getMaxOccurs()>1 ){
 						Multivaluado(nuevo_atributo,entidades.get(tipo));
 					}else{
 						atributos.add(nuevo_atributo);
@@ -1134,7 +1113,7 @@ public class Parser {
 		while (j>=0){
 
 			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
-
+		
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 
@@ -1288,6 +1267,7 @@ System.out.println("Nombre: " + iter.next());
 	/**
 	 * Método que se encarga de crear el archivo sql correspondiente al xml
 	 * schema proporcionado.
+	 * @throws IOException 
 	 *
 	 */
 	public static void EscribirScript(){
@@ -1301,9 +1281,12 @@ System.out.println("Nombre: " + iter.next());
 		Vector<Atributo> rangos = new Vector<Atributo>();
 		int k = 0,j = 0, l = 0;
 
-		try{
+		
 			//Se crea el archivo sql de salida.
-			FileWriter fstream = new FileWriter("out.sql");
+			FileWriter fstream;
+			try {
+				fstream = new FileWriter("out.sql");
+			
 			BufferedWriter out = new BufferedWriter(fstream);
 
 			//Se iteran sobre las entidades que se van a crear.
@@ -1314,7 +1297,21 @@ System.out.println("Nombre: " + iter.next());
 				out.write("CREATE TABLE "+ entidad.getNombre_entidad().
 						toUpperCase()+" (\n");
 
-
+				
+				defineClave(entidad);
+				HashMap<String,Atributo> clave_1 = entidad.getClave();
+				Iterator<Atributo> iter_c = clave_1.values().iterator();
+				
+				while (iter_c.hasNext()){
+					
+					Atributo a= iter_c.next(); 
+					out.write(" "+a.getNombre().toUpperCase()+
+							" "+ TipoDato(a)+" "+ Nulidad(a)+
+							" "+ValorDefecto(a)+" ,\n");
+					//out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+				}
+				System.out.println("sali\n");
+				
 				j = entidad.getAtributos().size()-1;
 				// se inicializan las variables para la nueva entidad
 				atributos = entidad.getAtributos();
@@ -1322,6 +1319,11 @@ System.out.println("Nombre: " + iter.next());
 				dominios = new Vector<Atributo>();
 				rangos = new Vector<Atributo>();
 
+				
+				
+				
+				
+				
 				//Se agregan los atributos basicos de la entidad.
 				while (j >= 0) {
 					out.write(" "+atributos.get(j).getNombre().toUpperCase()+
@@ -1459,8 +1461,9 @@ System.out.println("Nombre: " + iter.next());
 
 			//Se cierra el output de escritura en el archivo sql
 			out.close();
-			// Se toma la exception si existe
-		}catch (Exception e){
+			}
+			// Se toma la exce//ion si existe
+		catch (Exception e){
 			System.err.println("Error escribiendo el script sql: " + e.getMessage());
 		}
 	}
