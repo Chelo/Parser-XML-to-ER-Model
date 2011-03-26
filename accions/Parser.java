@@ -243,17 +243,13 @@ public class Parser {
 
 		Entidad nueva = new Entidad();
 		defineClave(entidad);
-
-		//Revisar
 		@SuppressWarnings("unchecked")
 		HashMap<String,Atributo> clave_entidad = (HashMap<String, Atributo>) entidad.getClave().clone();
-		Vector<Atributo> nuevos_atributos = new Vector<Atributo>();
 		Vector<Atributo> nuevos_atributos2 = new Vector<Atributo>();
 		Atributo aux = new Atributo();
 		HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();
 		Vector<Vector<Atributo>> agregar_foraneo = new Vector<Vector<Atributo>>();
 		String nombre = "";
-
 		
 		if (clave_entidad.keySet().size()==0){
 			System.out.println("ALERTA: Los atributos compuestos deben definirse despues de la clave en el Schema XML\n");
@@ -265,20 +261,21 @@ public class Parser {
 			aux.setNulo(false);
 			nuevos_atributos2.add(aux);
 		}
-
+		
 		Collections.reverse(nuevos_atributos2);
 		agregar_foraneo.add(nuevos_atributos2 );
 		foraneo.put(entidad.tipo,agregar_foraneo);
 		nueva.setNombre_entidad(atributo.nombre);
 		
 		atributo.setNulo(false);
-		nuevos_atributos.add(atributo);
-		nueva.setAtributos(nuevos_atributos);
+		
+		
 		nueva.setForaneo(foraneo);
 		nueva.setTipo(atributo.getNombre());
 		clave_entidad.put(atributo.nombre,atributo);
 		nueva.setClave(clave_entidad);
-
+		nueva.setAtributos(new Vector<Atributo>());
+		nueva.imprimir = false;
 		entidades.put(atributo.getNombre(), nueva);
 	}
 	
@@ -293,6 +290,7 @@ public class Parser {
 	 */
 	public static void CompuestoMultivaluado(Atributo nuevo_atributo, Entidad entidad_multivaluada, Vector<Atributo> vector_multivaluado, XSParticle[] particles ){
 		Vector<Atributo> atributos = new Vector<Atributo>();
+		nuevo_atributo.setNulo(  false);
 		
 		if(nuevo_atributo.getMinOccurs()==0)
 		{
@@ -303,8 +301,8 @@ public class Parser {
 			atributos = leerElementos(particles,entidad_multivaluada.tipo, vector_multivaluado,true,false); //Llamada RECURSIVA
 		}
 	
-		entidad_multivaluada.setAtributos(atributos);
-		
+	//	entidad_multivaluada.setAtributos(atributos);
+		entidad_multivaluada.setAtributos(new Vector<Atributo>());
 		HashMap<String,Atributo> clave = entidad_multivaluada.getClave();
 		
 		int j = atributos.size()-1;
@@ -313,6 +311,7 @@ public class Parser {
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 			j--;	
 		}	
+		entidad_multivaluada.imprimir = false;
 		entidad_multivaluada.setClave(clave);
 	}
 
@@ -1155,7 +1154,7 @@ public class Parser {
 	 * por todos los atributos que forman el atributo compuesto más la clave
 	 * @param entidad Entidad creada a partir del atributo compuesto multivaluado.
 	 */
-	public static void ClaveMultivaluado(Entidad entidad){
+	/**public static void ClaveMultivaluado(Entidad entidad){
 		Vector<Atributo> atributos =  entidad.getAtributos();
 		HashMap<String,Atributo> unico = entidad.getUnico();
 		HashMap<String,Atributo> clave = entidad.getClave();
@@ -1167,7 +1166,7 @@ public class Parser {
 				
 			}j--;	
 		entidad.setClave(clave);
-	}
+	}**/
 	
 	/**
 	 * Se definen los atributos unicos pertenecientes a la entidad.
@@ -1355,16 +1354,17 @@ System.out.println("Nombre: " + iter.next());
 
 				//Se obtiene los atributos que son referencias
 
+				
 
 				Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator();
 				Vector <Atributo> foraneos = new Vector<Atributo>();
-
+				if (entidad.imprimir){
 				while(iter_for_ini.hasNext()){
 
 					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
 
 					int i = vector_iter_for.size()-1;
-
+					
 					while (i>=0){
 						foraneos = vector_iter_for.get(i);
 						j = foraneos.size()-1;
@@ -1377,6 +1377,7 @@ System.out.println("Nombre: " + iter.next());
 
 						} i--;
 					}
+				}
 				}
 
 				iter_for_ini = entidad.foraneo.values().iterator();

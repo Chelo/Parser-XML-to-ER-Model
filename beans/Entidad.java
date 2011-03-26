@@ -30,7 +30,7 @@ public class Entidad {
 	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el nombre de la entidad foránea, valor, el vector de Vectores de Atributos
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
-	
+	public boolean imprimir = true;																	//Determina si se imprime el vector foraneo 
 	/**
 	 * Retorna los atributos unicos de la entidad
 	 * @return Hashmap con los atributos unicos de la entidad
