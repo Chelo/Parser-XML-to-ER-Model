@@ -217,8 +217,10 @@ public class Parser {
 		//Se leen los atributos que forman parte de la clave de la entidad inicial
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
+			
 			nombre = iter.next();
-			aux= clave_entidad.get(nombre);
+			aux= (Atributo) clave_entidad.get(nombre).clone();
+			aux.setNulo(false);
 			nuevos_atributos2.add(aux);
 		}
 		
@@ -256,7 +258,8 @@ public class Parser {
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
 			nombre = iter.next();
-			aux= clave_entidad.get(nombre);
+			aux= (Atributo) clave_entidad.get(nombre).clone();
+			aux.setNulo(false);
 			nuevos_atributos2.add(aux);
 		}
 
@@ -264,6 +267,8 @@ public class Parser {
 		agregar_foraneo.add(nuevos_atributos2 );
 		foraneo.put(entidad.tipo,agregar_foraneo);
 		nueva.setNombre_entidad(atributo.nombre);
+		
+		atributo.setNulo(false);
 		nuevos_atributos.add(atributo);
 		nueva.setAtributos(nuevos_atributos);
 		nueva.setForaneo(foraneo);
@@ -301,6 +306,7 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+			atributos.get(j).setNulo(false);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 			j--;	
 		}	
@@ -425,7 +431,7 @@ public class Parser {
 				//OJO ESTO PUEDE SER PELIGROSO
 				//tiposBasicos.add("anySimpleType");
 				//tiposBasicos.add("null");
-				tiposBasicos.add("ID");
+				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
 				String valorPorDefecto;
@@ -883,9 +889,17 @@ public class Parser {
 						{
 							
 							String subcl = subclass.nextElement();//Obtengo la subclase
-							Vector<Atributo> atributosSub = entidades.get(subcl).getAtributos();//obtengo los abtributos de la subclase
-							atributosSub.addAll(atributosSup); // Le agrego los atributos de la superclase.
-							entidades.get(subcl).setAtributos(atributosSub);
+							Vector<Atributo> atributosSub= entidades.get(subcl).atributos;
+							
+							Iterator<Atributo> l= atributosSup.iterator();
+							
+							while(l.hasNext()){
+								Atributo at= (Atributo)l.next().clone();
+								atributosSub.add(at);
+							}
+							
+							//atributosSub.addAll(atributosSup);
+							//Voy con la clave.
 							Iterator< Atributo> clav = claveSup.values().iterator();
 							HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
 							while(clav.hasNext()){
@@ -893,9 +907,9 @@ public class Parser {
 								String nameold= new String(at.nombre);
 								at.nombre= at.nombre+concatena;
 								concatena++;
-								System.out.println(at.nombre + " "+ nameold);
+								System.out.println(at.nombre + " "+ nameold + " "+ subcl);
 								claveSub.put(at.nombre, at);
-								CambiarNombreAtributo(subcl, new String(at.nombre), nameold);
+								//CambiarNombreAtributo(subcl, new String(at.nombre), new String (nameold));
 							}
 							
 							entidades.get(subcl).setClave(claveSub);
@@ -1722,7 +1736,22 @@ System.out.println("Nombre: " + iter.next());
 			Iterator<String> it = enearias.keySet().iterator();
 			while(it.hasNext()){
 				Entidad enearia = entidades.get(it.next()); // Entidad postulada a ser enearia.
-				if (enearia.referencias.size()<= 2) {
+				
+				//Veo si existe más de dos entidades referenciando a la enearia.
+				
+				int numEntidades=0;
+				
+				Iterator<Vector<Atributo>> ref= enearia.referencias.values().iterator();
+				
+				while(ref.hasNext()){
+					//Saco cada vector del hash de referencias y veo su tamaño y lo voy sumando,
+					//esto es porque puede que una entidad este dos veces en la enearia, hay que 
+					// considerarla.
+					
+					numEntidades= numEntidades+ref.next().size();
+				}
+				
+				if (numEntidades<= 2) {
 					//Si esto ocurre es porque la enearia estuvo definida solo con dos o menos entidades, lo cual 
 					// hace que no sea enearia. Se muestra error.
 					System.out.println("ERROR: El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
@@ -1764,17 +1793,27 @@ System.out.println("Nombre: " + iter.next());
 								break;
 							}
 						}
+						if (!enearia.clave.isEmpty()) {
+							//Tiene una clave lo cual no es correcto.
+							System.out.println("ERROR: Las interrelaciones no poseen claves, se ha detectado que la interrelacion "+
+									enearia.nombre_entidad + " tiene clave.");
+							//Remuevo la entidad enearia.
+							entidades.remove(enearia.tipo);
+							esEnearia=false;
+							break;
+						}
 						
 					}
 					if (esEnearia) {
-						
 						//POR AHORA COLOCARE TODOS LOS ATRIBUTOS COMO CLAVES.
+					
 						Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
 						//tengo los vectores.
 						while(itera.hasNext()){
 							
 							Iterator<Atributo> i= itera.next().iterator();
 							//Tengo los atributos.
+							int contador=1;
 							while(i.hasNext()){
 								Atributo at = i.next();
 								
@@ -1786,12 +1825,32 @@ System.out.println("Nombre: " + iter.next());
 								
 								while(g.hasNext()){
 									Atributo atributo= g.next();
-									enearia.clave.put(atributo.nombre, (Atributo)atributo.clone());
+									if(enearia.clave.containsKey(atributo.nombre))
+									{
+										System.out.println("Entre con el atributo "+ atributo.nombre);
+										//Indica que esta entidad participa mas de una vez en la enearia.
+										//Meto de nuevo el atributo pero con otro nombre.
+										
+										//Clono el atributo y le cambio el nombre.
+										Atributo atri= (Atributo)atributo.clone();
+										atri.nombre= atri.nombre+contador;
+										System.out.println("le cambie el nombre a "+ atri.nombre);
+										//Meto el atributo como clave
+										enearia.clave.put(atri.nombre, atri);
+										contador++;
+									}
+									else
+									{
+										//No esta repetida, la meto igual.
+										enearia.clave.put(atributo.nombre, (Atributo)atributo.clone());
+									}
 								}
-								//Agrego el atributo como foráneo.
+								//Agrego e	l atributo como foráneo.
 								enearia.AgregarForaneo(at.tipo, ent.clave.values());
 							}
 						}
+						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
+						enearia.referencias.clear();
 						/*
 						//Como es enearia debo recorrer todas las referencias y ver la cardinalidad para determinar,
 						//quien sera clave y quien sera unica.
