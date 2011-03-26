@@ -431,7 +431,7 @@ public class Parser {
 				//OJO ESTO PUEDE SER PELIGROSO
 				//tiposBasicos.add("anySimpleType");
 				//tiposBasicos.add("null");
-				tiposBasicos.add("ID");
+				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
 				String valorPorDefecto;
@@ -891,7 +891,14 @@ public class Parser {
 							String subcl = subclass.nextElement();//Obtengo la subclase
 							Vector<Atributo> atributosSub= entidades.get(subcl).atributos;
 							
-							atributosSub.addAll(atributosSup);
+							Iterator<Atributo> l= atributosSup.iterator();
+							
+							while(l.hasNext()){
+								Atributo at= (Atributo)l.next().clone();
+								atributosSub.add(at);
+							}
+							
+							//atributosSub.addAll(atributosSup);
 							//Voy con la clave.
 							Iterator< Atributo> clav = claveSup.values().iterator();
 							HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
