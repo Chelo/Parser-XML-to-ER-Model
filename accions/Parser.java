@@ -666,6 +666,9 @@ public class Parser {
 				//Se termina de incluir los atributos, referencias o clave a la entidad correspondiente
 				//OJO esta porción de código está incluyendo a la clave 2 veces, como atributo y como clave
 				//Si colocas la línea entidad.setAtributo(nuevo_atributo); despues del if se evita esta situación
+				//Se verifica si el atributo es clave y se coloca la clave en la entidad
+				
+				
 				if (tiposBasicos.contains(tipoAttr)){
 
 					if (nuevo_atributo.getMaxOccurs()>1){
@@ -673,16 +676,14 @@ public class Parser {
 					}else{
 						atributos.add(nuevo_atributo);
 					}
-
-
-					//Se verifica si el atributo es clave y se coloca la clave en la entidad
+				}
+				else if (tipoAttr!=null){
+					
 					if ((tipoAttr.equals(id))){
 						clave = entidad.getClave();
 						clave.put(nuevo_atributo.nombre,nuevo_atributo);
 						entidad.setClave(clave);
 					}
-				}
-				else if (tipoAttr!=null){
 					//Agregué esto pues una entidad puede relacionarse
 					//con una subclase (complex sin entidad definida)
 					if(entidades.containsKey(tipoAttr) || complexSinEntidad.containsKey(tipoAttr)) {
@@ -891,14 +892,14 @@ public class Parser {
 							String subcl = subclass.nextElement();//Obtengo la subclase
 							Vector<Atributo> atributosSub= entidades.get(subcl).atributos;
 							
-							Iterator<Atributo> l= atributosSup.iterator();
+							//Iterator<Atributo> l= atributosSup.iterator();
 							
-							while(l.hasNext()){
+							/*while(l.hasNext()){
 								Atributo at= (Atributo)l.next().clone();
 								atributosSub.add(at);
-							}
+							}*/
 							
-							//atributosSub.addAll(atributosSup);
+							atributosSub.addAll(atributosSup);
 							//Voy con la clave.
 							Iterator< Atributo> clav = claveSup.values().iterator();
 							HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
