@@ -300,8 +300,7 @@ public class Parser {
 		{
 			atributos = leerElementos(particles,entidad_multivaluada.tipo, vector_multivaluado,true,false); //Llamada RECURSIVA
 		}
-	
-	//	entidad_multivaluada.setAtributos(atributos);
+
 		entidad_multivaluada.setAtributos(new Vector<Atributo>());
 		HashMap<String,Atributo> clave = entidad_multivaluada.getClave();
 		
@@ -1147,26 +1146,6 @@ public class Parser {
 		}
 		entidad.setClave(clave2);
 	}
-
-	/**
-	 * Se define la clave de una entidad que ha sido creada por se
-	 * un atributo multivaluado y compuesto. En este caso la clave esta formada
-	 * por todos los atributos que forman el atributo compuesto más la clave
-	 * @param entidad Entidad creada a partir del atributo compuesto multivaluado.
-	 */
-	/**public static void ClaveMultivaluado(Entidad entidad){
-		Vector<Atributo> atributos =  entidad.getAtributos();
-		HashMap<String,Atributo> unico = entidad.getUnico();
-		HashMap<String,Atributo> clave = entidad.getClave();
-		unico.remove("");
-		
-		int j = atributos.size()-1;
-		while (j>=0){
-				clave.put(atributos.get(j).nombre,atributos.get(j));
-				
-			}j--;	
-		entidad.setClave(clave);
-	}**/
 	
 	/**
 	 * Se definen los atributos unicos pertenecientes a la entidad.
@@ -1224,26 +1203,28 @@ public class Parser {
 		HashMap<String,Atributo> clave = entidad.getClave();
 		Iterator<String> iter = clave.keySet().iterator();
 
-		/*while(iter.hasNext()){
-System.out.println("Nombre: " + iter.next());
-}*/
 
-		int i = clave.size();
-		String salida = "(";
+		try {
+			int i = clave.size();
+			String salida = "(";
 
-		if (i==0){
-			return "(Clave no definida";
-		}
-		else if (i==1){
-			return "("+clave.get(iter.next()).nombre.toUpperCase();
-		}else{
-
-			while (iter.hasNext()) {
-				salida = salida+clave.get(iter.next()).nombre+",";
-
+			if (i==0){
+				return "(Clave no definida";
 			}
-			return salida.substring(0, salida.length()-1).toUpperCase();
-		}
+			else if (i==1){
+				return "("+clave.get(iter.next()).nombre.toUpperCase();
+			}else{
+
+				while (iter.hasNext()) {
+					salida = salida+clave.get(iter.next()).nombre+",";
+
+				}
+				return salida.substring(0, salida.length()-1).toUpperCase();
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}return "Clave Invalida";
 
 	}
 
@@ -1255,20 +1236,26 @@ System.out.println("Nombre: " + iter.next());
 	public static String retornaForaneos(Vector<Atributo> vector){
 		int i = vector.size();
 		String salida = "(";
-
-		if (i==0){
-			return "(Atributo no definido";
-		}
-		else if (i==1){
-			return "("+vector.get(0).nombre.toUpperCase();
-		}else{
-			i--;
-			while (i>=0) {
-				salida = salida+vector.get(i).nombre+",";
-				i--;
+		
+		try {
+			if (i==0){
+				return "(Atributo no definido";
 			}
-			return salida.substring(0, salida.length()-1).toUpperCase();
+			else if (i==1){
+				return "("+vector.get(0).nombre.toUpperCase();
+			}else{
+				i--;
+				while (i>=0) {
+					salida = salida+vector.get(i).nombre+",";
+					i--;
+				}
+				return salida.substring(0, salida.length()-1).toUpperCase();
+			}
+		} catch (Exception e) {
+			
+			e.printStackTrace();
 		}
+		return "Foraneo Invalido";
 	}
 
 	/**
@@ -1308,16 +1295,21 @@ System.out.println("Nombre: " + iter.next());
 				defineClave(entidad);
 				HashMap<String,Atributo> clave_1 = entidad.getClave();
 				Iterator<Atributo> iter_c = clave_1.values().iterator();
-				
-				while (iter_c.hasNext()){
-					
-					Atributo a= iter_c.next(); 
-					out.write(" "+a.getNombre().toUpperCase()+
-							" "+ TipoDato(a)+" "+ Nulidad(a)+
-							" "+ValorDefecto(a)+" ,\n");
-					//out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+				System.out.println("IMPRIMIENTO CLAVE \n"+ entidad.nombre_entidad);
+				try {
+					while (iter_c.hasNext()){
+						
+						Atributo a= iter_c.next(); 
+						out.write(" "+a.getNombre().toUpperCase()+
+								" "+ TipoDato(a)+" "+ Nulidad(a)+
+								" "+ValorDefecto(a)+" ,\n");
+						//out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+					}
+				} catch (Exception e3) {
+					System.out.println("ERROR: al escribir los atributos claves");
+					e3.printStackTrace();
 				}
-				System.out.println("sali\n");
+				System.out.println("IMPRIMIENTO ATRIBUTOS \n"+ entidad.nombre_entidad);
 				
 				j = entidad.getAtributos().size()-1;
 				// se inicializan las variables para la nueva entidad
@@ -1332,140 +1324,187 @@ System.out.println("Nombre: " + iter.next());
 				
 				
 				//Se agregan los atributos basicos de la entidad.
-				while (j >= 0) {
-					out.write(" "+atributos.get(j).getNombre().toUpperCase()+
-							" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+
-							" "+ValorDefecto(atributos.get(j))+" ,\n");
+				try {
+					while (j >= 0) {
+						out.write(" "+atributos.get(j).getNombre().toUpperCase()+
+								" "+ TipoDato(atributos.get(j))+" "+ Nulidad(atributos.get(j))+
+								" "+ValorDefecto(atributos.get(j))+" ,\n");
 
-					//Se verifica el tipo del atributo y se agrega al vector
-					//correspondiente
-					if (atributos.get(j).getTipo().equals("boolean")){
-						booleanos.add(atributos.get(j));
+						//Se verifica el tipo del atributo y se agrega al vector
+						//correspondiente
+						if (atributos.get(j).getTipo().equals("boolean")){
+							booleanos.add(atributos.get(j));
+						}
+						if (atributos.get(j).getDominio().size()>0){
+							dominios.add(atributos.get(j));
+						}
+						if ( !(atributos.get(j).getMaxRango()=="-1") |
+								!(atributos.get(j).getMinRango()=="-1") ){
+							rangos.add(atributos.get(j));
+						}
+						j--;
 					}
-					if (atributos.get(j).getDominio().size()>0){
-						dominios.add(atributos.get(j));
-					}
-					if ( !(atributos.get(j).getMaxRango()=="-1") |
-							!(atributos.get(j).getMinRango()=="-1") ){
-						rangos.add(atributos.get(j));
-					}
-					j--;
+				} catch (Exception e2) {
+					System.out.println("ERROR: al escribir los atributos\n");
+					e2.printStackTrace();
 				}
 
 				//Se obtiene los atributos que son referencias
 
 				
-
+				System.out.println("IMPRIMIENTO FOREANEOS \n"+ entidad.nombre_entidad);
 				Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator();
 				Vector <Atributo> foraneos = new Vector<Atributo>();
-				if (entidad.imprimir){
-				while(iter_for_ini.hasNext()){
+				try {
+					if (entidad.imprimir){
+					while(iter_for_ini.hasNext()){
 
-					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
+						Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
 
-					int i = vector_iter_for.size()-1;
+						int i = vector_iter_for.size()-1;
+						
+						while (i>=0){
+							foraneos = vector_iter_for.get(i);
+							j = foraneos.size()-1;
+
+							while (j >= 0) {
+								out.write(" "+foraneos.get(j).getNombre().toUpperCase()+
+										" "+TipoDato(foraneos.get(j)).toUpperCase() +" "+
+										Nulidad(foraneos.get(j))+" ,\n");
+								j--;
+
+							} i--;
+						}
+					}
+					}
+				} catch (Exception e1) {
+					System.out.println("ERROR: al escribir el Constraint de Foreing Key\n");
+					e1.printStackTrace();
+				}
+
+				System.out.println("IMPRIMIENTO CONSTRAINT FORANEO \n"+ entidad.nombre_entidad);
+				try {
+					iter_for_ini = entidad.foraneo.values().iterator();
+					Iterator<String> iter_for_ini_f = entidad.foraneo.keySet().iterator();
+					foraneos = new Vector<Atributo>();
+
+					while(iter_for_ini.hasNext()){
+
+						Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
+
+						int i = vector_iter_for.size()-1;
+						String tipo= iter_for_ini_f.next();
+
+						while (i>=0){
+							foraneos = vector_iter_for.get(i);
+						
+							out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
+									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
+
+							i --;
+						}
+
+					}
+				} catch (Exception e) {
 					
-					while (i>=0){
-						foraneos = vector_iter_for.get(i);
-						j = foraneos.size()-1;
-
-						while (j >= 0) {
-							out.write(" "+foraneos.get(j).getNombre().toUpperCase()+
-									" "+TipoDato(foraneos.get(j)).toUpperCase() +" "+
-									Nulidad(foraneos.get(j))+" ,\n");
-							j--;
-
-						} i--;
-					}
+					System.out.println("ERROR: al escribir el Constraint de Foreing Key");
+					e.printStackTrace();
 				}
-				}
-
-				iter_for_ini = entidad.foraneo.values().iterator();
-				Iterator<String> iter_for_ini_f = entidad.foraneo.keySet().iterator();
-				foraneos = new Vector<Atributo>();
-
-				while(iter_for_ini.hasNext()){
-
-					Vector<Vector<Atributo>> vector_iter_for = iter_for_ini.next();
-
-					int i = vector_iter_for.size()-1;
-					String tipo= iter_for_ini_f.next();
-
-					while (i>=0){
-						foraneos = vector_iter_for.get(i);
-
-						out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
-								+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
-
-						i --;
-					}
-
-				}
+				System.out.println("IMPRIMIENTO CONSTRAINT CHECK \n"+ entidad.nombre_entidad);
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
-				while (k >= 0) {
-					out.write(" CONSTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
-							getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
-							getNombre().toUpperCase() + " IN ('0','1')),\n");
-					k--;
+				try {
+					while (k >= 0) {
+						out.write(" CONSTRAINT CHECK_BOOLEAN_"+booleanos.get(k).
+								getNombre().toUpperCase()+ " CHECK (" +booleanos.get(k).
+								getNombre().toUpperCase() + " IN ('0','1')),\n");
+						k--;
+					}
+				} catch (Exception e) {
+					System.out.println("ERROR: al escribir el Check Constraint\n");
+					e.printStackTrace();
 				}
 
+				System.out.println("IMPRIMIENTO CONSTRAINT DOMINIO \n"+ entidad.nombre_entidad);
 				l = dominios.size()-1;
 				//Se agregan los contraint de dominio a la entidad.
-				while (l >= 0) {
+				try {
+					while (l >= 0) {
 
-					out.write(" CONSTRAINT CHECK_DOMINIO_"+dominios.get(l).
-							getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
-							getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
-									get(l).getDominio())+")),\n");
-					l--;
+						out.write(" CONSTRAINT CHECK_DOMINIO_"+dominios.get(l).
+								getNombre().toUpperCase()+ " CHECK (" +dominios.get(l).
+								getNombre().toUpperCase() + " IN ("+DominioAtributo(dominios.
+										get(l).getDominio())+")),\n");
+						l--;
+					}
+				} catch (Exception e) {
+					System.out.println("ERROR: al escribir el Constraint de Dominio\n");
+					e.printStackTrace();
 				}
 
+				
+				System.out.println("IMPRIMIENTO CONSTRAINT RANGO \n"+ entidad.nombre_entidad);
 				l = rangos.size()-1;
 				//Se agregan los contraint de rango a la entidad
-				while (l >= 0) {
+				try {
+					while (l >= 0) {
 
-					if (!(rangos.get(l).getMaxRango().equals("-1")) &&
-							!(rangos.get(l).getMinRango().equals("-1"))){
+						if (!(rangos.get(l).getMaxRango().equals("-1")) &&
+								!(rangos.get(l).getMinRango().equals("-1"))){
 
-						out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
-								getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-								getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
-								getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
+							out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
+									getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+									getNombre().toUpperCase() + " BETWEEN "+rangos.get(l).
+									getMinRango()+" AND "+rangos.get(l).getMaxRango()+ "),\n");
 
-					}else if ((rangos.get(l).getMaxRango()=="-1") &&
-							!(rangos.get(l).getMinRango()=="-1")){
+						}else if ((rangos.get(l).getMaxRango()=="-1") &&
+								!(rangos.get(l).getMinRango()=="-1")){
 
-						out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
-								getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-								getNombre().toUpperCase() + " >= "+rangos.get(l).
-								getMinRango()+ "),\n");
+							out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
+									getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+									getNombre().toUpperCase() + " >= "+rangos.get(l).
+									getMinRango()+ "),\n");
 
-					}else{
+						}else{
 
-						out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
-								getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
-								getNombre().toUpperCase() + " <= "+rangos.get(l).
-								getMaxRango()+"),\n");
+							out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
+									getNombre().toUpperCase()+ " CHECK (" +rangos.get(l).
+									getNombre().toUpperCase() + " <= "+rangos.get(l).
+									getMaxRango()+"),\n");
 
+						}
+
+						l--;
 					}
-
-					l--;
+				} catch (Exception e) {
+					System.out.println("ERROR: al escribir el Constraint de Rango\n");
+					e.printStackTrace();
 				}
 
+				System.out.println("IMPRIMIENTO CONSTRAINT UNIQUE \n"+ entidad.nombre_entidad);
 				defineUnico(entidad);
 				HashMap<String,Atributo> unico = entidad.getUnico();
 				Iterator<Atributo> iter_unico = unico.values().iterator();
 
-				while (iter_unico.hasNext()){
-					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+				try {
+					while (iter_unico.hasNext()){
+						out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
+					}
+				} catch (Exception e1) {
+					System.out.println("ERROR: al escribir el Unique Contraint\n");
+					e1.printStackTrace();
 				}
-
+				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
-				out.write(" CONSTRAINT PK_"+entidad.getNombre_entidad().
-						toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
-						toUpperCase()+")\n);\n");
+				try {
+					out.write(" CONSTRAINT PK_"+entidad.getNombre_entidad().
+							toUpperCase()+ " PRIMARY KEY "+ retornaClave(entidad).
+							toUpperCase()+")\n);\n");
+				} catch (Exception e) {
+					System.out.println("ERROR: al escribir el Constraint Primary Key\n");
+					e.printStackTrace();
+				}
 			}
 
 			//Se cierra el output de escritura en el archivo sql
