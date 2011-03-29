@@ -1494,6 +1494,26 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Unique Contraint\n");
 					e1.printStackTrace();
 				}
+				
+				//------------Agregado por Chelo --------------------------------
+				
+				//Falta arreglarlo demasiado, solo hice esto para probar que lo q hago esta bien.
+				Iterator<Collection<Atributo>> z= entidad.unike.iterator();
+				//Tengo collections
+				while(z.hasNext()){
+					
+					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE (");
+					//Tengo los atributos
+					Iterator<Atributo> o= z.next().iterator();
+					while(o.hasNext())
+					{
+						Atributo ag= o.next();
+						out.write(ag.nombre+ " ");
+					}
+					out.write(" );\n");
+				}
+				
+				//--------------------------------------------------------------------
 				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
@@ -1670,7 +1690,7 @@ public class Parser {
 						while(i.hasNext()){
 							//Para cada atributo a mi mismo, veo si me absorbo o si creo otra entidad.
 							Atributo at = i.next();
-							if (at.minOccurs + at.maxOccurs == 2) {
+							if (at.minOccurs ==1 && at.maxOccurs == 1) {
 								//Se absorbe a si misma
 								ent.AgregarForaneo(ent.tipo,ent.clave.values());
 							}
@@ -1780,7 +1800,6 @@ public class Parser {
 			Iterator<String> it = enearias.keySet().iterator();
 			while(it.hasNext()){
 				Entidad enearia = entidades.get(it.next()); // Entidad postulada a ser enearia.
-				
 				//Veo si existe más de dos entidades referenciando a la enearia.
 				
 				int numEntidades=0;
@@ -1851,7 +1870,7 @@ public class Parser {
 					if (esEnearia) {
 						//POR AHORA COLOCARE TODOS LOS ATRIBUTOS COMO CLAVES.
 					
-						Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
+						/*Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
 						//tengo los vectores.
 						while(itera.hasNext()){
 							
@@ -1894,8 +1913,8 @@ public class Parser {
 							}
 						}
 						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
-						enearia.referencias.clear();
-						/*
+						enearia.referencias.clear();*/
+						//------------------------------------------------------------------------------------------
 						//Como es enearia debo recorrer todas las referencias y ver la cardinalidad para determinar,
 						//quien sera clave y quien sera unica.
 						
@@ -1913,29 +1932,57 @@ public class Parser {
 							
 							Iterator<Atributo> i= itera.next().iterator();
 							//Tengo los atributos.
+							
+							int contando=0;//Lleva la cuenta de los atributos que se meten en el hash de todas como claves.
+							
 							while(i.hasNext()){
 								Atributo at= i.next();
+								
+								//Saco la clave de la entidad del atributo pues es eso lo q se traerá como foránea.
+								Iterator<Atributo> x = entidades.get(at.tipo).clave.values().iterator();
+								//Hash que tendrá la copia de la clave.
+								HashMap<String, Atributo> copiaClave= new HashMap<String, Atributo>();
+								
+								
+								while(x.hasNext()){
+									Atributo atActual= (Atributo)x.next().clone();
+									copiaClave.put(atActual.nombre, atActual);
+								}
 								
 								if (at.maxOccurs==1) {
 									hayMax1=true;
 									//Es clave o es unico.
 									if (!hayClave) {
 										hayClave= true;
-										enearia.clave.put(at.nombre, at);
+										//Coloco como clave la copia.
+										enearia.clave= copiaClave;
 									}
 									else{
 										//Ya hay clave pero este es unico.
-										enearia.unico.put(at.nombre, at);
+										enearia.unike.add(copiaClave.values());
 									}
 								}
 								else{
 									if (!hayMax1) {
 										//Voy llenando el hash por si ninguna es de max1
-										claveContodas.put(at.nombre, at);	
+										
+										//Recorro la copia de la clave para meterla en el hash.
+										Iterator<Atributo> t= copiaClave.values().iterator();
+										while(t.hasNext()){
+											Atributo atributico= t.next();
+											
+											if (claveContodas.containsKey(atributico.nombre)) {
+												//Ya se metio este atributo en la clave por ende debo cambiarle el nombre
+												//pa colocarlo de nuevo.
+												atributico.nombre= atributico.nombre+contando;
+												contando++;
+											}
+											claveContodas.put(atributico.nombre, atributico);
+										}
 									}
 								}
 								//Agrego el atributo como foráneo.
-								enearia.AgregarForaneo(at.tipo, entidades.get(at.tipo).clave.values());
+								enearia.AgregarForaneo(at.tipo, copiaClave.values());
 							}
 						}
 						
@@ -1947,7 +1994,7 @@ public class Parser {
 						
 						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
 						enearia.referencias.clear();
-						*/
+						
 					}
 					
 				}
@@ -2064,7 +2111,8 @@ public class Parser {
 	public static Entidad CrearEntidadNueva(Atributo atr1){
 		Entidad entNueva= new Entidad();
 		Entidad entidadAtr1= entidades.get(atr1.tipo);// Entidad de Atributo1
-
+		
+		entNueva.imprimir= false;
 		//Coloco el nombre de la entidad
 		entNueva.nombre_entidad= atr1.nombre;
 
