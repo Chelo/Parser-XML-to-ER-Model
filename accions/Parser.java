@@ -144,7 +144,7 @@ public class Parser {
 					atributo.setLongitud(facet.getValue().value);
 				}
 				if (facet.getName().equals(XSFacet.FACET_MINLENGTH)) {
-					System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción minLength es inválido en el modelo ER");
+					ReportarError("**ERROR**\n	El campo "+facet.getValue().value+ "perteneciente a la restricción minLength es inválido en el modelo ER.\n");
 				}
 				if (facet.getName().equals(XSFacet.FACET_PATTERN)) {
 					Vector<String> dominio = new Vector<String>();
@@ -152,7 +152,7 @@ public class Parser {
 					if (dominio.size()>1){
 						atributo.setDominio(separaRango(facet.getValue().value));
 					}else{
-						System.out.println("ADVERTENCIA: el campo "+facet.getValue().value+ "perteneciente a la restricción pattern value es inválido en el modelo ER");
+						ReportarError("**ERROR**\n	El campo "+facet.getValue().value+ "perteneciente a la restricción pattern value es inválido en el modelo ER.\n");
 					}
 
 				}
@@ -252,7 +252,8 @@ public class Parser {
 		String nombre = "";
 		
 		if (clave_entidad.keySet().size()==0){
-			System.out.println("ALERTA: Los atributos compuestos deben definirse despues de la clave en el Schema XML\n");
+			ReportarError("**ERROR**\n	Los atributos compuestos deben definirse después de la clave en el Schema XML.\n");
+			
 		}
 		Iterator<String> iter = clave_entidad.keySet().iterator();
 		while (iter.hasNext()){
@@ -354,10 +355,10 @@ public class Parser {
 				// se verifica que sea sequence o choice
 				if(compositor.equals(XSModelGroup.Compositor.ALL.toString()))
 				{
-					System.out.println("ERROR: Los elements (atributos) definidos dentro del complexType <" +tipo+
+					ReportarError("**ERROR**\n	Los elements (atributos) definidos dentro del complexType <" +tipo+
 							"> que se refieren a una generalización / especialización deben estar definidos entre el " +
-							"compositor <sequence> (solapado), <choice> (disjunto) \n " +
-					"Cambie el compositor o de lo contrario no se creará la generalización /especialización \n");
+							"compositor <sequence> (solapado), <choice> (disjunto) \n+" +
+							"	Cambie el compositor o de lo contrario no se creará la generalización /especialización. \n");
 				}
 				else
 				{
@@ -393,11 +394,11 @@ public class Parser {
 							}
 							else
 							{
-								System.out.print("ERROR: Los tipos de las subclases de una generalización / especialización deben" +
+								ReportarError("**ERROR**\n	Los tipos de las subclases de una generalización / especialización deben" +
 										" corresponder con el nombre de algún complexType al cual no se le haya definido <element> \n" +
 										" Este no es el caso de la subclase "+ nombreAttr+ " de tipo " + tipoAttr + "\n No se incluirá a esta subclase" +
 										" dentro de la generalización / especialización de la superclase "+entidades.get(tipo).getNombre_entidad()+
-								" hasta que realice los cambios \n");
+								" hasta que realice los cambios.\n");
 							}
 						}
 					}
@@ -411,8 +412,8 @@ public class Parser {
 					}
 					else
 					{
-						System.out.print("ALERTA: No se creará la generalización / especialización de la entidad "+
-								entidades.get(tipo).getNombre_entidad() + " pues ninguna subclase está bien definida \n");
+						ReportarError("*ALERTA*\n	No se creará la generalización / especialización de la entidad "+
+								entidades.get(tipo).getNombre_entidad() + " pues ninguna subclase está bien definida.\n");
 					}
 				}
 			}
@@ -474,18 +475,18 @@ public class Parser {
 					{
 						nuevo_atributo.setMinOccurs(0);
 						if(p.getMinOccurs()!=0)
-							System.out.print("ALERTA: El atributo "+ nombreAttr + " de la entidad "
+							ReportarError("*ALERTA*\n	El atributo "+ nombreAttr + " de la entidad "
 									+entidad.getNombre_entidad()+" forma parte de un " +
-							"atributo compuesto Nulo. Se le asignará un minOccurs igual a cero \n");
+							"atributo compuesto Nulo. Se le asignará un minOccurs igual a cero.\n");
 
 					}
 					else
 					{
 						if ((!(p.getMinOccurs()==0)) && (!(p.getMinOccurs()==1)))
 						{
-							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "
+							ReportarError("*ALERTA*\n	El minOccurs del atributo "+ nombreAttr + " de la entidad "
 									+entidad.getNombre_entidad()+" que forma parte de un " +
-							"atributo compuesto debe ser igual a cero o uno. Se colocará 1 por defecto \n");
+							"atributo compuesto debe ser igual a cero o uno. Se colocará 1 por defecto.\n");
 							nuevo_atributo.setNulo(false);
 							nuevo_atributo.setMinOccurs(1);
 						}
@@ -499,10 +500,10 @@ public class Parser {
 					//MaxOccurs
 					if(p.getMaxOccurs()!=1)
 					{
-						System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "
+						ReportarError("*ALERTA*\n	El maxOccurs del atributo "+ nombreAttr + " de la entidad "
 								+entidad.getNombre_entidad()+" que forma parte de un " +
-						"atributo compuesto debe ser igual a uno. Se colocará 1 por defecto \n");
-						System.out.print("No se permiten hojas multivaluadas en los atributos compuestos \n");
+						"atributo compuesto debe ser igual a uno. Se colocará 1 por defecto. \n");
+						ReportarError("*ALERTA*\n	No se permiten hojas multivaluadas en los atributos compuestos. \n");
 						//El maxOccurs por defecto ya es 1 (al hacer new Atributo), por eso no se asigna.
 					}
 				}
@@ -512,9 +513,9 @@ public class Parser {
 					{
 						if((p.getMinOccurs()!=1) || (p.getMaxOccurs()!=1))
 						{
-							System.out.println("ALERTA: Tanto el minOccurs como maxOccurs de la clave " +nombreAttr+
+							ReportarError("*ALERTA*\n	Tanto el minOccurs como maxOccurs de la clave " +nombreAttr+
 									" de la entidad " +entidad.getNombre_entidad()+
-							" deben ser 1 \n Se le colocará minOccurs = 1 y maxOccurs = 1 \n");
+							" deben ser 1 .\n	Se le colocará minOccurs = 1 y maxOccurs = 1.\n");
 						}
 						nuevo_atributo.setNulo(false);
 						nuevo_atributo.setMinOccurs(1);
@@ -524,7 +525,7 @@ public class Parser {
 					{
 						//MinOccurs
 						if (p.getMinOccurs() < 0){
-							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor o igual a cero. Se colocará 1 por defecto \n");
+							ReportarError("*ALERTA*\n	El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor o igual a cero. Se colocará 1 por defecto.\n");
 							nuevo_atributo.setMinOccurs(1);
 							nuevo_atributo.setNulo(false);
 						}
@@ -544,7 +545,7 @@ public class Parser {
 							}
 							else
 							{
-								System.out.print("ALERTA: El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto \n");
+								ReportarError("*ALERTA*\n	El maxOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+" debe ser mayor que cero. Se colocará 1 por defecto.\n");
 								nuevo_atributo.setMaxOccurs(1);
 							}
 						}
@@ -554,9 +555,9 @@ public class Parser {
 						}
 						if(nuevo_atributo.getMinOccurs()>nuevo_atributo.getMaxOccurs())
 						{
-							System.out.print("ALERTA: El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+
-									" es mayor que el maxOccurs.\n El minOccurs siempre debe ser menor que el maxOccurs \n " +
-							"Se colocará minOccurs = 0 y maxOccurs = 1 por defecto \n");
+							ReportarError("*ALERTA*\n	El minOccurs del atributo "+ nombreAttr + " de la entidad "+entidad.getNombre_entidad()+
+									" es mayor que el maxOccurs.\n	El minOccurs siempre debe ser menor que el maxOccurs. \n" +
+							"	Se colocará minOccurs = 0 y maxOccurs = 1 por defecto.\n");
 							nuevo_atributo.setMinOccurs(0);
 							nuevo_atributo.setMaxOccurs(1);
 						}
@@ -592,10 +593,10 @@ public class Parser {
 									// se verifica que sea all
 									if (!xsModelGroup.getCompositor().toString().equals("all"))
 									{
-										System.out.println("ALERTA: Los atributos compuestos deben estar definidos " +
-												"entre el compositor <all> \n Se creará el atributo compuesto " +nombreAttr+ " de la entidad " +entidad.getNombre_entidad()+
+										ReportarError("*ALERTA*\n	Los atributos compuestos deben estar definidos " +
+												"entre el compositor <all> .\n	Se creará el atributo compuesto " +nombreAttr+ " de la entidad " +entidad.getNombre_entidad()+
 												", sin embargo agregue el compositor <all> para evitar inconsistencias al " +
-										"momento de cargar los datos. \n ");
+										"momento de cargar los datos.\n");
 									}
 									// Se leen los atributos de las entidades
 									//Caso del compuesto multivaluado, debo crear una nueva entidad, con todos los
@@ -647,7 +648,6 @@ public class Parser {
 				
 				
 				if (tiposBasicos.contains(tipoAttr)){
-					System.out.println("TAMANO DEL MINOCCRUSS      "+nuevo_atributo.getMinOccurs());
 					if ( nuevo_atributo.getMinOccurs()>1 | nuevo_atributo.getMaxOccurs()>1 ){
 						Multivaluado(nuevo_atributo,entidades.get(tipo));
 					}else{
@@ -671,21 +671,21 @@ public class Parser {
 					else{
 						if(tipoAttr.equals("anyType"))
 						{
-							System.out.println("ERROR: Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ "\n " +
-							"El atributo no será creado hasta que no realice los cambios\n");
+							ReportarError("**ERROR**\n	Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ ".\n	" +
+									"El atributo no será creado hasta que no realice los cambios.\n");
 						}
 						else
 						{
-							System.out.println("ERROR: El atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe " + tipoAttr +
-							"\n El atributo no será creado hasta que no realice los cambios\n");
+							ReportarError("**ERROR**\n	El atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe " + tipoAttr +
+							".\n	El atributo no será creado hasta que no realice los cambios\n");
 						}
 					}
 
 				}
 				else {
 					if(!esCompuesto)
-						System.out.println("ERROR: Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ "\n " +
-						"El atributo no será creado hasta que no realice los cambios\n");
+						ReportarError("**ERROR**\n	Debe definirle un tipo al atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ ".\n	" +
+						"El atributo no será creado hasta que no realice los cambios.\n");
 				}
 			}
 		}
@@ -709,16 +709,16 @@ public class Parser {
 				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					clave.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
-				else System.out.println("ALERTA : Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
+				else ReportarError("*ALERTA*\n	Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad+".\n");
 				//Se verifican si existen restricciones del tipo <unique>
 			}else if (constraint.get(i).getCategory()==2){
 				//se verifica que el atributo este definido
 				if (constraint.get(i).getSelector().getXPath().toString().toUpperCase().equalsIgnoreCase(entidad.tipo)){
 					unico.put(constraint.get(i).getFields().get(0).getXPath().value,null);
 				}
-				else System.out.println("ALERTA :Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad);
+				else ReportarError("*ALERTA*\n	Incorrecta Asociación de la clave "+constraint.get(i).getName()+" en "+ entidad.nombre_entidad+".\n");
 			}else{
-				System.out.println("ALERTA : Restriccion no valida en el parser\n");
+				ReportarError("*ALERTA*\n	Restriccion no valida en el parser.\n");
 			}
 			i--;
 		}
@@ -809,9 +809,9 @@ public class Parser {
 					if(!xsModelGroup.getCompositor().toString().equals("sequence"))
 					{
 						//Ojo esto podría cambiar cuando se implementen las n-arias
-						System.out.println("ALERTA: Los elements (atributos) definidos dentro del complexType <" +tipo+
-								"> deben estar definidos entre el compositor <sequence> \n Agregue el compositor <sequence> " +
-						"para evitar inconsistencias al momento de cargar los datos.");
+						ReportarError("*ALERTA*\n	Los elements (atributos) definidos dentro del complexType <" +tipo+
+								"> deben estar definidos entre el compositor <sequence> .\n	Agregue el compositor <sequence> " +
+						"para evitar inconsistencias al momento de cargar los datos.\n");
 					}
 
 					// Se leen los atributos de las entidades
@@ -829,8 +829,8 @@ public class Parser {
 			String next = (String) SinEntidad.next();
 			if(!subclases.containsKey(next))
 			{
-				System.out.print("ALERTA: El elemento del tipo "+ next +" no esta definido.\n " +
-						"No se creará el tipo "+ next +", ni la Entidad hasta que no realice los cambios \n");
+				ReportarError("*ALERTA*\n	El elemento del tipo "+ next +" no esta definido.\n	" +
+						"No se creará el tipo "+ next +", ni la Entidad hasta que no realice los cambios .\n\n");
 			}
 		}
 		//En caso de que existan generalización/especialización solapado
@@ -1135,7 +1135,7 @@ public class Parser {
 				String nombre = iter.next();
 
 				if (clave.get(nombre)==null){
-					System.out.println("ALERTA : " +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad);
+					ReportarError("*ALERTA*\n	" +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad+".\n");
 					clave2.remove(nombre);
 
 				}
@@ -1181,7 +1181,7 @@ public class Parser {
 					String nombre = iter.next();
 
 					if (unico.get(nombre)==null){
-						System.out.println("ALERTA : " +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad);
+						ReportarError("*ALERTA*	" +nombre+ " no ha sido definido como atributo en la entidad "+ entidad.nombre_entidad+".\n");
 						clave2.remove(nombre);
 					}
 				}
@@ -1209,6 +1209,7 @@ public class Parser {
 			String salida = "(";
 
 			if (i==0){
+				ReportarError("**ERROR**\n	Clave no definida en la entidad :"+ entidad.nombre_entidad+".\n");
 				return "(Clave no definida";
 			}
 			else if (i==1){
@@ -1258,6 +1259,30 @@ public class Parser {
 		return "Foraneo Invalido";
 	}
 
+	public static void CreaReporte(){
+		FileWriter fstream;
+		BufferedWriter out = null;
+		try {
+			fstream = new FileWriter("error");
+			out = new BufferedWriter(fstream);
+			out.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();}
+	
+	}
+	public static void ReportarError(String error){
+		FileWriter fstream;
+		BufferedWriter out = null;
+		try {
+			fstream = new FileWriter("error",true);
+			out = new BufferedWriter(fstream);
+			out.write(error);
+			out.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();}
+	}
 	/**
 	 * Método que se encarga de crear el archivo sql correspondiente al xml
 	 * schema proporcionado.
@@ -1448,8 +1473,9 @@ public class Parser {
 				//Se agregan los contraint de rango a la entidad
 				try {
 					while (l >= 0) {
-
-						if (!(rangos.get(l).getMaxRango().equals("-1")) &&
+						if ((rangos.get(l).getMaxRango().equals("-1")) &&
+								(rangos.get(l).getMinRango().equals("-1"))){}
+						else if (!(rangos.get(l).getMaxRango().equals("-1")) &&
 								!(rangos.get(l).getMinRango().equals("-1"))){
 
 							out.write(" CONSTRAINT CHECK_RANGO_"+rangos.get(l).
@@ -1512,7 +1538,7 @@ public class Parser {
 			}
 			// Se toma la exce//ion si existe
 		catch (Exception e){
-			System.err.println("Error escribiendo el script sql: " + e.getMessage());
+			System.err.println("*ERROR*	Escribiendo el script sql: " + e.getMessage());
 		}
 	}
 
@@ -1649,9 +1675,9 @@ public class Parser {
 				if(visitados.containsKey(tipoEnti) && !tipoEnt.equals(tipoEnti)){
 					if(!visitados.get(tipoEnti).contains(tipoEnt))
 					{
-						System.out.println("ERROR: Los atributos de tipo "+ tipoEnti+" de la entidad"+
+						ReportarError("**ERROR**\n	Los atributos de tipo "+ tipoEnti+" de la entidad"+
 								entidades.get(tipoEnt).nombre_entidad+" no poseen referencia circular"+
-								" con la entidad " + entidades.get(tipoEnti).nombre_entidad);
+								" con la entidad " + entidades.get(tipoEnti).nombre_entidad+".\n");
 					}
 				}
 				else
@@ -1720,7 +1746,7 @@ public class Parser {
 						 */
 
 						if (vectEnt==null) {
-							System.out.println("ERROR: No hay referencia circular entre "+ent.nombre_entidad+" y "+enti.nombre_entidad);
+							ReportarError("**ERROR**\n	No hay referencia circular entre "+ent.nombre_entidad+" y "+enti.nombre_entidad+".\n");
 
 						} else {
 							if (vectEnt.size()+vectEnti.size()==2) {
@@ -1749,13 +1775,13 @@ public class Parser {
 									}
 									if (!encontro) {
 										//no hay referencia circular.
-										System.out.println("ERROR: No hay ref circular para el atributo "+ c.nombre+" de la entidad "+ ent.nombre_entidad+"\n");
+										ReportarError("**ERROR**\n	No hay ref circular para el atributo "+ c.nombre+" de la entidad "+ ent.nombre_entidad+".\n");
 									}
 								}
 								if (vectEnt.size()!=0) {
 									Iterator<Atributo> t= vectEnt.iterator();
 									while(t.hasNext()){
-										System.out.println("ERROR: No hay ref circular para el atributo "+ t.next().nombre+" de la entidad "+enti.nombre_entidad);
+										System.out.println("**ERROR**\n	No hay ref circular para el atributo "+ t.next().nombre+" de la entidad "+enti.nombre_entidad+".\n");
 									}
 									//Quiere decir que aun quedaron atributos que no tenian pareja.
 								}
@@ -1798,8 +1824,8 @@ public class Parser {
 				if (numEntidades<= 2) {
 					//Si esto ocurre es porque la enearia estuvo definida solo con dos o menos entidades, lo cual 
 					// hace que no sea enearia. Se muestra error.
-					System.out.println("ERROR: El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
-							" interrelación enearia, sin embargo tiene menos de dos entidades relacionadas. ");
+					ReportarError("**ERROR**\n	El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
+							" interrelación enearia, sin embargo tiene menos de dos entidades relacionadas.\n\n ");
 					//Se retira esa entidad del hash de entidades para que no sea analizada.
 					entidades.remove(enearia.tipo);
 				}
@@ -1815,7 +1841,7 @@ public class Parser {
 						Entidad ent = entidades.get(tipoEntidad); // Entidad relacionada en la enearia.
 						if (ent == null) {
 							//Se referencio a una entidad que no existe.
-							System.out.println("ERROR: la entidad "+ tipoEntidad +" no esta definida\n");
+							ReportarError("ERROR: la entidad "+ tipoEntidad +" no esta definida.\n");
 							//Remuevo la entidad enearia para que no se le genere tabla pues esta mala.
 							entidades.remove(enearia.tipo);
 							esEnearia=false;
@@ -1828,8 +1854,8 @@ public class Parser {
 							if (ent.referencias.containsKey(enearia.tipo))
 							{
 								//Existe referencia circular. ERROR!
-								System.out.println("La interrelacion " + enearia.nombre_entidad + "pareciera ser enearia,"+
-										"sin embargo existen referencias circulares entre ella y la entidad "+ ent.nombre_entidad);
+								ReportarError("**ERROR**\n	La interrelacion " + enearia.nombre_entidad + "pareciera ser enearia,"+
+										"sin embargo existen referencias circulares entre ella y la entidad "+ ent.nombre_entidad+".\n");
 								
 								//Remuevo la entidad enearia del hash de entidades para que no se genere tabla.
 								entidades.remove(enearia.tipo);
@@ -1839,8 +1865,8 @@ public class Parser {
 						}
 						if (!enearia.clave.isEmpty()) {
 							//Tiene una clave lo cual no es correcto.
-							System.out.println("ERROR: Las interrelaciones no poseen claves, se ha detectado que la interrelacion "+
-									enearia.nombre_entidad + " tiene clave.");
+							ReportarError("**ERROR**\n	Las interrelaciones no poseen claves, se ha detectado que la interrelacion "+
+									enearia.nombre_entidad + " tiene clave.\n");
 							//Remuevo la entidad enearia.
 							entidades.remove(enearia.tipo);
 							esEnearia=false;
@@ -2161,7 +2187,7 @@ public class Parser {
 
 			}
 		} catch (Exception exp) {
-			System.out.println("Error en la formacion del xml Schema\n");
+			ReportarError("**ERROR**\n	XML SCHEMA INVALIDO.\n");
 			exp.printStackTrace(System.out);
 		}
 		EscribirScript();
