@@ -29,7 +29,7 @@ public class Entidad {
 	public HashMap<String,Atributo> clave = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public HashMap<String,Atributo> unico = new HashMap<String,Atributo>();							//Hash cuya clave es el nombre del Atributo que se encuentra como valor.
 	public Vector<Collection<Atributo>> unike = new Vector<Collection<Atributo>>();							//Vector de vectores que contiene los atributos que serán unike, que salen de las interrelaciones.
-	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el nombre de la entidad foránea, valor, el vector de Vectores de Atributos
+	public HashMap<String, Vector<Vector<Atributo>>> foraneo = new HashMap<String,Vector<Vector<Atributo>>>();//Hash, con clave el tipo de la entidad foránea, valor, el vector de Vectores de Atributos
 	public String tipo;																				//Tipo de la Entidad según el XMLSchema.
 	public boolean imprimir = true;																	//Determina si se imprime el vector foraneo 
 	/**
@@ -232,7 +232,7 @@ public class Entidad {
 		 */
 		
 		//Recorro la colletion de claves.
-		Iterator<Atributo> itr = clave.iterator();
+		Iterator<Atributo> itr = clave.iterator(); 
 		
 		Vector<Atributo> vector= new Vector<Atributo>();// Vector donde se meteran los clones.
 		
@@ -269,4 +269,63 @@ public class Entidad {
 			vectores.add(vector);
 		}
 	}
-}	
+	
+	/**
+	 * Se encarga de colocar nuevos valores foraneos a la entidad actual sin duplicar
+	 * los atributos, es decir, se pasa la referencia directamente, esto con el fin de
+	 * mantener la integridad de estos atributos al momento de imprimir el sql.
+	 * Los datos entrantes son de la entidad que absorbera la entidad actual.
+	 * 
+	 * @param nombre String que indica el tipo de la entidad.
+	 * @param clave Collection con los atributos que forman la clave de la Entidad a
+	 * 			absorber.
+	 */
+	public void AgregarForaneoSinDuplicar(String nombre, Collection<Atributo> clave){
+		/*
+		 * Recordemos que lo único que puede ser foráneo son las claves.
+		 */
+		
+		//Recorro la colletion de claves.
+		Iterator<Atributo> itr = clave.iterator(); 
+		
+		Vector<Atributo> vector= new Vector<Atributo>();// Vector donde se meteran los clones.
+		
+		Vector<Vector<Atributo>> vectores=new Vector<Vector<Atributo>>(); //vector donde se meteran los vectores creados.
+		
+		if (!foraneo.containsKey(nombre)) {
+			//Si la entidad foranea no esta creo todo nuevo y la inserto en el hash.
+		
+			while(itr.hasNext()){
+				//Clono a cada atributo de la clave y lo paso al vector
+				Atributo atri=itr.next();
+				if (nombre.equals(tipo)) {
+					//Soy yo mismo, debo cambiar el nombre del atributo.
+					atri.nombre=atri.nombre+"_F";
+				}
+				
+				vector.add(atri);
+			}
+			vectores.add(vector);
+			foraneo.put(nombre,vectores);
+		}
+		else 
+		{
+			//Si la entidad ya esta, agrego un nuevo vector con la clave.
+			vectores= foraneo.get(nombre);
+			String concatena=Integer.toString(vectores.size());
+			
+			while(itr.hasNext()){
+				Atributo atributo=itr.next();
+				//Cambio el nombre de cada atributo para que se coloque con calma en el SQL.
+				atributo.nombre=atributo.nombre+concatena;
+				vector.add(atributo);
+			}
+			vectores.add(vector);
+		}
+	}
+}
+	
+	
+	
+	
+	

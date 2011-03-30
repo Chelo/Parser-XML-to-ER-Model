@@ -1318,11 +1318,6 @@ public class Parser {
 				dominios = new Vector<Atributo>();
 				rangos = new Vector<Atributo>();
 
-				
-				
-				
-				
-				
 				//Se agregan los atributos basicos de la entidad.
 				try {
 					while (j >= 0) {
@@ -1495,25 +1490,7 @@ public class Parser {
 					e1.printStackTrace();
 				}
 				
-				//------------Agregado por Chelo --------------------------------
 				
-				//Falta arreglarlo demasiado, solo hice esto para probar que lo q hago esta bien.
-				Iterator<Collection<Atributo>> z= entidad.unike.iterator();
-				//Tengo collections
-				while(z.hasNext()){
-					
-					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE (");
-					//Tengo los atributos
-					Iterator<Atributo> o= z.next().iterator();
-					while(o.hasNext())
-					{
-						Atributo ag= o.next();
-						out.write(ag.nombre+ " ");
-					}
-					out.write(" );\n");
-				}
-				
-				//--------------------------------------------------------------------
 				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
@@ -1920,11 +1897,15 @@ public class Parser {
 						
 						//Creo un hash que vaya guardando a todos los atributos como clave por si no hay ningun
 						// atributo con max 1.
-						
 						HashMap<String, Atributo> claveContodas=new HashMap<String, Atributo>(); 
+						
+
+						//Cambio imprimir a false pues no deben imprimirse las foraneas, para q no se dupliquen.
+						enearia.imprimir=false;
 						
 						boolean hayClave= false; //Ayuda saber si ya la clave esta definida para no definirla varias veces.
 						boolean hayMax1= false;  //Ayuda a saber si nadie tiene max=1 para ir llenando el hash auxiliar de claves.
+						String tipoEntidadClave= ""; //String que guardará el tipo de la entidad que es clave en caso de que se dé.
 						
 						Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
 						//Tengo los vectores de atributos.
@@ -1949,6 +1930,7 @@ public class Parser {
 									copiaClave.put(atActual.nombre, atActual);
 								}
 								
+								
 								if (at.maxOccurs==1) {
 									hayMax1=true;
 									//Es clave o es unico.
@@ -1956,13 +1938,22 @@ public class Parser {
 										hayClave= true;
 										//Coloco como clave la copia.
 										enearia.clave= copiaClave;
+										tipoEntidadClave= at.tipo;
 									}
 									else{
 										//Ya hay clave pero este es unico.
 										enearia.unike.add(copiaClave.values());
+										//Meto los atributos como atributos de la entidad.
 									}
+									
+									//Agrego el atributo como foráneo.
+									enearia.AgregarForaneoSinDuplicar(at.tipo, copiaClave.values());
 								}
 								else{
+									
+									//Agrego el atributo como foráneo.
+									enearia.AgregarForaneoSinDuplicar(at.tipo, copiaClave.values());
+									
 									if (!hayMax1) {
 										//Voy llenando el hash por si ninguna es de max1
 										
@@ -1981,15 +1972,72 @@ public class Parser {
 										}
 									}
 								}
-								//Agrego el atributo como foráneo.
-								enearia.AgregarForaneo(at.tipo, copiaClave.values());
+								
+								
+								
 							}
 						}
 						
 						if(!hayClave){
 							//Si al salir aun no hay clave TODAS deben ser clave.
-							//Se coloca el hah auxiliar como hash de claves.
+							//Se coloca el hash auxiliar como hash de claves.
 							enearia.clave=claveContodas;
+						}
+						else{
+							//Debo pasar todo foráneo que no este en clave para atributos para que se impriman.
+							
+							//La clave es una sola o son todas... nunca habran convinaciones raras. Aqui ajuro es una sola.
+							
+							//Saco cual es el tipo de la entidad que conforma la clave.
+							System.out.println("El tipo de la entidad clave es  "+ tipoEntidadClave);
+						
+							Iterator<String> itr= enearia.foraneo.keySet().iterator();
+							while(itr.hasNext()){
+								String entidadForanea= itr.next();
+								
+								if (entidadForanea.equals(tipoEntidadClave)) {
+									//Aqui esta la clave.. a ella no hay q pasarla.
+									 
+									//Si el vector de Vectores tiene mas de uno significa que hay otro atributo de la
+									//misma entidad que no es clave y si hay que pasarlo.
+									Vector<Vector<Atributo>> vector =enearia.foraneo.get(tipoEntidadClave);
+									
+									if(vector.size()>1){
+										//Hay mas atributos de esta entidad que debo pasar como atributo.
+										//OJO: pilla que agrego desde el 1 y no desde 0 pues el 0 es la clave.
+										for (int g = 1; g < vector.size(); g++) {
+											//Agrego.
+											Iterator<Atributo> h= vector.elementAt(g).iterator();
+											while(h.hasNext()){
+												Atributo pasante= h.next();
+												System.out.println("estoy pasando el atributo "+ pasante.nombre+  "con ");
+												
+												enearia.atributos.add(pasante);
+												//OJO: estoy pasando por referencia, no estoy clonando.
+											}
+										}
+									}
+
+								} else {
+									//No es de la clave por ende lo paso al atributo.
+									
+									//Saco los vectores del foráneo respectivos
+									Iterator<Vector<Atributo>> y= enearia.foraneo.get(entidadForanea).iterator();
+									while(y.hasNext()){
+										Iterator<Atributo> z= y.next().iterator();
+										//Recorro el vector seleccionado.
+										while(z.hasNext()){
+											//Agrego.
+											Atributo pasante= z.next();
+											System.out
+											.println("estoy pasando el atributo "+ pasante.nombre+  "como atributo.");
+											enearia.atributos.add(pasante);
+											//OJO: estoy pasando por referencia, no estoy clonando.
+										}
+									}
+
+								}
+							}
 						}
 						
 						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
@@ -2004,6 +2052,25 @@ public class Parser {
 		}
 		
 	}
+	
+	/**
+	 * Función que permite pasar los atributos de una clave como atributos propios de la
+	 * relacion, esto para poderlos imprimir en caso de que las foráneas no se deban imprimir.
+	 * 
+	 * @param atrs Collection de Atributos a pasar 
+	 * @param ent Entidad donde se pasarán los atributos.
+	 */
+	public static void MeterAtributos(Collection<Atributo> atrs, Entidad ent) {
+		
+		//Recorro toda la colección para meter los atributos.
+		Iterator<Atributo> i= atrs.iterator();
+		while(i.hasNext()){
+			ent.atributos.add(i.next());
+		}
+	}
+	
+	
+	
 	/**
 	 * Analiza cual entidad absorbe a cual, de acuerdo a las reglas de la cardinalidad y
 	 * participacion. (1:1,1:N,M:N)
