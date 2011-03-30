@@ -9,7 +9,12 @@ public class Principal {
 	
 	public static void main(String[] args) throws SAXException, IOException {
 
+
+		Parser.CreaReporte();
 		Parser.ParsearXMLSchema("ejemploViejo.xml");
+
+
+
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
 		//utilizar el hash de entidades (las pueden borrar)
