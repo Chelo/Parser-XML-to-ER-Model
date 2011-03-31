@@ -1817,15 +1817,27 @@ public class Parser {
 					numEntidades= numEntidades+ref.next().size();
 				}
 				
+				boolean error = false;
 				if (numEntidades<= 2) {
 					//Si esto ocurre es porque la enearia estuvo definida solo con dos o menos entidades, lo cual 
-					// hace que no sea enearia. Se muestra error.
-					ReportarError("**ERROR**\n	El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
-							" interrelación enearia, sin embargo tiene menos de dos entidades relacionadas.\n\n ");
+					// implica que hay que revisar que los min y max occurs NO sean 11.
+					Iterator<Vector<Atributo>> iter= enearia.referencias.values().iterator();
+					while(iter.hasNext()){
+						Iterator<Atributo> o= iter.next().iterator();
+						while(o.hasNext()){
+							Atributo atri= o.next();
+							if (atri.minOccurs==1 && atri.maxOccurs==1) {
+								ReportarError("**ERROR**\n El atributo "+ atri.nombre + " no puede tener minOccurs y maxOccurs igual a 1\n\n");
+								error= true;
+								break;
+							}
+						}
+					}
 					//Se retira esa entidad del hash de entidades para que no sea analizada.
 					entidades.remove(enearia.tipo);
 				}
-				else {
+				
+				if(!error){
 					//Recorro cada una de las entidades a las que hago referencia para ver si hay referencia circular
 					// NO DEBE HABER REFERENCIA CIRCULAR, sino no se cumple el concepto de la enearia.
 					
