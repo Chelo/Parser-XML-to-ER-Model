@@ -389,10 +389,12 @@ public class Parser {
 								Entidad nueva_subclase = new Entidad();
 								nueva_subclase.setNombre_entidad(nombreAttr);
 								nueva_subclase.setTipo(tipoAttr);
+								nueva_subclase.imprimir =false;
 								entidades.put(tipoAttr, nueva_subclase);
 								Vector<Atributo> atributosSubclase = nueva_subclase.getAtributos();
 								leerElementos(particlesSubclase, tipoAttr, atributosSubclase, false,false);
 								nueva_subclase.setAtributos(atributosSubclase);
+								
 
 							}
 							else
@@ -412,6 +414,7 @@ public class Parser {
 						//atributos de la superclase, se termine de realizar la traducción,
 						//dependiendo de la opción que escoja el usuario
 						superclases.put(tipo, subclasesValidas);
+						entidades.get(tipo).imprimir = false;
 					}
 					else
 					{
@@ -439,7 +442,7 @@ public class Parser {
 				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto;
+				String valorPorDefecto = "";
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -458,6 +461,7 @@ public class Parser {
 				{
 					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
 					nuevo_atributo.setValor(valorPorDefecto);
+					System.out.println("VALOR POR DEFECTO :"+valorPorDefecto);
 				}
 
 				//Se obtienen las retricciones
@@ -959,6 +963,7 @@ public class Parser {
 					// Se leen los atributos de las entidades
 					Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
 					atributos = leerElementos(particles,tipo,atributos,false,false);
+					System.out.println("AQUII IMPRIMIR " +entidades.get(tipo).imprimir + "de tipo"+tipo +"\n");
 					entidades.get(tipo).setAtributos(atributos);
 				}
 			}
@@ -977,7 +982,7 @@ public class Parser {
 		}
 		//En caso de que existan generalización/especialización solapado
 		//Se hacen los ajustes necesarios
-		System.out.println("AQUIIII!!");
+		/*System.out.println("AQUIIII!!");
 		Iterator<String> multi = multivaluados.keySet().iterator(); 
 		//Iterator<String> multiComp = multivaluadosCompuestos.keySet().iterator();
 		while(multi.hasNext())
@@ -989,7 +994,7 @@ public class Parser {
 			{
 				System.out.println("Atributos multivaluados "+entidadesDeMultivaluados.nextElement()+ "\n");
 			}	
-		}	
+		}*/	
 		
 		
 		if(!superclases.isEmpty())
@@ -1018,7 +1023,8 @@ public class Parser {
 						//cambiar las referencias circulares
 						 
 						concatena = crearEntidadAPartirDeOtra(entidades.get(sup), entidades.get(subcl),0, concatena, null);
-					
+						entidades.get(sup).imprimir = false;
+						entidades.get(subcl).imprimir = false;
 						//Como se escogio opcion de traduccion 2, 
 						//debo verificar si la superclase de esta subclase tenía atributos multivaluados, 
 						//de ser así debera crear una entidad que represente al atributo multivaluado
@@ -1037,6 +1043,7 @@ public class Parser {
 								
 									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,1, -1, entidades.get(subcl));
 								
+									entidad_multivaluada.imprimir = false;
 									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
 								}
 							}	
@@ -1059,6 +1066,7 @@ public class Parser {
 									 
 									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,2, -1, entidades.get(subcl));
 									
+									entidad_multivaluada.imprimir = false;
 									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
 								}	
 							}
@@ -1164,7 +1172,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()==""){
+		if (atributo.getValor()=="" | atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
@@ -1540,7 +1548,7 @@ public class Parser {
 							while (j >= 0) {
 								out.write(" "+foraneos.get(j).getNombre().toUpperCase()+
 										" "+TipoDato(foraneos.get(j)).toUpperCase() +" "+
-										Nulidad(foraneos.get(j))+" ,\n");
+										Nulidad(foraneos.get(j))+" "+ValorDefecto(foraneos.get(j))+" ,\n");
 								j--;
 
 							} i--;
@@ -2474,7 +2482,10 @@ public class Parser {
 				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator();
 				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-				
+				Vector<Atributo> atr = entidades.get("Persona").atributos;
+				Enumeration<Atributo> enum_att = atr.elements();
+				while (enum_att.hasMoreElements())
+				{ System.out.println("Nombre "+ enum_att.nextElement().nombre+"\n");}	
 				VerEnearias();
 				VerInterrelaciones();
 				ImprimirEntidades();
