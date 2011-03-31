@@ -11,7 +11,7 @@ public class Principal {
 
 		Parser.CreaReporte();
 
-		Parser.ParsearXMLSchema("ejemploViejo.xml",2);
+		Parser.ParsearXMLSchema("ejemplo2.xml",2);
 
 
 

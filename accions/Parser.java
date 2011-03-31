@@ -1262,12 +1262,11 @@ public class Parser {
 
 		int j = atributos.size()-1;
 		while (j>=0){
-
-			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 		
+			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
-
+				atributos.remove(j);
 			}j--;
 		}
 
