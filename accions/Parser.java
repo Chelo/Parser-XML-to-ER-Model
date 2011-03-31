@@ -375,11 +375,9 @@ public class Parser {
 							nombreAttr = pterm1.asElementDecl().getName();
 							// Se obtiene el tipo del atributo
 							tipoAttr = pterm1.asElementDecl().getType().getName();
-							//System.out.print("Tipo: "+ tipoAttr+"\n");
 
 							if(complexSinEntidad.containsKey(tipoAttr))
 							{
-								//System.out.print("Si soy complexSinEntidad "+ tipoAttr +"\n");
 								XSComplexType complex = (XSComplexType) complexSinEntidad.get(tipoAttr);
 								subclasesValidas.add(tipoAttr);
 								subclases.put(tipoAttr, complex);
@@ -1808,7 +1806,7 @@ public class Parser {
 		// y asi ir sacando las interrelaciones.
 
 		/*
-		 * Debo sacar las claves y copiarlas a un vector para asi recorrerlo y que no me genere error
+		 * Debo sacar los tipos de las entidades y copiarlas a un vector para asi recorrerlo y que no me genere error
 		 * de concurrencias al insertar en entidades las nuevas interrelaciones.
 		 */
 		Set<String> claves = entidades.keySet();
@@ -2299,9 +2297,6 @@ public class Parser {
 		if (min1==1 && max1==1) {
 			//atr1 es 1:1
 			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
-			// System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
-			// "por ende "+ entidades.get(atr2.tipo).nombre_entidad +" absorbe a "+
-			// entidades.get(atr1.tipo).nombre_entidad+"\n");
 			Entidad ent1= entidades.get(atr1.tipo);
 			entidades.get(atr2.tipo).AgregarForaneo(ent1.tipo,ent1.clave.values());//Entidad que absorbe.
 		}
@@ -2309,9 +2304,6 @@ public class Parser {
 		{
 			//atr2 es 1:1
 			//Entidad del tipo atr1 absorbe a Entidad del atributo tipo atr2
-			// System.out.println("el atributo "+ atr2.nombre+" tiene min y max 1:1, " +
-			// "por ende "+ entidades.get(atr1.tipo).nombre_entidad +" absorbe a "+
-			// entidades.get(atr2.tipo).nombre_entidad+"\n");
 			Entidad ent2=entidades.get(atr2.tipo);
 			entidades.get(atr1.tipo).AgregarForaneo(ent2.tipo,ent2.clave.values());//Entidad que absorbe.
 		}
@@ -2319,46 +2311,40 @@ public class Parser {
 		{
 			if (min2==0 && max2==1) {
 				//atr1 es 0:1 y atr2 es 0:1
-				// System.out.println("Ambos atributos ("+atr1.nombre+ " , "+ atr2.nombre+") tienen 0:1"+
-				// "por ende se crea una nueva entidad con uno de los dos como clave.");
 				//se crea una nueva entidad, donde uno de los dos sera clave y el otro ser alterno.
 				Entidad entNueva= CrearEntidadNueva(atr1);
 
 				//Coloco el otro atributo como un atributo foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
+				entNueva.unike.add(ent2.clave.values());
 				entNueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
-
+				entNueva.AgregarAtributos(ent2.clave.values());
 				entidades.put(entNueva.tipo, entNueva);
 
 			} else {
 				// atr1 es 0:1 y atr2 es 0:N o 1:N
-				// System.out.println("El atributo "+ atr1.nombre+" tiene 0:1, pero el atributo "+ atr2.nombre+
-				// "tiene 0:N o 1:N\n");
 				// Se crea una nueva entidad donde atr1 sea clave y lo otro sea atributo normal.
 				Entidad nueva= CrearEntidadNueva(atr1);
 
 				//Coloco atr2 como foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
 				nueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
-
+					nueva.AgregarAtributos(ent2.clave.values());
 				entidades.put(nueva.tipo, nueva);
 			}
 		}
 		else if(min2==0 && max2==1){
 			//atr2 es 0:1, y atr1 ajuro debe ser 0:N o 1:N
-			// System.out.println("El atributo "+atr2.nombre+" es 0:1 pero el atributo "+ atr1.nombre+ " es 0:N o 1:N"+
-			// "por ende se debe crear una nueva entidad cuya clave sea la de la entidad "+ entidades.get(atr2.tipo).nombre_entidad);
 			//Se crea una nueva entidad donde atr2 sea clave y lo otro sea atributo normal.
 			Entidad nueva=CrearEntidadNueva(atr2);
 
 			//coloco a atr1 como foraneo.
 			Entidad ent1= entidades.get(atr1.tipo);
 			nueva.AgregarForaneo(ent1.tipo,ent1.clave.values());
-
+			nueva.AgregarAtributos(ent1.clave.values());
 			entidades.put(nueva.tipo, nueva);
 		}
 		else {
-			// System.out.println("Caso M:N Se crea una nueva entidad con clave de ambas entidades\n");
 
 			//M:N
 
@@ -2437,7 +2423,6 @@ public class Parser {
 				// Ahora iteramos sobre cada uno de los schemas individualmente
 				itr.next();
 				XSSchema schema = (XSSchema) itr.next();
-				System.out.print("Esquema nuevo: \n ");
 
 
 				/*
@@ -2455,7 +2440,6 @@ public class Parser {
 
 				// ComplexTypes (Del nivel más externo)
 				Map<String, XSComplexType> mapa = (Map<String, XSComplexType>) schema.getComplexTypes();
-				//System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
 				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator();
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
 

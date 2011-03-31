@@ -328,6 +328,21 @@ public class Entidad {
 			vectores.add(vector);
 		}
 	}
+	
+	/**
+	 * Permite agregar atributos que vienen en una Colletion.
+	 * 
+	 * @param atributos Collection que tiene los atributos a agregar.
+	 */
+	public void AgregarAtributos(Collection<Atributo> atributs){
+		
+		Iterator<Atributo> it= atributs.iterator();
+		while(it.hasNext()){
+			atributos.add(it.next());
+		}
+		
+		
+	}
 }
 	
 	
