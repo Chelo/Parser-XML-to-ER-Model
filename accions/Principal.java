@@ -9,7 +9,7 @@ public class Principal {
 	public static void main(String[] args) throws SAXException, IOException {
 
 		Parser.CreaReporte();
-		Parser.ParsearXMLSchema("EjemploPruebas.xml",1);
+		Parser.ParsearXMLSchema("ejemploViejo.xml",1);
 
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
