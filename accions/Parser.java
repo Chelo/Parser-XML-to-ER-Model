@@ -1845,7 +1845,6 @@ public class Parser {
 							{
 								//Se crea entidad.
 								Entidad entidadNueva= new Entidad();
-
 								//Introduzco la clave y coloco el atributo tambien como clave alterna.
 								//Se debe insertar doble pues recordemos que se referencia a sí misma.
 
@@ -1869,11 +1868,31 @@ public class Parser {
 								//Coloco tipo.
 								entidadNueva.tipo= at.nombre; // POR AHORA
 
-								//Introduzco tambien en el foraneo.
+								//Introduzco tambien en el foraneo dos veces.
 								entidadNueva.AgregarForaneo(tipoEnt, ent.clave.values());
-
+								entidadNueva.AgregarForaneo(tipoEnt, ent.clave.values());
+								
+								//Coloco imprimir como false.
+								entidadNueva.imprimir=false;
+								
+								//Agrego a los atributos para que se imprima, y lleno una coleccion para el unike.
+								Vector<Atributo> unik = new Vector<Atributo>();
+							
+								
+								Iterator<Atributo> v = entidadNueva.foraneo.get(tipoEnt).get(1).iterator();
+								while(v.hasNext()){
+									Atributo p= v.next();
+									entidadNueva.atributos.add(p);
+									unik.add(p);
+								}
+								
+								//Agrego unike
+								entidadNueva.unike.add(unik);
+								
 								//introduzco en el hash.
 								entidades.put(entidadNueva.tipo, entidadNueva);
+								
+								
 							}
 						}
 					}
@@ -2395,7 +2414,7 @@ public class Parser {
 				LeerAtributosEntidades(claves1, valores1);
 				VerEnearias();
 				VerInterrelaciones();
-				//ImprimirEntidades();
+				ImprimirEntidades();
 
 			}
 		} catch (Exception exp) {
