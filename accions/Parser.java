@@ -1670,7 +1670,7 @@ public class Parser {
 				unicos_inter = entidad.unike;
 				int o = unicos_inter.size()-1;
 				while (o>=0){
-					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE "+retornaUnico(unicos_inter.get(o))+"),\n");
+					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE_"+o+ " UNIQUE"+retornaUnico(unicos_inter.get(o))+"),\n");
 					o--;
 				}
 				
