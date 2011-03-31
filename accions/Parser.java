@@ -439,7 +439,7 @@ public class Parser {
 				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto;
+				String valorPorDefecto = "";
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -458,6 +458,7 @@ public class Parser {
 				{
 					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
 					nuevo_atributo.setValor(valorPorDefecto);
+					System.out.println("VALOR POR DEFECTO :"+valorPorDefecto);
 				}
 
 				//Se obtienen las retricciones
@@ -1164,7 +1165,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()==""){
+		if (atributo.getValor()=="" | atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
@@ -1540,7 +1541,7 @@ public class Parser {
 							while (j >= 0) {
 								out.write(" "+foraneos.get(j).getNombre().toUpperCase()+
 										" "+TipoDato(foraneos.get(j)).toUpperCase() +" "+
-										Nulidad(foraneos.get(j))+" ,\n");
+										Nulidad(foraneos.get(j))+" "+ValorDefecto(foraneos.get(j))+" ,\n");
 								j--;
 
 							} i--;
