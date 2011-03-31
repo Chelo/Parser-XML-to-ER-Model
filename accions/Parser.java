@@ -294,7 +294,7 @@ public class Parser {
 	 */
 	public static void CompuestoMultivaluado(Atributo nuevo_atributo, Entidad entidad_multivaluada, Vector<Atributo> vector_multivaluado, XSParticle[] particles ){
 		Vector<Atributo> atributos = new Vector<Atributo>();
-		nuevo_atributo.setNulo(  false);
+		nuevo_atributo.setNulo(  true);
 		
 		if(nuevo_atributo.getMinOccurs()==0)
 		{
@@ -310,6 +310,7 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+		
 			atributos.get(j).setNulo(false);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 			j--;	
@@ -434,13 +435,10 @@ public class Parser {
 				tiposBasicos.add("boolean");
 				tiposBasicos.add("date");
 				tiposBasicos.add("time");
-				//OJO ESTO PUEDE SER PELIGROSO
-				//tiposBasicos.add("anySimpleType");
-				//tiposBasicos.add("null");
-				//tiposBasicos.add("ID");
+			
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto = "";
+				String valorPorDefecto;
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -459,7 +457,6 @@ public class Parser {
 				{
 					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
 					nuevo_atributo.setValor(valorPorDefecto);
-					System.out.println("VALOR POR DEFECTO :"+valorPorDefecto);
 				}
 
 				//Se obtienen las retricciones
@@ -609,9 +606,6 @@ public class Parser {
 							
 									if(nuevo_atributo.getMinOccurs()>1 || nuevo_atributo.getMaxOccurs()>1 ) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
-										//Aqui tienes que hacer tu parte Lili
-										System.out.println("Compuesto Multivaluado\n");
-								
 										//Se crea la nueva entidad conrespondiente al atributo compuesto multivaluado.
 										Entidad entidad_multivaluada = new Entidad();
 										entidad_multivaluada.nombre_entidad = nuevo_atributo.getNombre();
@@ -1170,7 +1164,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()=="" | atributo.getValor().equals("")){
+		if (atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
@@ -1260,12 +1254,11 @@ public class Parser {
 
 		int j = atributos.size()-1;
 		while (j>=0){
-
-			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 		
+			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
-
+				atributos.remove(j);
 			}j--;
 		}
 
@@ -1402,6 +1395,9 @@ public class Parser {
 		return "Foraneo Invalido";
 	}
 
+	/**
+	 * Método encargado de crear el archivo de errores
+	 */
 	public static void CreaReporte(){
 		FileWriter fstream;
 		BufferedWriter out = null;
@@ -1414,6 +1410,10 @@ public class Parser {
 			e.printStackTrace();}
 	
 	}
+	/**
+	 * Método que agrega una alerta o error al archivo de error del programa
+	 * @param error	String que contiene el error ocurrido
+	 */
 	public static void ReportarError(String error){
 		FileWriter fstream;
 		BufferedWriter out = null;
@@ -1426,6 +1426,12 @@ public class Parser {
 			// TODO Auto-generated catch block
 			e.printStackTrace();}
 	}
+	
+	/**
+	 * Función que contatena todos los atributos que forman una clave alterna
+	 * @param atributos Collection de atributos que forman una clave alterna
+	 * @return	String con la clave alterna de una entidad
+	 */
 	public static String retornaUnico(Collection<Atributo> atributos){
 	
 		Iterator<Atributo> iter = atributos.iterator();
@@ -1476,7 +1482,7 @@ public class Parser {
 				defineClave(entidad);
 				HashMap<String,Atributo> clave_1 = entidad.getClave();
 				Iterator<Atributo> iter_c = clave_1.values().iterator();
-				System.out.println("IMPRIMIENTO CLAVE \n"+ entidad.nombre_entidad);
+			
 				try {
 					while (iter_c.hasNext()){
 						
@@ -1484,13 +1490,11 @@ public class Parser {
 						out.write(" "+a.getNombre().toUpperCase()+
 								" "+ TipoDato(a)+" "+ Nulidad(a)+
 								" "+ValorDefecto(a)+" ,\n");
-						//out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
 					}
 				} catch (Exception e3) {
 					System.out.println("ERROR: al escribir los atributos claves");
 					e3.printStackTrace();
 				}
-				System.out.println("IMPRIMIENTO ATRIBUTOS \n"+ entidad.nombre_entidad);
 				
 				j = entidad.getAtributos().size()-1;
 				// se inicializan las variables para la nueva entidad
@@ -1526,9 +1530,6 @@ public class Parser {
 				}
 
 				//Se obtiene los atributos que son referencias
-
-				
-				System.out.println("IMPRIMIENTO FOREANEOS \n"+ entidad.nombre_entidad);
 				Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator();
 				Vector <Atributo> foraneos = new Vector<Atributo>();
 				try {
@@ -1558,7 +1559,7 @@ public class Parser {
 					e1.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT FORANEO \n"+ entidad.nombre_entidad);
+				//Se imprimen los constraint de clave foranea
 				try {
 					iter_for_ini = entidad.foraneo.values().iterator();
 					Iterator<String> iter_for_ini_f = entidad.foraneo.keySet().iterator();
@@ -1586,7 +1587,7 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Constraint de Foreing Key");
 					e.printStackTrace();
 				}
-				System.out.println("IMPRIMIENTO CONSTRAINT CHECK \n"+ entidad.nombre_entidad);
+				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				try {
@@ -1601,9 +1602,9 @@ public class Parser {
 					e.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT DOMINIO \n"+ entidad.nombre_entidad);
+			
 				l = dominios.size()-1;
-				//Se agregan los contraint de dominio a la entidad.
+				//Se agregan los constraint de dominio a la entidad.
 				try {
 					while (l >= 0) {
 
@@ -1617,11 +1618,8 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Constraint de Dominio\n");
 					e.printStackTrace();
 				}
-
-				
-				System.out.println("IMPRIMIENTO CONSTRAINT RANGO \n"+ entidad.nombre_entidad);
 				l = rangos.size()-1;
-				//Se agregan los contraint de rango a la entidad
+				//Se agregan los constraint de rango a la entidad
 				try {
 					while (l >= 0) {
 						if ((rangos.get(l).getMaxRango().equals("-1")) &&
@@ -1658,7 +1656,7 @@ public class Parser {
 					e.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT UNIQUE \n"+ entidad.nombre_entidad);
+				//Se imprimen los atributos que tiene restricción de unicidad
 				defineUnico(entidad);
 				HashMap<String,Atributo> unico = entidad.getUnico();
 				Iterator<Atributo> iter_unico = unico.values().iterator();
@@ -1672,7 +1670,7 @@ public class Parser {
 					e1.printStackTrace();
 				}
 				
-				System.out.println("IMPRIMIENDO CONSTRAINT DE CHELO");
+				//Se imprimen atributos unicos pertenecientes a entidades n-arias
 				unicos_inter = entidad.unike;
 				int o = unicos_inter.size()-1;
 				while (o>=0){
@@ -1680,11 +1678,6 @@ public class Parser {
 					o--;
 				}
 				
-				
-				
-				
-				
-				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
 				try {
