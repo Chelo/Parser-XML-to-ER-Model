@@ -56,8 +56,11 @@ public class Parser {
 	public static HashMap<String, String> nombreEntidades = new HashMap<String, String>();
 	public static HashMap<String, XSComplexType> complexSinEntidad = new HashMap<String, XSComplexType>() ;
 	public static HashMap<String, XSComplexType> subclases = new HashMap<String, XSComplexType>() ;
+	public static HashMap<String, Vector<String>> multivaluados = new HashMap<String, Vector<String>>();  
+	public static HashMap<String, Vector<String>> multivaluadosCompuestos = new HashMap<String, Vector<String>>(); 
 	public static HashMap<String, Vector<String>> superclases = new HashMap<String, Vector<String>>() ;
 	public static HashMap<String, XSComplexType> enearias = new HashMap<String, XSComplexType>(); //Hash cuya clave es el nombre de la entidad enearia y el valor es el complextype que tiene.
+	public static int opcionTraduccion;
 	/**
 	 * El m&#233todo CrearParser es el encargado de crear un nuevo
 	 * XSOM parser y parsear el archivo (XMLSchema) indicado el
@@ -621,6 +624,20 @@ public class Parser {
 										//Se agregan los atributos a la nueva entidad
 										CompuestoMultivaluado(nuevo_atributo,entidad_multivaluada,vector_multivaluado,particles1);	
 										
+										//Debemos almacenar información de los atributos que son multivaluados, 
+										//pues si llegase de dejar de existir la superclase que los contiene
+										//(caso de generalizacion/especializacion traduccion 2) habría que cambiar las 
+										//foráneas de dichos multivaluados hacia la superclase, hacia las subclases.
+										Vector<String> att_multivaluados;
+										if (multivaluadosCompuestos.containsKey(tipo))
+											att_multivaluados = multivaluadosCompuestos.get(tipo);
+										else
+											att_multivaluados = new Vector<String>();
+										
+										att_multivaluados.add(entidad_multivaluada.tipo);
+										multivaluadosCompuestos.put(tipo, att_multivaluados);
+										
+										
 									}
 									else
 									{
@@ -648,9 +665,24 @@ public class Parser {
 				
 				if (tiposBasicos.contains(tipoAttr)){
 					System.out.println("TAMANO DEL MINOCCRUSS      "+nuevo_atributo.getMinOccurs());
-					if ( nuevo_atributo.getMinOccurs()>1 | nuevo_atributo.getMaxOccurs()>1 ){
+					if ( nuevo_atributo.getMinOccurs()>1 | nuevo_atributo.getMaxOccurs()>1 )
+					{
 						Multivaluado(nuevo_atributo,entidades.get(tipo));
-					}else{
+						
+						//Debemos almacenar información de los atributos que son multivaluados, 
+						//pues si llegase de dejar de existir la superclase que los contiene
+						//(caso de generalizacion/especializacion traduccion 2) habría que cambiar las 
+						//foráneas de dichos multivaluados hacia la superclase, hacia las subclases.
+						Vector<String> att_multivaluados;
+						if (multivaluados.containsKey(tipo))
+							att_multivaluados = multivaluados.get(tipo);
+						else
+							att_multivaluados = new Vector<String>();
+						
+						att_multivaluados.add(nuevo_atributo.nombre);
+						multivaluados.put(tipo, att_multivaluados);
+					}
+					else{
 						atributos.add(nuevo_atributo);
 					}
 				}
@@ -769,6 +801,115 @@ public class Parser {
 	}
 
 	/**
+	 * La funci&#243n crearEntidadAPartirDeOtra permite crear una entidad a partir de otra ya definida.
+	 * La utilidad de esta función es que permitirá crear a las subclases a partir de la información de la superclase
+	 * en caso de que la opción de traduccion sea dos, crear las entidades de atributos multivaludados y multivaluados 
+	 * compuestos en caso de que la superclase a la que pertenecen desaparezca.
+	 * 	
+	 * @param entidadOriginal: Entidad de la cual se extraerá la información.
+	 * @param entidadNueva: Entidad a la cual se le agregarán los nuevos datos.
+	 * @param caso: int que nos indica en cual de los casos citados anteriormente estamos. 
+	 * @param concatena: entero que permite colocar distintos nombres a las claves de 
+	 * las subclases de una superclase.
+	 * @param subclase: subclase a la cual deberá hacer referencia la nueva entidad que representa al atributo 
+	 * multivaluado de la subclase (dicho att multivaluado lo hereda de la superclase)
+	 * 
+	 * 0 -> entidadOriginal es una Superclase y 
+	 *      entidadNueva es una subclase de ella
+	 * 1 -> entidadOriginal es una Entidad que representa el atributo multivaluado de una superclase
+	 *      entidadNueva es una Entidad que representa el atributo multivaluado de una subclase
+	 * 2 -> entidadOriginal es una Entidad que representa el atributo multivaluado compuesto de una superclase
+	 *      entidadNueva es una Entidad que representa el atributo multivaluado compuesto de una subclase     
+	 */
+	@SuppressWarnings("unchecked")
+	public static int crearEntidadAPartirDeOtra(Entidad entidadOriginal, Entidad entidadNueva, int caso, int concatena, Entidad subclase)
+	{
+		
+		String subcl = entidadNueva.tipo;
+		String sup = entidadOriginal.tipo;
+		
+		//Se pasan los atributos
+		Vector<Atributo> atributosSup= entidadOriginal.getAtributos();
+		Vector<Atributo> atributosSub= entidadNueva.atributos;
+		atributosSub.addAll(atributosSup);
+		
+		if(caso == 0)
+		{	
+			//Se pasa la clave
+			HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
+			HashMap<String,Atributo> claveSup = entidadOriginal.getClave();
+			Iterator< Atributo> clav = claveSup.values().iterator();
+			
+			while(clav.hasNext())
+			{
+				Atributo at= (Atributo)clav.next().clone();
+				at.nombre= at.nombre+concatena;
+				claveSub.put(at.nombre, at);
+				concatena++;
+			}
+			entidadNueva.setClave(claveSub);
+			
+			//Se le agregan a las subclases el resto de las cosas que tenía la superclase
+			//las referecias y tenemos que cambiar las referencias circulares que habían hacia
+			//la superclase que ahora desaparecerá
+			Iterator<Vector<Atributo>> referenciasSupVal = entidadOriginal.getReferencias().values().iterator();
+			Vector<String> referencias_agregadas = new Vector<String>();
+			while (referenciasSupVal.hasNext())
+			{
+				Enumeration<Atributo> ref = referenciasSupVal.next().elements();
+				while(ref.hasMoreElements())
+				{
+					//Paso referencias de la superclase a la subclase
+					Atributo attr = (Atributo)ref.nextElement().clone();
+					entidadNueva.setReferencia(attr);
+					//Debo guardar la información de el tipo de la entidad
+					//a la cual se hacia referencia, para
+					//luego cambiar en ellas el tipo en las referencias circulares,
+					//que ahora debe ser hacia la subclase
+					String tipo = attr.getTipo();
+					if (!referencias_agregadas.contains(tipo))
+						referencias_agregadas.add(tipo);
+				}
+	
+			}
+			//Cambio el tipo de la referencia circular
+			Iterator<String> referencias_a_cambiar = referencias_agregadas.iterator();
+			while(referencias_a_cambiar.hasNext())
+			{
+				String tipo = referencias_a_cambiar.next();
+				Vector<Atributo> referenciasCirculares = entidades.get(tipo).getReferencias().get(sup);
+				Iterator<Atributo> refCir = referenciasCirculares.iterator();
+				while(refCir.hasNext())
+				{
+					Atributo nuevo_attr = (Atributo)refCir.next().clone();
+					nuevo_attr.setTipo(subcl);
+					entidades.get(tipo).setReferencia(nuevo_attr);
+				}
+			}
+			//Unico
+			HashMap<String,Atributo> unico = entidadOriginal.getUnico();
+			entidadNueva.setUnico(unico);
+			//Tipo
+			String tipo = subcl;
+			entidadNueva.setTipo(tipo);
+		}
+		
+		if (caso == 1 || caso ==2)
+		{
+			//Se pasa la clave
+		    entidadNueva.setClave((HashMap<String, Atributo>) entidadOriginal.clave.clone());
+			
+			//Se le pasan las claves foraneas relacionadas con la primary key, 
+			//pero ahora hacen referencia a la subclase en lugar de la superclase
+			
+			SetForaneoMultivaluado(subclase, entidadNueva);
+	    }	
+		
+		return concatena;
+		
+	}
+	
+	/**
 	 * La funci&#243n leerAtributosEntidades es la encargada de leer y almacenar por cada ComplexType que defina a una
 	 * Entidad dentro del XMLSchema, todos sus atributos con sus restricciones. Esta funci&#243n se apoya de las funciones
 	 * auxiliares leerAtributos2 y leerElementos
@@ -777,6 +918,7 @@ public class Parser {
 	 * en el nivel m&#225s externo de anidamiento, que definen a Entidades.
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unchecked")
 	public static void LeerAtributosEntidades(Iterator<String> claves, Iterator<XSComplexType> valores) throws IOException{
 
 		XSComplexType complex;
@@ -835,6 +977,21 @@ public class Parser {
 		}
 		//En caso de que existan generalización/especialización solapado
 		//Se hacen los ajustes necesarios
+		System.out.println("AQUIIII!!");
+		Iterator<String> multi = multivaluados.keySet().iterator(); 
+		//Iterator<String> multiComp = multivaluadosCompuestos.keySet().iterator();
+		while(multi.hasNext())
+		{
+			String ent = multi.next();
+			System.out.println("Entidad que posee multivaluados"+ ent+ "\n");
+			Enumeration<String> entidadesDeMultivaluados = multivaluados.get(ent).elements();
+			while (entidadesDeMultivaluados.hasMoreElements())
+			{
+				System.out.println("Atributos multivaluados "+entidadesDeMultivaluados.nextElement()+ "\n");
+			}	
+		}	
+		
+		
 		if(!superclases.isEmpty())
 		{
 			Iterator<String> superC = superclases.keySet().iterator();
@@ -846,142 +1003,122 @@ public class Parser {
 				HashMap<String,Atributo> claveSup = entidades.get(sup).getClave();
 				Enumeration<String> subclass= sub.elements();
 
-				BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-				boolean opcionValida = false;
-				
-				while(!opcionValida)
+				if (opcionTraduccion==2)
 				{
-					System.out.println("*---Se ha detectado generalización/especialización en la superclase "+ sup +" ---* \n");
-					System.out.println("*---Si desea que se creen entidades para las subclases y también para la superclase presione 1 : \n");
-					System.out.println("*---Si desea que sólo se creen entidades para las subclases presione 2 : \n");
-					String opcionTraduccion = in.readLine();
-
-					if (opcionTraduccion.equals("2"))
+					int concatena =0;
+					
+					while(subclass.hasMoreElements())
 					{
+						
+						String subcl = subclass.nextElement();//Obtengo la subclase
+						
 						//Agregas a cada subclase todos los atributos de la superclase
 						//Y la clave será la clave de la superclase
-						Vector<Atributo> atributosSup= entidades.get(sup).getAtributos();
-						int concatena =0;
-						
-						while(subclass.hasMoreElements())
+						//Tambien le debes pasar todas las referencias que tenía la superclase y
+						//cambiar las referencias circulares
+						 
+						concatena = crearEntidadAPartirDeOtra(entidades.get(sup), entidades.get(subcl),0, concatena, null);
+					
+						//Como se escogio opcion de traduccion 2, 
+						//debo verificar si la superclase de esta subclase tenía atributos multivaluados, 
+						//de ser así debera crear una entidad que represente al atributo multivaluado
+						//de dicha subclase
+						if(multivaluados.containsKey(sup))
 						{
-							
-							String subcl = subclass.nextElement();//Obtengo la subclase
-							Vector<Atributo> atributosSub= entidades.get(subcl).atributos;
-							
-							//Iterator<Atributo> l= atributosSup.iterator();
-							
-							/*while(l.hasNext()){
-								Atributo at= (Atributo)l.next().clone();
-								atributosSub.add(at);
-							}*/
-							
-							atributosSub.addAll(atributosSup);
-							//Voy con la clave.
-							Iterator< Atributo> clav = claveSup.values().iterator();
-							HashMap<String,Atributo> claveSub=new HashMap<String,Atributo>();
-							while(clav.hasNext()){
-								Atributo at= (Atributo)clav.next().clone();
-								String nameold= new String(at.nombre);
-								at.nombre= at.nombre+concatena;
-								concatena++;
-								System.out.println(at.nombre + " "+ nameold + " "+ subcl);
-								claveSub.put(at.nombre, at);
-								//CambiarNombreAtributo(subcl, new String(at.nombre), new String (nameold));
-							}
-							
-							entidades.get(subcl).setClave(claveSub);
-							//Se le agregan a las subclases el resto de las cosas que tenía la superclase
-							//las referecias y tenemos que cambiar las referencias circulares que habían hacia
-							//la superclase que ahora desaparecerá
-							Iterator<Vector<Atributo>> referenciasSupVal = entidades.get(sup).getReferencias().values().iterator();
-							Vector<String> referencias_agregadas = new Vector<String>();
-							while (referenciasSupVal.hasNext())
-							{
-								Enumeration<Atributo> ref = referenciasSupVal.next().elements();
-								while(ref.hasMoreElements())
-								{
-									//Paso referencias de la superclase a la subclase
-									Atributo attr = (Atributo)ref.nextElement().clone();
-									entidades.get(subcl).setReferencia(attr);
-									//Debo guardar la información de el tipo de la entidad
-									//a la cual se hacia referencia, para
-									//luego cambiar en ellas el tipo en las referencias circulares,
-									//que ahora debe ser hacia la subclase
-									String tipo = attr.getTipo();
-									if (!referencias_agregadas.contains(tipo))
-										referencias_agregadas.add(tipo);
+							Iterator<String> attr_mult = multivaluados.get(sup).iterator();
+							while(attr_mult.hasNext())
+							{	
+								String mult = attr_mult.next();
+								if(entidades.containsKey(mult))
+								{	
+									Entidad entidad_multivaluada = new Entidad();
+									entidad_multivaluada.nombre_entidad = entidades.get(mult).nombre_entidad + "_" + subcl;
+									entidad_multivaluada.tipo = entidades.get(mult).nombre_entidad + "_" + subcl;
+								
+									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,1, -1, entidades.get(subcl));
+								
+									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
 								}
-
-							}
-							//Cambio el tipo de la referencia circular
-							Iterator<String> referencias_a_cambiar = referencias_agregadas.iterator();
-							while(referencias_a_cambiar.hasNext())
-							{
-								String tipo = referencias_a_cambiar.next();
-								Vector<Atributo> referenciasCirculares = entidades.get(tipo).getReferencias().get(sup);
-								Iterator<Atributo> refCir = referenciasCirculares.iterator();
-								while(refCir.hasNext())
+							}	
+						}
+						//Como se escogio opcion de traduccion 2, 
+						//debo verificar si la superclase de esta subclase tenía atributos compuestos multivaluados, 
+						//de ser así debera crear una entidad que represente al atributo compuesto multivaluado
+						//de dicha subclase
+						if(multivaluadosCompuestos.containsKey(sup))
+						{
+							Iterator<String> attr_mult = multivaluadosCompuestos.get(sup).iterator();
+							while(attr_mult.hasNext())
+							{	
+								String mult = attr_mult.next();
+								if(entidades.containsKey(mult))
 								{
-									Atributo nuevo_attr = (Atributo)refCir.next().clone();
-									nuevo_attr.setTipo(subcl);
-									entidades.get(tipo).setReferencia(nuevo_attr);
-								}
-							}
-							//Unico
-							HashMap<String,Atributo> unico = entidades.get(sup).getUnico();
-							entidades.get(subcl).setUnico(unico);
-							//Foraneos
-							//System.out.println("Superclase = sup" +sup + "Subclase"+ subcl+"\n" );
-							//HashMap<String, Vector<Vector<Atributo>>> foraneo = entidades.get(sup).getForaneo();
-							//entidades.get(subcl).setForaneo(foraneo);
-							//Tipo
-							String tipo = subcl;
-							entidades.get(subcl).setTipo(tipo);
-						}
-						//Eliminas la superclase
-						entidades.remove(sup);
-						//Debes eliminar todas las referencias hechas a ella
-						Iterator<Entidad> entidads = entidades.values().iterator();
-						while(entidads.hasNext())
-						{
-							Entidad ent = entidads.next();
-							if(ent.getReferencias().containsKey(sup))
-							{
-								ent.getReferencias().remove(sup);
+									Entidad entidad_multivaluada = new Entidad();
+									entidad_multivaluada.nombre_entidad = entidades.get(mult).nombre_entidad + "_" + subcl;
+									entidad_multivaluada.tipo = entidades.get(mult).nombre_entidad + "_" + subcl;
+									 
+									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,2, -1, entidades.get(subcl));
+									
+									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
+								}	
 							}
 						}
-						opcionValida = true;
 					}
-					else if (opcionTraduccion.equals("1"))
+					//Eliminamos a la superclase y a todos las entidades que representen 
+					//atributos multivaluados y multivaluados compuestos de dicha superclase
+					entidades.remove(sup);
+					if(multivaluados.containsKey(sup))
 					{
-						//Agregas como clave primaria de cada subclase, la clave primaria de la superclase
-						//como foránea
-						while(subclass.hasMoreElements())
-						{
-							String subcl = subclass.nextElement();
-							//Se le coloca como clave, la clave de la superclase
-							entidades.get(subcl).setClave(claveSup);
-							//Esa clave se la agregas como atributo y como foránea
-							Iterator<Atributo> clavesSup = claveSup.values().iterator();
-							Vector <Atributo> foraneas = new Vector<Atributo>();
-							while(clavesSup.hasNext())
-							{
-								Atributo attr = clavesSup.next();
-								//entidades.get(subcl).setAtributo(attr);
-								foraneas.add(attr);
-							}
-							Vector <Vector<Atributo>> attrForaneas = new Vector<Vector<Atributo>>();
-							attrForaneas.add(foraneas);
-							HashMap<String, Vector <Vector<Atributo>>> foraneasCompleta = new HashMap<String, Vector<Vector<Atributo>>>();
-							foraneasCompleta.put(sup, attrForaneas);
-							entidades.get(subcl).setForaneo(foraneasCompleta);
+						Iterator<String> attr_mult = multivaluados.get(sup).iterator();
+						while(attr_mult.hasNext())
+						{	
+							entidades.remove(attr_mult.next());	
 						}
-						opcionValida = true;
-					}
-					else
+					}	
+					if(multivaluadosCompuestos.containsKey(sup))
 					{
-						System.out.println("ERROR: Opción inválida.\n");
+						Iterator<String> comp_mult = multivaluadosCompuestos.get(sup).iterator();
+						while(comp_mult.hasNext())
+						{		
+							entidades.remove(comp_mult.next());	
+						}
+					}
+					
+					//Debes eliminar todas las referencias hechas a la superclase
+					Iterator<Entidad> entidads = entidades.values().iterator();
+					while(entidads.hasNext())
+					{
+						Entidad ent = entidads.next();
+						if(ent.getReferencias().containsKey(sup))
+						{
+							ent.getReferencias().remove(sup);
+						}
+					}
+					
+				}
+				else if (opcionTraduccion == 1)
+				{
+					//Agregas como clave primaria de cada subclase, la clave primaria de la superclase
+					//como foránea
+					while(subclass.hasMoreElements())
+					{
+						String subcl = subclass.nextElement();
+						//Se le coloca como clave, la clave de la superclase
+						entidades.get(subcl).setClave(claveSup);
+						//Esa clave se la agregas como atributo y como foránea
+						Iterator<Atributo> clavesSup = claveSup.values().iterator();
+						Vector <Atributo> foraneas = new Vector<Atributo>();
+						while(clavesSup.hasNext())
+						{
+							Atributo attr = clavesSup.next();
+							//entidades.get(subcl).setAtributo(attr);
+							foraneas.add(attr);
+						}
+						Vector <Vector<Atributo>> attrForaneas = new Vector<Vector<Atributo>>();
+						attrForaneas.add(foraneas);
+						HashMap<String, Vector <Vector<Atributo>>> foraneasCompleta = new HashMap<String, Vector<Vector<Atributo>>>();
+						foraneasCompleta.put(sup, attrForaneas);
+						entidades.get(subcl).setForaneo(foraneasCompleta);
 					}
 				}
 			}
@@ -2094,9 +2231,10 @@ public class Parser {
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public static void ParsearXMLSchema(String archivo) throws SAXException, IOException {
+	public static void ParsearXMLSchema(String archivo, int opcionTrad) throws SAXException, IOException {
 
 		File file = new File(archivo);
+		opcionTraduccion = opcionTrad;
 		try {
 
 			XSSchemaSet result = CrearParser(file);
