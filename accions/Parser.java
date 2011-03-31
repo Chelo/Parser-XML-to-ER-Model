@@ -1283,6 +1283,18 @@ public class Parser {
 			// TODO Auto-generated catch block
 			e.printStackTrace();}
 	}
+	public static String retornaUnico(Collection<Atributo> atributos){
+	
+		Iterator<Atributo> iter = atributos.iterator();
+		String salida = "(";
+		
+	
+			while (iter.hasNext()){
+				salida = salida+iter.next().nombre+",";
+			}
+			return salida.substring(0, salida.length()-1).toUpperCase();
+	
+	}
 	/**
 	 * Método que se encarga de crear el archivo sql correspondiente al xml
 	 * schema proporcionado.
@@ -1298,6 +1310,7 @@ public class Parser {
 		Vector<Atributo> booleanos = new Vector<Atributo>();
 		Vector<Atributo> dominios = new Vector<Atributo>();
 		Vector<Atributo> rangos = new Vector<Atributo>();
+		Vector<Collection<Atributo>> unicos_inter = new Vector<Collection<Atributo>>();
 		int k = 0,j = 0, l = 0;
 
 		
@@ -1418,8 +1431,8 @@ public class Parser {
 						while (i>=0){
 							foraneos = vector_iter_for.get(i);
 						
-							out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
-									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
+							out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length()).replace(',','_')+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
+									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+"),\n");
 
 							i --;
 						}
@@ -1515,6 +1528,17 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Unique Contraint\n");
 					e1.printStackTrace();
 				}
+				
+				System.out.println("IMPRIMIENDO CONSTRAINT DE CHELO");
+				unicos_inter = entidad.unike;
+				int o = unicos_inter.size()-1;
+				while (o>=0){
+					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE "+retornaUnico(unicos_inter.get(o))+"),\n");
+					o--;
+				}
+				
+				
+				
 				
 				
 				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
