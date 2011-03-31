@@ -461,7 +461,6 @@ public class Parser {
 
 				//Se obtienen las retricciones
 				if (pterm.asElementDecl().getType().isSimpleType()) {
-					// System.out.println("Tiene Restriccion : "+pterm.asElementDecl().getType().asSimpleType().isRestriction());
 					// Se verifican las restricciones existentes
 					restriction = pterm.asElementDecl().getType().asSimpleType().asRestriction();
 					nuevo_atributo = restricciones(restriction,nuevo_atributo);
@@ -565,8 +564,6 @@ public class Parser {
 						}
 					}
 				}
-				System.out.print("Lo q el usuario coloco: "+ nombreAttr + " " +p.getMinOccurs()+ " "+ p.getMaxOccurs() +" \n");
-				System.out.print("Asi quedo: "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 
 				//Verificamos si es un atributo compuesto
 				if(tipoAttr == null )
@@ -955,7 +952,6 @@ public class Parser {
 					// Se leen los atributos de las entidades
 					Vector<Atributo> atributos = entidades.get(tipo).getAtributos();
 					atributos = leerElementos(particles,tipo,atributos,false,false);
-					System.out.println("AQUII IMPRIMIR " +entidades.get(tipo).imprimir + "de tipo"+tipo +"\n");
 					entidades.get(tipo).setAtributos(atributos);
 				}
 			}
@@ -974,19 +970,7 @@ public class Parser {
 		}
 		//En caso de que existan generalización/especialización solapado
 		//Se hacen los ajustes necesarios
-		/*System.out.println("AQUIIII!!");
-		Iterator<String> multi = multivaluados.keySet().iterator(); 
-		//Iterator<String> multiComp = multivaluadosCompuestos.keySet().iterator();
-		while(multi.hasNext())
-		{
-			String ent = multi.next();
-			System.out.println("Entidad que posee multivaluados"+ ent+ "\n");
-			Enumeration<String> entidadesDeMultivaluados = multivaluados.get(ent).elements();
-			while (entidadesDeMultivaluados.hasMoreElements())
-			{
-				System.out.println("Atributos multivaluados "+entidadesDeMultivaluados.nextElement()+ "\n");
-			}	
-		}*/	
+		
 		
 		
 		if(!superclases.isEmpty())
@@ -2043,53 +2027,7 @@ public class Parser {
 						
 					}
 					if (esEnearia) {
-						//POR AHORA COLOCARE TODOS LOS ATRIBUTOS COMO CLAVES.
-					
-						/*Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
-						//tengo los vectores.
-						while(itera.hasNext()){
-							
-							Iterator<Atributo> i= itera.next().iterator();
-							//Tengo los atributos.
-							int contador=1;
-							while(i.hasNext()){
-								Atributo at = i.next();
-								
-								//Saco la entidad del atributo para poder extraer su clave.
-								Entidad ent= entidades.get(at.tipo); //Entidad del atributo.
-								
-								//Extraigo la clave y la meto como clave de "enearia"
-								Iterator<Atributo> g = ent.clave.values().iterator();
-								
-								while(g.hasNext()){
-									Atributo atributo= g.next();
-									if(enearia.clave.containsKey(atributo.nombre))
-									{
-										System.out.println("Entre con el atributo "+ atributo.nombre);
-										//Indica que esta entidad participa mas de una vez en la enearia.
-										//Meto de nuevo el atributo pero con otro nombre.
-										
-										//Clono el atributo y le cambio el nombre.
-										Atributo atri= (Atributo)atributo.clone();
-										atri.nombre= atri.nombre+contador;
-										System.out.println("le cambie el nombre a "+ atri.nombre);
-										//Meto el atributo como clave
-										enearia.clave.put(atri.nombre, atri);
-										contador++;
-									}
-									else
-									{
-										//No esta repetida, la meto igual.
-										enearia.clave.put(atributo.nombre, (Atributo)atributo.clone());
-									}
-								}
-								//Agrego e	l atributo como foráneo.
-								enearia.AgregarForaneo(at.tipo, ent.clave.values());
-							}
-						}
-						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
-						enearia.referencias.clear();*/
-						//------------------------------------------------------------------------------------------
+						
 						//Como es enearia debo recorrer todas las referencias y ver la cardinalidad para determinar,
 						//quien sera clave y quien sera unica.
 						
@@ -2187,7 +2125,6 @@ public class Parser {
 							//La clave es una sola o son todas... nunca habran convinaciones raras. Aqui ajuro es una sola.
 							
 							//Saco cual es el tipo de la entidad que conforma la clave.
-							System.out.println("El tipo de la entidad clave es  "+ tipoEntidadClave);
 						
 							Iterator<String> itr= enearia.foraneo.keySet().iterator();
 							while(itr.hasNext()){
@@ -2209,7 +2146,6 @@ public class Parser {
 											Iterator<Atributo> h= vector.elementAt(g).iterator();
 											while(h.hasNext()){
 												Atributo pasante= h.next();
-												System.out.println("estoy pasando el atributo "+ pasante.nombre+  "con ");
 												
 												enearia.atributos.add(pasante);
 												//OJO: estoy pasando por referencia, no estoy clonando.
@@ -2230,8 +2166,6 @@ public class Parser {
 										while(z.hasNext()){
 											//Agrego.
 											Atributo pasante= z.next();
-											System.out
-											.println("estoy pasando el atributo "+ pasante.nombre+  "como atributo.");
 											enearia.atributos.add(pasante);
 											//OJO: estoy pasando por referencia, no estoy clonando.
 										}
@@ -2461,7 +2395,7 @@ public class Parser {
 				LeerAtributosEntidades(claves1, valores1);
 				VerEnearias();
 				VerInterrelaciones();
-				ImprimirEntidades();
+				//ImprimirEntidades();
 
 			}
 		} catch (Exception exp) {
