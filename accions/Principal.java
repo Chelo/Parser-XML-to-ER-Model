@@ -1,7 +1,6 @@
 package accions;
 	
 import java.io.IOException;
-import java.util.Iterator;
 
 import org.xml.sax.SAXException;
 
@@ -9,9 +8,9 @@ public class Principal {
 	
 	public static void main(String[] args) throws SAXException, IOException {
 
-
 		Parser.CreaReporte();
-		Parser.ParsearXMLSchema("ejemploViejo.xml");
+		Parser.ParsearXMLSchema("ejemploViejo.xml",2);
+
 		//Estas tres líneas son solo para probar que dentro del main se puede 
 		//utilizar el hash de entidades (las pueden borrar)
 		//Para hacer uso del hash simplemente hacen Parser.entidades
