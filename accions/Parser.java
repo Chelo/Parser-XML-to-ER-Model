@@ -442,7 +442,7 @@ public class Parser {
 				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto;
+				String valorPorDefecto = "";
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -461,6 +461,7 @@ public class Parser {
 				{
 					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
 					nuevo_atributo.setValor(valorPorDefecto);
+					System.out.println("VALOR POR DEFECTO :"+valorPorDefecto);
 				}
 
 				//Se obtienen las retricciones
@@ -1168,7 +1169,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()==""){
+		if (atributo.getValor()=="" | atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
@@ -1544,7 +1545,7 @@ public class Parser {
 							while (j >= 0) {
 								out.write(" "+foraneos.get(j).getNombre().toUpperCase()+
 										" "+TipoDato(foraneos.get(j)).toUpperCase() +" "+
-										Nulidad(foraneos.get(j))+" ,\n");
+										Nulidad(foraneos.get(j))+" "+ValorDefecto(foraneos.get(j))+" ,\n");
 								j--;
 
 							} i--;
@@ -1994,12 +1995,12 @@ public class Parser {
 							if (atri.minOccurs==1 && atri.maxOccurs==1) {
 								ReportarError("**ERROR**\n El atributo "+ atri.nombre + " no puede tener minOccurs y maxOccurs igual a 1\n\n");
 								error= true;
+								entidades.remove(enearia.tipo);
 								break;
 							}
 						}
 					}
 					//Se retira esa entidad del hash de entidades para que no sea analizada.
-					entidades.remove(enearia.tipo);
 				}
 				
 				if(!error){
@@ -2208,6 +2209,7 @@ public class Parser {
 									if(vector.size()>1){
 										//Hay mas atributos de esta entidad que debo pasar como atributo.
 										//OJO: pilla que agrego desde el 1 y no desde 0 pues el 0 es la clave.
+										
 										for (int g = 1; g < vector.size(); g++) {
 											//Agrego.
 											Iterator<Atributo> h= vector.elementAt(g).iterator();
@@ -2220,14 +2222,16 @@ public class Parser {
 											}
 										}
 									}
-
+									
 								} else {
 									//No es de la clave por ende lo paso al atributo.
 									
 									//Saco los vectores del foráneo respectivos
 									Iterator<Vector<Atributo>> y= enearia.foraneo.get(entidadForanea).iterator();
 									while(y.hasNext()){
-										Iterator<Atributo> z= y.next().iterator();
+										Vector<Atributo> vectorForaneo= y.next();
+										//Debo voltearlo para q se imprima bien.
+										Iterator<Atributo> z= vectorForaneo.iterator();
 										//Recorro el vector seleccionado.
 										while(z.hasNext()){
 											//Agrego.
@@ -2240,7 +2244,9 @@ public class Parser {
 									}
 
 								}
+								
 							}
+							
 						}
 						
 						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
@@ -2473,10 +2479,6 @@ public class Parser {
 				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator();
 				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-				Vector<Atributo> atr = entidades.get("Persona").atributos;
-				Enumeration<Atributo> enum_att = atr.elements();
-				while (enum_att.hasMoreElements())
-				{ System.out.println("Nombre "+ enum_att.nextElement().nombre+"\n");}	
 				VerEnearias();
 				VerInterrelaciones();
 				ImprimirEntidades();
