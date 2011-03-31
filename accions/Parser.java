@@ -710,6 +710,7 @@ public class Parser {
 						}
 						else
 						{
+							if(!tipoAttr.equals("ID"))
 							ReportarError("**ERROR**\n	El atributo "+ nombreAttr +" de la entidad "+ entidad.getNombre_entidad()+ " es de un tipo que no existe " + tipoAttr +
 							".\n	El atributo no será creado hasta que no realice los cambios\n");
 						}
@@ -1426,6 +1427,18 @@ public class Parser {
 			// TODO Auto-generated catch block
 			e.printStackTrace();}
 	}
+	public static String retornaUnico(Collection<Atributo> atributos){
+	
+		Iterator<Atributo> iter = atributos.iterator();
+		String salida = "(";
+		
+	
+			while (iter.hasNext()){
+				salida = salida+iter.next().nombre+",";
+			}
+			return salida.substring(0, salida.length()-1).toUpperCase();
+	
+	}
 	/**
 	 * Método que se encarga de crear el archivo sql correspondiente al xml
 	 * schema proporcionado.
@@ -1441,6 +1454,7 @@ public class Parser {
 		Vector<Atributo> booleanos = new Vector<Atributo>();
 		Vector<Atributo> dominios = new Vector<Atributo>();
 		Vector<Atributo> rangos = new Vector<Atributo>();
+		Vector<Collection<Atributo>> unicos_inter = new Vector<Collection<Atributo>>();
 		int k = 0,j = 0, l = 0;
 
 		
@@ -1561,8 +1575,8 @@ public class Parser {
 						while (i>=0){
 							foraneos = vector_iter_for.get(i);
 						
-							out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length())+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
-									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+")\n");
+							out.write(" CONSTRAINT FK_"+entidad.getNombre_entidad().toUpperCase()+"_"+retornaForaneos(foraneos).substring(1, retornaForaneos(foraneos).length()).replace(',','_')+"_"+i+ " FOREIGN KEY "+retornaForaneos(foraneos)
+									+") REFERENCES "+ entidades.get(tipo).nombre_entidad.toUpperCase() +" "+retornaClave(entidades.get(tipo))+"),\n");
 
 							i --;
 						}
@@ -1658,6 +1672,17 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Unique Contraint\n");
 					e1.printStackTrace();
 				}
+				
+				System.out.println("IMPRIMIENDO CONSTRAINT DE CHELO");
+				unicos_inter = entidad.unike;
+				int o = unicos_inter.size()-1;
+				while (o>=0){
+					out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE_"+o+ " UNIQUE"+retornaUnico(unicos_inter.get(o))+"),\n");
+					o--;
+				}
+				
+				
+				
 				
 				
 				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
@@ -1960,15 +1985,27 @@ public class Parser {
 					numEntidades= numEntidades+ref.next().size();
 				}
 				
+				boolean error = false;
 				if (numEntidades<= 2) {
 					//Si esto ocurre es porque la enearia estuvo definida solo con dos o menos entidades, lo cual 
-					// hace que no sea enearia. Se muestra error.
-					ReportarError("**ERROR**\n	El elemento "+ enearia.nombre_entidad+ " se detectó como una"+
-							" interrelación enearia, sin embargo tiene menos de dos entidades relacionadas.\n\n ");
+					// implica que hay que revisar que los min y max occurs NO sean 11.
+					Iterator<Vector<Atributo>> iter= enearia.referencias.values().iterator();
+					while(iter.hasNext()){
+						Iterator<Atributo> o= iter.next().iterator();
+						while(o.hasNext()){
+							Atributo atri= o.next();
+							if (atri.minOccurs==1 && atri.maxOccurs==1) {
+								ReportarError("**ERROR**\n El atributo "+ atri.nombre + " no puede tener minOccurs y maxOccurs igual a 1\n\n");
+								error= true;
+								break;
+							}
+						}
+					}
 					//Se retira esa entidad del hash de entidades para que no sea analizada.
 					entidades.remove(enearia.tipo);
 				}
-				else {
+				
+				if(!error){
 					//Recorro cada una de las entidades a las que hago referencia para ver si hay referencia circular
 					// NO DEBE HABER REFERENCIA CIRCULAR, sino no se cumple el concepto de la enearia.
 					
