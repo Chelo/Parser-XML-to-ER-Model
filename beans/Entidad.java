@@ -1,6 +1,7 @@
 package beans;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
@@ -251,6 +252,7 @@ public class Entidad {
 				
 				vector.add(atri);
 			}
+			Collections.reverse(vector);
 			vectores.add(vector);
 			foraneo.put(nombre,vectores);
 		}
@@ -266,6 +268,7 @@ public class Entidad {
 				atributo.nombre=atributo.nombre+concatena;
 				vector.add(atributo);
 			}
+			Collections.reverse(vector);
 			vectores.add(vector);
 		}
 	}
@@ -305,6 +308,7 @@ public class Entidad {
 				
 				vector.add(atri);
 			}
+			Collections.reverse(vector);
 			vectores.add(vector);
 			foraneo.put(nombre,vectores);
 		}
@@ -320,6 +324,7 @@ public class Entidad {
 				atributo.nombre=atributo.nombre+concatena;
 				vector.add(atributo);
 			}
+			Collections.reverse(vector);
 			vectores.add(vector);
 		}
 	}
