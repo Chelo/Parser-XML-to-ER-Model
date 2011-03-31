@@ -413,7 +413,7 @@ public class Parser {
 						//atributos de la superclase, se termine de realizar la traducción,
 						//dependiendo de la opción que escoja el usuario
 						superclases.put(tipo, subclasesValidas);
-						entidades.get(tipo).imprimir = false;
+					
 					}
 					else
 					{
@@ -815,7 +815,7 @@ public class Parser {
 	 *      entidadNueva es una Entidad que representa el atributo multivaluado compuesto de una subclase     
 	 */
 	@SuppressWarnings("unchecked")
-	public static int crearEntidadAPartirDeOtra(Entidad entidadOriginal, Entidad entidadNueva, int caso, int concatena, Entidad subclase)
+	public static int crearEntidadAPartirDeOtra(Entidad entidadOriginal, Entidad entidadNueva, int caso, int concatena, Entidad subclase, Entidad superclase)
 	{
 		
 		String subcl = entidadNueva.tipo;
@@ -891,7 +891,21 @@ public class Parser {
 		{
 			//Se pasa la clave
 		    entidadNueva.setClave((HashMap<String, Atributo>) entidadOriginal.clave.clone());
-			
+		    Iterator<String> itera_clave_sup = superclase.clave.keySet().iterator();
+		    while(itera_clave_sup.hasNext())
+		    {
+		    	String clave = itera_clave_sup.next();
+		    	entidadNueva.clave.remove(clave);
+		    }	
+		   
+		    HashMap<String, Atributo> ClaveAIncorporar = (HashMap<String, Atributo>) subclase.getClave().clone();
+		    Iterator<String> itera_attr1 = ClaveAIncorporar.keySet().iterator();
+		    Iterator<Atributo> itera_attr2 = ClaveAIncorporar.values().iterator();
+		    while(itera_attr1.hasNext() && itera_attr2.hasNext())
+		    {
+		    	entidadNueva.clave.put(itera_attr1.next(), itera_attr2.next());
+		    }	
+		    
 			//Se le pasan las claves foraneas relacionadas con la primary key, 
 			//pero ahora hacen referencia a la subclase en lugar de la superclase
 			
@@ -992,15 +1006,13 @@ public class Parser {
 					{
 						
 						String subcl = subclass.nextElement();//Obtengo la subclase
-						
+						entidades.get(subcl).imprimir = true;
 						//Agregas a cada subclase todos los atributos de la superclase
 						//Y la clave será la clave de la superclase
 						//Tambien le debes pasar todas las referencias que tenía la superclase y
 						//cambiar las referencias circulares
 						 
-						concatena = crearEntidadAPartirDeOtra(entidades.get(sup), entidades.get(subcl),0, concatena, null);
-						entidades.get(sup).imprimir = false;
-						entidades.get(subcl).imprimir = false;
+						concatena = crearEntidadAPartirDeOtra(entidades.get(sup), entidades.get(subcl),0, concatena, null, null);
 						//Como se escogio opcion de traduccion 2, 
 						//debo verificar si la superclase de esta subclase tenía atributos multivaluados, 
 						//de ser así debera crear una entidad que represente al atributo multivaluado
@@ -1017,7 +1029,7 @@ public class Parser {
 									entidad_multivaluada.nombre_entidad = entidades.get(mult).nombre_entidad + "_" + subcl;
 									entidad_multivaluada.tipo = entidades.get(mult).nombre_entidad + "_" + subcl;
 								
-									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,1, -1, entidades.get(subcl));
+									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,1, -1, entidades.get(subcl), entidades.get(sup));
 								
 									entidad_multivaluada.imprimir = false;
 									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
@@ -1040,7 +1052,7 @@ public class Parser {
 									entidad_multivaluada.nombre_entidad = entidades.get(mult).nombre_entidad + "_" + subcl;
 									entidad_multivaluada.tipo = entidades.get(mult).nombre_entidad + "_" + subcl;
 									 
-									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,2, -1, entidades.get(subcl));
+									crearEntidadAPartirDeOtra(entidades.get(mult), entidad_multivaluada ,2, -1, entidades.get(subcl), entidades.get(sup));
 									
 									entidad_multivaluada.imprimir = false;
 									entidades.put(entidad_multivaluada.tipo, entidad_multivaluada);
@@ -1087,6 +1099,7 @@ public class Parser {
 					while(subclass.hasMoreElements())
 					{
 						String subcl = subclass.nextElement();
+						entidades.get(subcl).imprimir = false;
 						//Se le coloca como clave, la clave de la superclase
 						entidades.get(subcl).setClave(claveSup);
 						//Esa clave se la agregas como atributo y como foránea

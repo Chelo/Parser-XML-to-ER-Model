@@ -11,10 +11,7 @@ public class Principal {
 
 		Parser.CreaReporte();
 
-
-		Parser.ParsearXMLSchema("ejemploViejo.xml",2);
-
-
+		Parser.ParsearXMLSchema("EjemploPruebas.xml",2);
 
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
