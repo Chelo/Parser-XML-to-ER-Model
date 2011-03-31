@@ -2482,10 +2482,6 @@ public class Parser {
 				claves1 = ((Map<String, XSComplexType>) nuevo_mapa).keySet().iterator();
 				valores1 =((Map<String, XSComplexType>) nuevo_mapa).values().iterator();
 				LeerAtributosEntidades(claves1, valores1);
-				Vector<Atributo> atr = entidades.get("Persona").atributos;
-				Enumeration<Atributo> enum_att = atr.elements();
-				while (enum_att.hasMoreElements())
-				{ System.out.println("Nombre "+ enum_att.nextElement().nombre+"\n");}	
 				VerEnearias();
 				VerInterrelaciones();
 				ImprimirEntidades();
