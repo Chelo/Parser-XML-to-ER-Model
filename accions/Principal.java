@@ -11,7 +11,9 @@ public class Principal {
 
 		Parser.CreaReporte();
 
-		Parser.ParsearXMLSchema("EjemploPruebas.xml",1);
+
+		Parser.ParsearXMLSchema("EjemploPruebas.xml",2);
+		
 
 		//Estas tres líneas son solo para probar que dentro del main se puede 
 		//utilizar el hash de entidades (las pueden borrar)

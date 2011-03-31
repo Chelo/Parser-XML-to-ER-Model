@@ -294,7 +294,7 @@ public class Parser {
 	 */
 	public static void CompuestoMultivaluado(Atributo nuevo_atributo, Entidad entidad_multivaluada, Vector<Atributo> vector_multivaluado, XSParticle[] particles ){
 		Vector<Atributo> atributos = new Vector<Atributo>();
-		nuevo_atributo.setNulo(  false);
+		nuevo_atributo.setNulo(  true);
 		
 		if(nuevo_atributo.getMinOccurs()==0)
 		{
@@ -310,6 +310,7 @@ public class Parser {
 		
 		int j = atributos.size()-1;
 		while (j>=0){
+		
 			atributos.get(j).setNulo(false);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
 			j--;	
@@ -375,11 +376,9 @@ public class Parser {
 							nombreAttr = pterm1.asElementDecl().getName();
 							// Se obtiene el tipo del atributo
 							tipoAttr = pterm1.asElementDecl().getType().getName();
-							//System.out.print("Tipo: "+ tipoAttr+"\n");
 
 							if(complexSinEntidad.containsKey(tipoAttr))
 							{
-								//System.out.print("Si soy complexSinEntidad "+ tipoAttr +"\n");
 								XSComplexType complex = (XSComplexType) complexSinEntidad.get(tipoAttr);
 								subclasesValidas.add(tipoAttr);
 								subclases.put(tipoAttr, complex);
@@ -436,13 +435,10 @@ public class Parser {
 				tiposBasicos.add("boolean");
 				tiposBasicos.add("date");
 				tiposBasicos.add("time");
-				//OJO ESTO PUEDE SER PELIGROSO
-				//tiposBasicos.add("anySimpleType");
-				//tiposBasicos.add("null");
-				//tiposBasicos.add("ID");
+			
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto = "";
+				String valorPorDefecto;
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -461,12 +457,10 @@ public class Parser {
 				{
 					valorPorDefecto = pterm.asElementDecl().getDefaultValue().toString();
 					nuevo_atributo.setValor(valorPorDefecto);
-					System.out.println("VALOR POR DEFECTO :"+valorPorDefecto);
 				}
 
 				//Se obtienen las retricciones
 				if (pterm.asElementDecl().getType().isSimpleType()) {
-					// System.out.println("Tiene Restriccion : "+pterm.asElementDecl().getType().asSimpleType().isRestriction());
 					// Se verifican las restricciones existentes
 					restriction = pterm.asElementDecl().getType().asSimpleType().asRestriction();
 					nuevo_atributo = restricciones(restriction,nuevo_atributo);
@@ -570,8 +564,6 @@ public class Parser {
 						}
 					}
 				}
-				System.out.print("Lo q el usuario coloco: "+ nombreAttr + " " +p.getMinOccurs()+ " "+ p.getMaxOccurs() +" \n");
-				System.out.print("Asi quedo: "+ nombreAttr + " " +nuevo_atributo.getMinOccurs()+ " "+nuevo_atributo.getMaxOccurs() +" \n");
 
 				//Verificamos si es un atributo compuesto
 				if(tipoAttr == null )
@@ -611,9 +603,6 @@ public class Parser {
 							
 									if(nuevo_atributo.getMinOccurs()>1 || nuevo_atributo.getMaxOccurs()>1 ) //|| nuevo_atributo.getMinOccurs()>1 Este caso te está faltando
 									{
-										//Aqui tienes que hacer tu parte Lili
-										System.out.println("Compuesto Multivaluado\n");
-								
 										//Se crea la nueva entidad conrespondiente al atributo compuesto multivaluado.
 										Entidad entidad_multivaluada = new Entidad();
 										entidad_multivaluada.nombre_entidad = nuevo_atributo.getNombre();
@@ -995,19 +984,7 @@ public class Parser {
 		}
 		//En caso de que existan generalización/especialización solapado
 		//Se hacen los ajustes necesarios
-		/*System.out.println("AQUIIII!!");
-		Iterator<String> multi = multivaluados.keySet().iterator(); 
-		//Iterator<String> multiComp = multivaluadosCompuestos.keySet().iterator();
-		while(multi.hasNext())
-		{
-			String ent = multi.next();
-			System.out.println("Entidad que posee multivaluados"+ ent+ "\n");
-			Enumeration<String> entidadesDeMultivaluados = multivaluados.get(ent).elements();
-			while (entidadesDeMultivaluados.hasMoreElements())
-			{
-				System.out.println("Atributos multivaluados "+entidadesDeMultivaluados.nextElement()+ "\n");
-			}	
-		}*/	
+		
 		
 		
 		if(!superclases.isEmpty())
@@ -1184,7 +1161,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()=="" | atributo.getValor().equals("")){
+		if (atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
@@ -1274,12 +1251,11 @@ public class Parser {
 
 		int j = atributos.size()-1;
 		while (j>=0){
-
-			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 		
+			if (clave.containsKey(atributos.get(j).nombre) && clave.get(atributos.get(j).nombre)==null ){
 				clave.remove(atributos.get(j).nombre);
 				clave.put(atributos.get(j).nombre,atributos.get(j));
-
+				atributos.remove(j);
 			}j--;
 		}
 
@@ -1416,6 +1392,9 @@ public class Parser {
 		return "Foraneo Invalido";
 	}
 
+	/**
+	 * Método encargado de crear el archivo de errores
+	 */
 	public static void CreaReporte(){
 		FileWriter fstream;
 		BufferedWriter out = null;
@@ -1428,6 +1407,10 @@ public class Parser {
 			e.printStackTrace();}
 	
 	}
+	/**
+	 * Método que agrega una alerta o error al archivo de error del programa
+	 * @param error	String que contiene el error ocurrido
+	 */
 	public static void ReportarError(String error){
 		FileWriter fstream;
 		BufferedWriter out = null;
@@ -1440,6 +1423,12 @@ public class Parser {
 			// TODO Auto-generated catch block
 			e.printStackTrace();}
 	}
+	
+	/**
+	 * Función que contatena todos los atributos que forman una clave alterna
+	 * @param atributos Collection de atributos que forman una clave alterna
+	 * @return	String con la clave alterna de una entidad
+	 */
 	public static String retornaUnico(Collection<Atributo> atributos){
 	
 		Iterator<Atributo> iter = atributos.iterator();
@@ -1490,7 +1479,7 @@ public class Parser {
 				defineClave(entidad);
 				HashMap<String,Atributo> clave_1 = entidad.getClave();
 				Iterator<Atributo> iter_c = clave_1.values().iterator();
-				System.out.println("IMPRIMIENTO CLAVE \n"+ entidad.nombre_entidad);
+			
 				try {
 					while (iter_c.hasNext()){
 						
@@ -1498,13 +1487,11 @@ public class Parser {
 						out.write(" "+a.getNombre().toUpperCase()+
 								" "+ TipoDato(a)+" "+ Nulidad(a)+
 								" "+ValorDefecto(a)+" ,\n");
-						//out.write(" CONSTRAINT "+entidad.getNombre_entidad().toUpperCase()+"_UNIQUE UNIQUE ("+iter_unico.next().nombre.toUpperCase()+"),\n");
 					}
 				} catch (Exception e3) {
 					System.out.println("ERROR: al escribir los atributos claves");
 					e3.printStackTrace();
 				}
-				System.out.println("IMPRIMIENTO ATRIBUTOS \n"+ entidad.nombre_entidad);
 				
 				j = entidad.getAtributos().size()-1;
 				// se inicializan las variables para la nueva entidad
@@ -1540,9 +1527,6 @@ public class Parser {
 				}
 
 				//Se obtiene los atributos que son referencias
-
-				
-				System.out.println("IMPRIMIENTO FOREANEOS \n"+ entidad.nombre_entidad);
 				Iterator<Vector<Vector<Atributo>>> iter_for_ini = entidad.foraneo.values().iterator();
 				Vector <Atributo> foraneos = new Vector<Atributo>();
 				try {
@@ -1572,7 +1556,7 @@ public class Parser {
 					e1.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT FORANEO \n"+ entidad.nombre_entidad);
+				//Se imprimen los constraint de clave foranea
 				try {
 					iter_for_ini = entidad.foraneo.values().iterator();
 					Iterator<String> iter_for_ini_f = entidad.foraneo.keySet().iterator();
@@ -1600,7 +1584,7 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Constraint de Foreing Key");
 					e.printStackTrace();
 				}
-				System.out.println("IMPRIMIENTO CONSTRAINT CHECK \n"+ entidad.nombre_entidad);
+				
 				k = booleanos.size()-1;
 				//Se agregan los contraint de atributo booleano
 				try {
@@ -1615,9 +1599,9 @@ public class Parser {
 					e.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT DOMINIO \n"+ entidad.nombre_entidad);
+			
 				l = dominios.size()-1;
-				//Se agregan los contraint de dominio a la entidad.
+				//Se agregan los constraint de dominio a la entidad.
 				try {
 					while (l >= 0) {
 
@@ -1631,11 +1615,8 @@ public class Parser {
 					System.out.println("ERROR: al escribir el Constraint de Dominio\n");
 					e.printStackTrace();
 				}
-
-				
-				System.out.println("IMPRIMIENTO CONSTRAINT RANGO \n"+ entidad.nombre_entidad);
 				l = rangos.size()-1;
-				//Se agregan los contraint de rango a la entidad
+				//Se agregan los constraint de rango a la entidad
 				try {
 					while (l >= 0) {
 						if ((rangos.get(l).getMaxRango().equals("-1")) &&
@@ -1672,7 +1653,7 @@ public class Parser {
 					e.printStackTrace();
 				}
 
-				System.out.println("IMPRIMIENTO CONSTRAINT UNIQUE \n"+ entidad.nombre_entidad);
+				//Se imprimen los atributos que tiene restricción de unicidad
 				defineUnico(entidad);
 				HashMap<String,Atributo> unico = entidad.getUnico();
 				Iterator<Atributo> iter_unico = unico.values().iterator();
@@ -1686,7 +1667,7 @@ public class Parser {
 					e1.printStackTrace();
 				}
 				
-				System.out.println("IMPRIMIENDO CONSTRAINT DE CHELO");
+				//Se imprimen atributos unicos pertenecientes a entidades n-arias
 				unicos_inter = entidad.unike;
 				int o = unicos_inter.size()-1;
 				while (o>=0){
@@ -1694,11 +1675,6 @@ public class Parser {
 					o--;
 				}
 				
-				
-				
-				
-				
-				System.out.println("IMPRIMIENTO CONSTRAINT PRIMARY KEY  \n"+ entidad.nombre_entidad);
 				defineClave(entidad);
 				//Se agrega la clave primaria a la entidad
 				try {
@@ -1820,7 +1796,7 @@ public class Parser {
 		// y asi ir sacando las interrelaciones.
 
 		/*
-		 * Debo sacar las claves y copiarlas a un vector para asi recorrerlo y que no me genere error
+		 * Debo sacar los tipos de las entidades y copiarlas a un vector para asi recorrerlo y que no me genere error
 		 * de concurrencias al insertar en entidades las nuevas interrelaciones.
 		 */
 		Set<String> claves = entidades.keySet();
@@ -2064,53 +2040,7 @@ public class Parser {
 						
 					}
 					if (esEnearia) {
-						//POR AHORA COLOCARE TODOS LOS ATRIBUTOS COMO CLAVES.
-					
-						/*Iterator<Vector<Atributo>> itera= enearia.referencias.values().iterator();
-						//tengo los vectores.
-						while(itera.hasNext()){
-							
-							Iterator<Atributo> i= itera.next().iterator();
-							//Tengo los atributos.
-							int contador=1;
-							while(i.hasNext()){
-								Atributo at = i.next();
-								
-								//Saco la entidad del atributo para poder extraer su clave.
-								Entidad ent= entidades.get(at.tipo); //Entidad del atributo.
-								
-								//Extraigo la clave y la meto como clave de "enearia"
-								Iterator<Atributo> g = ent.clave.values().iterator();
-								
-								while(g.hasNext()){
-									Atributo atributo= g.next();
-									if(enearia.clave.containsKey(atributo.nombre))
-									{
-										System.out.println("Entre con el atributo "+ atributo.nombre);
-										//Indica que esta entidad participa mas de una vez en la enearia.
-										//Meto de nuevo el atributo pero con otro nombre.
-										
-										//Clono el atributo y le cambio el nombre.
-										Atributo atri= (Atributo)atributo.clone();
-										atri.nombre= atri.nombre+contador;
-										System.out.println("le cambie el nombre a "+ atri.nombre);
-										//Meto el atributo como clave
-										enearia.clave.put(atri.nombre, atri);
-										contador++;
-									}
-									else
-									{
-										//No esta repetida, la meto igual.
-										enearia.clave.put(atributo.nombre, (Atributo)atributo.clone());
-									}
-								}
-								//Agrego e	l atributo como foráneo.
-								enearia.AgregarForaneo(at.tipo, ent.clave.values());
-							}
-						}
-						//Elimino el hash de referencias para que no exista problemas con "VerInterrelaciones"
-						enearia.referencias.clear();*/
-						//------------------------------------------------------------------------------------------
+						
 						//Como es enearia debo recorrer todas las referencias y ver la cardinalidad para determinar,
 						//quien sera clave y quien sera unica.
 						
@@ -2208,7 +2138,6 @@ public class Parser {
 							//La clave es una sola o son todas... nunca habran convinaciones raras. Aqui ajuro es una sola.
 							
 							//Saco cual es el tipo de la entidad que conforma la clave.
-							System.out.println("El tipo de la entidad clave es  "+ tipoEntidadClave);
 						
 							Iterator<String> itr= enearia.foraneo.keySet().iterator();
 							while(itr.hasNext()){
@@ -2230,7 +2159,6 @@ public class Parser {
 											Iterator<Atributo> h= vector.elementAt(g).iterator();
 											while(h.hasNext()){
 												Atributo pasante= h.next();
-												System.out.println("estoy pasando el atributo "+ pasante.nombre+  "con ");
 												
 												enearia.atributos.add(pasante);
 												//OJO: estoy pasando por referencia, no estoy clonando.
@@ -2251,8 +2179,6 @@ public class Parser {
 										while(z.hasNext()){
 											//Agrego.
 											Atributo pasante= z.next();
-											System.out
-											.println("estoy pasando el atributo "+ pasante.nombre+  "como atributo.");
 											enearia.atributos.add(pasante);
 											//OJO: estoy pasando por referencia, no estoy clonando.
 										}
@@ -2311,9 +2237,6 @@ public class Parser {
 		if (min1==1 && max1==1) {
 			//atr1 es 1:1
 			//Entidad del tipo atr2 absorbe a Entidad del atributo tipo atr1
-			// System.out.println("el atributo "+ atr1.nombre+" tiene min y max 1:1, " +
-			// "por ende "+ entidades.get(atr2.tipo).nombre_entidad +" absorbe a "+
-			// entidades.get(atr1.tipo).nombre_entidad+"\n");
 			Entidad ent1= entidades.get(atr1.tipo);
 			entidades.get(atr2.tipo).AgregarForaneo(ent1.tipo,ent1.clave.values());//Entidad que absorbe.
 		}
@@ -2321,9 +2244,6 @@ public class Parser {
 		{
 			//atr2 es 1:1
 			//Entidad del tipo atr1 absorbe a Entidad del atributo tipo atr2
-			// System.out.println("el atributo "+ atr2.nombre+" tiene min y max 1:1, " +
-			// "por ende "+ entidades.get(atr1.tipo).nombre_entidad +" absorbe a "+
-			// entidades.get(atr2.tipo).nombre_entidad+"\n");
 			Entidad ent2=entidades.get(atr2.tipo);
 			entidades.get(atr1.tipo).AgregarForaneo(ent2.tipo,ent2.clave.values());//Entidad que absorbe.
 		}
@@ -2331,46 +2251,40 @@ public class Parser {
 		{
 			if (min2==0 && max2==1) {
 				//atr1 es 0:1 y atr2 es 0:1
-				// System.out.println("Ambos atributos ("+atr1.nombre+ " , "+ atr2.nombre+") tienen 0:1"+
-				// "por ende se crea una nueva entidad con uno de los dos como clave.");
 				//se crea una nueva entidad, donde uno de los dos sera clave y el otro ser alterno.
 				Entidad entNueva= CrearEntidadNueva(atr1);
 
 				//Coloco el otro atributo como un atributo foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
+				entNueva.unike.add(ent2.clave.values());
 				entNueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
-
+				entNueva.AgregarAtributos(ent2.clave.values());
 				entidades.put(entNueva.tipo, entNueva);
 
 			} else {
 				// atr1 es 0:1 y atr2 es 0:N o 1:N
-				// System.out.println("El atributo "+ atr1.nombre+" tiene 0:1, pero el atributo "+ atr2.nombre+
-				// "tiene 0:N o 1:N\n");
 				// Se crea una nueva entidad donde atr1 sea clave y lo otro sea atributo normal.
 				Entidad nueva= CrearEntidadNueva(atr1);
 
 				//Coloco atr2 como foraneo.
 				Entidad ent2= entidades.get(atr2.tipo);
 				nueva.AgregarForaneo(ent2.tipo,ent2.clave.values());
-
+					nueva.AgregarAtributos(ent2.clave.values());
 				entidades.put(nueva.tipo, nueva);
 			}
 		}
 		else if(min2==0 && max2==1){
 			//atr2 es 0:1, y atr1 ajuro debe ser 0:N o 1:N
-			// System.out.println("El atributo "+atr2.nombre+" es 0:1 pero el atributo "+ atr1.nombre+ " es 0:N o 1:N"+
-			// "por ende se debe crear una nueva entidad cuya clave sea la de la entidad "+ entidades.get(atr2.tipo).nombre_entidad);
 			//Se crea una nueva entidad donde atr2 sea clave y lo otro sea atributo normal.
 			Entidad nueva=CrearEntidadNueva(atr2);
 
 			//coloco a atr1 como foraneo.
 			Entidad ent1= entidades.get(atr1.tipo);
 			nueva.AgregarForaneo(ent1.tipo,ent1.clave.values());
-
+			nueva.AgregarAtributos(ent1.clave.values());
 			entidades.put(nueva.tipo, nueva);
 		}
 		else {
-			// System.out.println("Caso M:N Se crea una nueva entidad con clave de ambas entidades\n");
 
 			//M:N
 
@@ -2449,7 +2363,6 @@ public class Parser {
 				// Ahora iteramos sobre cada uno de los schemas individualmente
 				itr.next();
 				XSSchema schema = (XSSchema) itr.next();
-				System.out.print("Esquema nuevo: \n ");
 
 
 				/*
@@ -2467,7 +2380,6 @@ public class Parser {
 
 				// ComplexTypes (Del nivel más externo)
 				Map<String, XSComplexType> mapa = (Map<String, XSComplexType>) schema.getComplexTypes();
-				//System.out.print("Tamano: " + ((Map<String, XSComplexType>) mapa).size() + "\n");
 				Iterator<String> claves1 = ((Map<String, XSComplexType>) mapa).keySet().iterator();
 				Iterator<XSComplexType>valores1 =((Map<String, XSComplexType>) mapa).values().iterator();
 
@@ -2496,7 +2408,7 @@ public class Parser {
 				LeerAtributosEntidades(claves1, valores1);
 				VerEnearias();
 				VerInterrelaciones();
-				ImprimirEntidades();
+				//ImprimirEntidades();
 
 			}
 		} catch (Exception exp) {
