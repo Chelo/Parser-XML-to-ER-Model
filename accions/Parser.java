@@ -2427,7 +2427,7 @@ public class Parser {
 				LeerAtributosEntidades(claves1, valores1);
 				VerEnearias();
 				VerInterrelaciones();
-				ImprimirEntidades();
+				//ImprimirEntidades();
 
 			}
 		} catch (Exception exp) {
