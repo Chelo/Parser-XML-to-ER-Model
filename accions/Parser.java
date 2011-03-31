@@ -442,7 +442,7 @@ public class Parser {
 				//tiposBasicos.add("ID");
 
 				XSRestrictionSimpleType restriction;
-				String valorPorDefecto = "";
+				String valorPorDefecto;
 				boolean esCompuesto = false;
 				Entidad entidad = entidades.get(tipo); // Entidad en donde se encuentran estos elementos
 				HashMap<String,Atributo> clave = new HashMap<String,Atributo>();
@@ -1172,7 +1172,7 @@ public class Parser {
 	 * @return String que indica default del atributo
 	 */
 	public static String ValorDefecto(Atributo atributo){
-		if (atributo.getValor()=="" | atributo.getValor().equals("")){
+		if (atributo.getValor().equals("")){
 			return "";
 		}
 		else return "DEFAULT "+atributo.valorPorDefecto;
